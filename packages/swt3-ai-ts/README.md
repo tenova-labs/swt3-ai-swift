@@ -8,9 +8,9 @@ Witness your AI. Prove it followed the rules. Cryptographic accountability for e
 
 **SWT3 AI Witness SDK for TypeScript**: tamper-proof evidence that your AI is doing what you say it does. Every inference hashed. Every tool call recorded. Every resource access checked against scope. No prompts or responses ever leave your infrastructure.
 
-Works with OpenAI, Anthropic, Vercel AI SDK, and any OpenAI-compatible endpoint (vLLM, Ollama, Azure, Llama.cpp).
+Works with OpenAI, Anthropic, AWS Bedrock, Vercel AI SDK, and any OpenAI-compatible endpoint (vLLM, Ollama, Azure, Llama.cpp).
 
-The EU AI Act takes effect **August 2, 2026**. When regulators ask "prove your AI followed the rules," you need more than logs. You need cryptographic proof.
+EU AI Act high-risk obligations take effect **August 2, 2026**. This SDK gives you the evidence chain.
 
 ## See It Work (No Account Needed)
 
@@ -127,7 +127,7 @@ const results = await search("SELECT * FROM transactions WHERE amount > 10000");
 // An AI-TOOL.1 anchor is minted recording: tool name, latency, success/failure
 ```
 
-When an auditor asks "what tools did your agent use?" you have the cryptographic record.
+Each anchor records the tool name, input/output hashes, latency, and success or failure.
 
 ## Witness Agent Resource Access
 
@@ -147,7 +147,7 @@ const results = await queryCustomers("SELECT name FROM customers");
 //   - Was access granted? (yes)
 ```
 
-If the agent tries to access something outside its declared scope, the anchor records a FAIL verdict. When a CISO asks "can you prove your AI agent only accessed what it was authorized to access?" this is the answer.
+If the agent tries to access something outside its declared scope, the anchor records a FAIL verdict with a full evidence trail.
 
 ## Detect Instruction Drift
 
@@ -178,6 +178,75 @@ The `agentId` survives all clearing levels. The `signingKey` produces a cryptogr
 - Fleet-wide governance dashboards
 - Agent-scoped evidence packages for auditors
 
+## Gatekeeper Mode (Pre-Call Enforcement)
+
+New in v0.3.4. Require guardrails to be active *before* the model is called, not just observed after:
+
+```typescript
+import { Witness, GatekeeperError } from "@tenova/swt3-ai";
+
+const witness = new Witness({
+  endpoint: "...",
+  apiKey: "axm_...",
+  tenantId: "...",
+  strict: true,
+  guardrailsRequired: 2,
+  guardrailNames: ["content-filter", "pii-scanner"],
+});
+
+const client = witness.wrap(new OpenAI()) as OpenAI;
+
+// If fewer than 2 guardrails are active, this throws GatekeeperError
+// BEFORE the model call happens. No inference runs without safeguards.
+try {
+  const response = await client.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: "..." }],
+  });
+} catch (e) {
+  if (e instanceof GatekeeperError) {
+    console.log(`Blocked: ${e.message}`);
+    // An AI-GRD.3 FAIL anchor is minted recording the gate failure
+  }
+}
+```
+
+Gatekeeper mode mints an **AI-GRD.3** anchor with:
+- **factor_a** = required guardrail count
+- **factor_b** = actual guardrail count
+- **factor_c** = 1 if gate passed, 0 if blocked
+
+## Multi-Agent Chain Linking
+
+New in v0.3.4. Link anchors across agents in a multi-step pipeline using `cycleId`:
+
+```typescript
+const witness = new Witness({
+  endpoint: "...",
+  apiKey: "axm_...",
+  tenantId: "...",
+  agentId: "step-1-classifier",
+  cycleId: "txn-review-abc123",  // shared across all agents in the chain
+});
+```
+
+The `cycleId` survives all clearing levels and appears in every anchor. An auditor can reconstruct the full decision chain by filtering on a single cycle ID.
+
+## Policy Version Binding
+
+New in v0.3.4. Tie every anchor to the specific policy configuration that was in effect:
+
+```typescript
+const witness = new Witness({
+  endpoint: "...",
+  apiKey: "axm_...",
+  tenantId: "...",
+  policyVersion: "v2.1.0-prod-2026-04-20",
+});
+```
+
+The SDK hashes the policy version string (SHA-256, first 12 characters) and includes it in every payload. When policies change between audit periods, the hash changes — proving which rules were in effect for each inference.
+
 ## What Gets Witnessed
 
 Each inference produces anchors for these checks. Every check maps to a regulation.
@@ -193,6 +262,27 @@ Each inference produces anchors for these checks. Every check maps to a regulati
 | AI-TOOL.1 | Tool/function call was recorded | "Did the tool call succeed?" | NIST AI RMF MANAGE 4.1 |
 | AI-ACC.1 | Resource access was within scope | "Was the access authorized?" | EU AI Act Art. 14 |
 | AI-ID.1 | Agent identity was attested | "Is the agent identified?" | EU AI Act Art. 13 |
+
+### EU AI Act Article Mapping
+
+All 12 SWT3 AI witnessing procedures map to specific EU AI Act obligations:
+
+| Procedure | EU AI Act Article | Obligation | Demo | Production |
+|-----------|-------------------|------------|------|------------|
+| AI-INF.1 | Art. 12(1) | Automatic Logging of Use Periods | ✓ | ✓ |
+| AI-INF.2 | Art. 15(3) | Performance Consistency Monitoring | — | ✓ |
+| AI-INF.3 | Art. 12(1) | Volume & Usage Logging | — | ✓ |
+| AI-MDL.1 | Art. 9(4a) | Model Risk Identification | ✓ | ✓ |
+| AI-MDL.2 | Art. 12(2b) | Version & Lineage Tracking | — | ✓ |
+| AI-MDL.3 | Art. 72(1) | Post-Market Drift Monitoring | — | ✓ |
+| AI-MDL.4 | Art. 15(4) | Feedback Loop Isolation | — | ✓ |
+| AI-GRD.1 | Art. 9(2a) | Risk Mitigation Measures | ✓ | ✓ |
+| AI-GRD.2 | Art. 9(4b) | Content Safety Filtering | — | ✓ |
+| AI-GRD.3 | Art. 10(2f) | PII & Data Protection | — | ✓ |
+| AI-EXPL.1 | Art. 13(1) | Transparency & Explainability | — | ✓ |
+| AI-EXPL.2 | Art. 13(3b) | Confidence Calibration | — | ✓ |
+
+The demo demonstrates 3 procedures using simulated data. All 12 are available in production with real inference data. [See live conformity →](https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public)
 
 ## How Verdicts Work
 
@@ -228,6 +318,7 @@ Translation: "Access attempt occurred. Target was outside declared scope. Access
 | AI-MDL.2 | 1 (required) | 1 if version recorded | 0 | PASS if b >= a |
 | AI-GRD.1 | Required count | Active count | 1 if all passed | PASS if b >= a |
 | AI-GRD.2 | 1 (clean expected) | 0 if refusal | 0 | PASS if b >= a |
+| AI-GRD.3 | Required count | Active count | 1=passed, 0=blocked | PASS if b >= a AND c == 1 |
 | AI-TOOL.1 | 1 (called) | Latency (ms) | 1=success, 0=error | PASS if b >= a |
 | AI-ACC.1 | 1 (accessed) | 1=in scope, 0=out | 1=granted, 0=denied | PASS if b >= a |
 | AI-ID.1 | 1 (required) | 1 if identity present | 0 | PASS if b >= a |
@@ -315,9 +406,9 @@ const witness = new Witness({
 | EU AI Act conformity | No | Yes (Pro) |
 | Auditor evidence packages | No | Yes (Pro) |
 | Access violation tracking | No | Yes (Pro) |
-| **Survives an audit** | **No** | **Yes** |
+| Audit-ready evidence chain | No | Yes |
 
-> Local anchors prove it to you. A connected engine proves it to your auditor.
+> Local mode is for development and testing. Connected mode is for production evidence.
 
 ## Resilience (Flight Recorder)
 
@@ -351,6 +442,12 @@ const witness = new Witness({
 | `guardrailNames` | [] | Active guardrail names |
 | `agentId` | - | Agent identity (survives all clearing levels) |
 | `signingKey` | - | HMAC-SHA256 key for payload signing |
+| `cycleId` | - | Multi-agent chain link (survives all clearing levels) |
+| `policyVersion` | - | Policy config identifier (hashed in payloads) |
+| `strict` | false | Gatekeeper mode: block inference if guardrails insufficient |
+| `latencyThresholdMs` | 30000 | AI-INF.2 latency limit (ms) |
+| `guardrailsRequired` | 0 | AI-GRD.1 minimum guardrail count |
+| `onFlush` | - | Callback `(payloads, receipts) => void` after each flush |
 | `factorHandoff` | - | "file" for local factor export |
 | `factorHandoffPath` | - | Directory for handoff files |
 
@@ -358,12 +455,36 @@ const witness = new Witness({
 
 | Method | Description |
 |--------|-------------|
-| `witness.wrap(client)` | Returns a Proxy that behaves identically to the original client. Supports OpenAI and Anthropic. |
+| `witness.wrap(client)` | Returns a Proxy that behaves identically to the original client. Supports OpenAI, Anthropic, and AWS Bedrock. |
 | `witness.wrapTool(fn, name?)` | Wraps a function for tool call witnessing (AI-TOOL.1). |
 | `witness.wrapAccess(fn, resource?, scope?)` | Wraps a function for resource access witnessing (AI-ACC.1). |
 | `witness.vercelOnFinish(opts?)` | Returns an onFinish callback for Vercel AI SDK streamText/generateText. |
 | `witness.flush()` | Force-flush all buffered payloads. Returns receipts. |
 | `witness.stop()` | Stop the witness and flush remaining payloads. |
+
+## OpenTelemetry Export
+
+New in v0.3.6. Send SWT3 anchors to your existing observability stack as OTel spans:
+
+```typescript
+import { Witness } from "@tenova/swt3-ai";
+import { OTelExporter } from "@tenova/swt3-ai/exporters/otel";
+
+const exporter = new OTelExporter({ tracerName: "swt3-witness" });
+const witness = new Witness({
+  endpoint: "...",
+  apiKey: "axm_...",
+  tenantId: "...",
+  onFlush: exporter.export.bind(exporter),
+});
+
+// Anchors now appear as spans in Datadog, Grafana, Jaeger, Honeycomb, etc.
+// Span attributes: swt3.procedure_id, swt3.verdict, swt3.fingerprint, swt3.model_id, ...
+```
+
+Install: `npm install @opentelemetry/api`
+
+The `onFlush` callback fires after each successful batch transmission. You can use it for any custom export destination, not just OTel.
 
 ## Installation
 
@@ -373,6 +494,7 @@ npm install @tenova/swt3-ai
 # Peer dependencies (install whichever you use)
 npm install openai              # for OpenAI adapter
 npm install @anthropic-ai/sdk   # for Anthropic adapter
+npm install @opentelemetry/api  # for OTel exporter
 ```
 
 ## Regulatory Coverage

@@ -2,11 +2,20 @@
 
 ## Sovereign Witness Traceability Protocol
 
-**Status:** Draft Standard
-**Version:** 1.2.0
-**Date:** 2026-03-29
+**Status:** Proposed Standard
+**Version:** 1.3.0
+**Date:** 2026-04-17
 **Authors:** Tenable Nova LLC (DBA TeNova)
 **License:** Apache 2.0
+
+---
+
+### Notation Conventions
+
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
+"SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be
+interpreted as described in [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt)
+and [RFC 8174](https://www.ietf.org/rfc/rfc8174.txt).
 
 ---
 
@@ -210,27 +219,69 @@ SWT3-E-VULTR-VUL-SI21-FAIL-1773800000-4d5e6f7a8b9c
 - Minimum 8 segments required for a valid anchor
 - Protocol field MUST be `SWT3`
 
+### 3.5 ABNF Grammar (RFC 5234)
+
+```abnf
+swt3-anchor   = protocol "-" tier "-" provider "-" uct "-" procedure "-"
+                verdict "-" epoch "-" fingerprint
+
+protocol      = %s"SWT3"                         ; case-sensitive
+tier          = %x45 / %x53 / %x48               ; "E" / "S" / "H"
+provider      = 2*6ALPHA                          ; e.g., VULTR, AWS, GCP
+uct           = 2*3ALPHA                          ; UCT Registry code
+procedure     = 1*(ALPHA / DIGIT)                 ; normalized ID, no hyphens
+verdict       = %s"PASS" / %s"FAIL"               ; normative verdicts
+epoch         = 10DIGIT                           ; Unix seconds
+fingerprint   = 12HEXDIG                          ; truncated SHA-256
+```
+
+Implementations MUST accept the above grammar for well-formed anchors.
+Implementations SHOULD additionally accept `INHERITED`, `LAPSED`, and
+`UNKNOWN` as informative verdict values in contexts where these verdicts
+originate from platform-level adjudication (not protocol-level witnessing).
+
 ## 4. Fingerprint Algorithm
 
 The fingerprint is the cryptographic core of SWT3. It binds the evidence factors
 to the anchor in a deterministic, reproducible way.
 
-### 4.1 Input Construction
+### 4.1 Input Construction (Canonical Formula)
 
-The fingerprint input is a colon-separated string of exactly six fields:
+The fingerprint input is a colon-separated string with a `WITNESS:` domain
+separator prefix, followed by exactly six fields:
+
+```
+WITNESS:{tenant_id}:{procedure_id}:{factor_a}:{factor_b}:{factor_c}:{timestamp_ms}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `WITNESS` | literal | Domain separator prefix (REQUIRED since v1.1.0) |
+| `tenant_id` | string | The organization/tenant identifier |
+| `procedure_id` | string | The procedure identifier (e.g., `SC-7.6`) — original format, NOT normalized |
+| `factor_a` | integer | Baseline/threshold factor (string representation of decimal integer) |
+| `factor_b` | integer | Measured/observed factor |
+| `factor_c` | integer | Delta factor (typically `factor_b - factor_a`) |
+| `timestamp_ms` | integer | Millisecond-precision Unix timestamp at witness time |
+
+**IMPORTANT:** The `procedure_id` in the fingerprint input retains its original
+format (e.g., `SC-7.6`), while the anchor token uses the normalized form (e.g.,
+`SC76`). This distinction is intentional — the anchor is human-readable; the
+fingerprint is cryptographic.
+
+#### 4.1.1 Legacy Formula (Pre-v1.1.0)
+
+Anchors minted before v1.1.0 used the formula without the `WITNESS:` prefix
+and with reversed tenant/procedure order:
 
 ```
 {procedure_id}:{tenant_id}:{factor_a}:{factor_b}:{factor_c}:{timestamp_ms}
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `procedure_id` | string | The procedure identifier (e.g., `SC-7.6`) |
-| `tenant_id` | string | The organization/tenant identifier |
-| `factor_a` | integer | Baseline/threshold factor (string representation of decimal integer) |
-| `factor_b` | integer | Measured/observed factor |
-| `factor_c` | integer | Delta factor (typically `factor_b - factor_a`) |
-| `timestamp_ms` | integer | Millisecond-precision Unix timestamp at witness time |
+Verifiers SHOULD attempt the canonical formula first, then fall back to the
+legacy formula if verification fails. This supports backward compatibility
+with pre-v1.1.0 anchors without ambiguity (the `WITNESS:` prefix is
+unambiguous).
 
 ### 4.2 Hash Computation
 
@@ -252,7 +303,7 @@ can be verified in TypeScript, Go, Rust, or any language with SHA-256 support.
 ### 4.4 Reference Computation
 
 ```
-Input:  "SC-7.6:DEMO_ENCLAVE:4:3:-1:1773316622000"
+Input:  "WITNESS:DEMO_ENCLAVE:SC-7.6:4:3:-1:1773316622000"
 SHA-256: 96b7d56c0245... (64 hex chars)
 Fingerprint: 96b7d56c0245 (first 12 hex chars)
 ```
@@ -555,6 +606,10 @@ AI procedures use the `AI` UCT code and follow the naming convention
 | `AI-HITL.2` | Override Decision | Witness that a human overrode the AI recommendation | EU AI Act Art. 14(4)(a) |
 | `AI-EXPL.1` | Explainability | Witness that an explanation was generated alongside output | EU AI Act Art. 13, NIST AI RMF GOVERN 1.5 |
 | `AI-EXPL.2` | Confidence Score | Witness model confidence against minimum threshold | NIST AI RMF MEASURE 2.9 |
+| `AI-TOOL.1` | Tool Call | Witness an AI agent's tool/function call with outcome | EU AI Act Art. 14(4), NIST AI RMF MANAGE 4.2 |
+| `AI-ID.1` | Agent Identity | Witness that an AI agent's cryptographic identity was asserted | EU AI Act Art. 50(2), NIST AI RMF GOVERN 1.2 |
+| `AI-ACC.1` | Access Control | Witness an AI agent's access to external resources with scope | EU AI Act Art. 9(4)(c), NIST AI RMF MANAGE 2.3 |
+| `AI-REV.1` | Anchor Revocation | Witness the revocation of a previously-issued anchor with reason | EU AI Act Art. 12(3), GDPR Art. 17 |
 
 ### 9.2 Factor Matrix Semantics for AI
 
@@ -581,6 +636,10 @@ factor semantics. Implementations MUST use these semantics for interoperability.
 | `AI-HITL.2` | AI recommendation hash (first 10 digits) | Final decision hash (first 10 digits) | Override flag (1 = overridden, 0 = accepted) |
 | `AI-EXPL.1` | Explanation required flag (1 = yes) | Explanation generated flag (1 = yes) | `factor_b - factor_a` (0 = compliant) |
 | `AI-EXPL.2` | Minimum confidence threshold (× 1000) | Actual confidence score (× 1000) | `factor_b - factor_a` (negative = below threshold) |
+| `AI-TOOL.1` | 1 (tool was called) | Latency (ms) | 1 if succeeded, 0 if exception |
+| `AI-ID.1` | 1 (identity asserted) | 1 (identity verified) | 0 (reserved) |
+| `AI-ACC.1` | 1 (access attempted) | 1 if within scope, 0 if out of scope | 1 if granted, 0 if denied |
+| `AI-REV.1` | 1 (revocation event) | 1 (target declared) | Reason code (0=unspecified, 1=model_recall, 2=policy_violation, 3=data_contamination, 4=consent_withdrawal, 5=regulatory_order, 6=error_correction) |
 
 ### 9.3 Clearing Protocol for AI Systems
 
@@ -722,21 +781,21 @@ or restrict it to non-sensitive fields.
 
 ## 10. Security Considerations
 
-### 9.1 Truncation Risk
+### 10.1 Truncation Risk
 
 The 12-character (48-bit) fingerprint is not intended as a cryptographic
 signature. It is a **verification shortcut**. Systems requiring full
 cryptographic assurance SHOULD store and verify against the full 64-character
 SHA-256 digest.
 
-### 9.2 Factor Confidentiality
+### 10.2 Factor Confidentiality
 
 Factor values (especially `factor_a` thresholds) may reveal security posture
 details (e.g., expected port counts, patch windows). Implementations SHOULD
 apply access controls to factor data and leverage the Clearing Protocol
 (Section 5.3) at Level 1 or higher for sensitive environments.
 
-### 9.5 Clearing and Data Sovereignty
+### 10.3 Clearing and Data Sovereignty
 
 The Clearing Protocol (Section 5.3) is designed to prevent raw evidence from
 becoming a persistent attack surface. However, implementations must consider:
@@ -753,14 +812,14 @@ becoming a persistent attack surface. However, implementations must consider:
   receipt). This supports SI-12 (Information Management and Retention) audit
   requirements.
 
-### 9.3 Timestamp Manipulation
+### 10.4 Timestamp Manipulation
 
 The `timestamp_ms` is a critical input to the fingerprint. An attacker who can
 control the timestamp can forge a valid fingerprint with different factors.
 Implementations MUST ensure timestamps are generated by trusted sources (system
 clock, NTP-synchronized) and not accepted from untrusted input.
 
-### 9.4 Collision Resistance
+### 10.5 Collision Resistance
 
 At 48 bits, the birthday paradox threshold is approximately 2^24 (~16.7 million)
 anchors before a 50% collision probability. For most compliance ledgers (tens of
@@ -802,3 +861,23 @@ SWT3 and Sovereign Witness Traceability are trademarks of Tenable Nova LLC. Pate
 ---
 
 *SWT3: Sovereign Witness Traceability — Provenance, Verification, Clearing.*
+
+## Appendix A: Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0.0 | 2026-02-26 | Initial specification. PPA #1 filed. |
+| 1.1.0 | 2026-03-15 | Canonical fingerprint formula with `WITNESS:` domain separator. Legacy fallback defined. |
+| 1.2.0 | 2026-03-29 | AI Witnessing Profile (Section 9). UCT Extended codes. Protocol Lock (Phase 2). PPA #2 filed. |
+| 1.3.0 | 2026-04-17 | RFC 2119 notation. ABNF grammar. Section numbering fixes. Proposed Standard status. |
+
+## Appendix B: Intellectual Property
+
+This specification is covered by the following Provisional Patent Applications:
+- **PPA #1** (Feb 26, 2026): Core protocol — fingerprint formula, factor semantics, Clearing Protocol
+- **PPA #2** (Mar 31, 2026): AI Witness SDKs, clearing engine, Merkle rollups, UCT taxonomy
+- **PPA #3** (Apr 12, 2026): Regulatory translation, agent binding, multi-dimensional risk, portable credentials
+
+The protocol specification is published under Apache 2.0. Implementations are
+free to use, modify, and distribute. The patent protection covers specific
+commercial implementations and platform features, not the protocol itself.

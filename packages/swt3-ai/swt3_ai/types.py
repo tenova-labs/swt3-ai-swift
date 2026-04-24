@@ -71,6 +71,8 @@ class WitnessPayload:
     legal_basis: Optional[str] = None  # GDPR legal basis (survives all clearing levels)
     purpose_class: Optional[str] = None  # CJT purpose classification (survives all clearing levels)
     authorization_id: Optional[str] = None  # CJT pre-inference authorization receipt (survives all clearing levels)
+    revocation_target: Optional[str] = None  # fingerprint of anchor being revoked (survives all clearing levels)
+    revocation_reason: Optional[str] = None  # reason for revocation (survives all clearing levels)
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to dict for JSON transmission."""
@@ -117,6 +119,10 @@ class WitnessPayload:
             d["purpose_class"] = self.purpose_class
         if self.authorization_id is not None:
             d["authorization_id"] = self.authorization_id
+        if self.revocation_target is not None:
+            d["revocation_target"] = self.revocation_target
+        if self.revocation_reason is not None:
+            d["revocation_reason"] = self.revocation_reason
         return d
 
 

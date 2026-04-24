@@ -66,7 +66,8 @@ def _generate_html_report(
         for p, a, d, v in coverage_map
     )
     uncovered_rows = "".join(
-        f'<tr><td style="font-family:monospace;color:#FBBF24">{p}</td><td>{a}</td><td>{d}</td></tr>'
+        f'<tr><td style="font-family:monospace">{p}</td><td>{a}</td><td>{d}</td>'
+        f'<td style="color:#9CA3AF;font-weight:600">[NEEDS PRODUCTION]</td></tr>'
         for p, a, d in uncovered
     )
     anchor_text = "\n".join(anchors)
@@ -94,6 +95,8 @@ pre{{background:#111;padding:1rem;border-radius:8px;overflow-x:auto;font-size:.8
 .countdown{{font-size:1rem;font-weight:600;color:#FBBF24;margin:1.5rem 0}}
 .cta{{display:inline-block;margin-top:1.25rem;padding:.75rem 2rem;background:#E8A87C;color:#070504;font-weight:700;text-decoration:none;border-radius:6px;font-size:.9rem;letter-spacing:.03em}}
 .cta:hover{{opacity:.9}}
+.cta-secondary{{display:inline-block;margin-top:1.25rem;margin-right:.75rem;padding:.75rem 2rem;background:transparent;color:#E8A87C;border:1px solid #E8A87C;font-weight:600;text-decoration:none;border-radius:6px;font-size:.9rem;letter-spacing:.03em}}
+.cta-secondary:hover{{background:rgba(232,168,124,.1)}}
 .footer{{color:#6B7280;font-size:.75rem;margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid #222}}
 .warn{{color:#FBBF24}}
 .sep{{border:none;border-top:1px solid #222;margin:1.5rem 0}}
@@ -102,19 +105,20 @@ pre{{background:#111;padding:1rem;border-radius:8px;overflow-x:auto;font-size:.8
 <body>
 <div class="c">
 <h1>SWT3 AI Witness — Coverage Report</h1>
-<p class="meta">Generated {ts} UTC | SWT3 Protocol v0.2.9 | Demo Environment</p>
+<p class="meta">Generated {ts} UTC | SWT3 Protocol v0.3.3 | Demo Environment</p>
 
-<div class="score"><span class="pass">3</span><span class="total"> / 12 obligations covered</span></div>
+<div class="score"><span class="pass">12</span><span class="total"> / 12 obligations mapped</span></div>
+<p style="color:#9CA3AF;font-size:.95rem;margin-top:-.5rem">3 demonstrated locally · 9 need production data</p>
 
-<h2>Covered — EU AI Act Article Mapping</h2>
+<h2>Demonstrated Locally</h2>
 <table>
 <tr><th>Procedure</th><th>EU AI Act</th><th>Obligation</th><th>Status</th></tr>
 {covered_rows}
 </table>
 
-<h2 class="warn">Uncovered Obligations ({len(uncovered)})</h2>
+<h2>Mapped — Needs Production Data ({len(uncovered)})</h2>
 <table>
-<tr><th>Procedure</th><th>EU AI Act</th><th>Obligation</th></tr>
+<tr><th>Procedure</th><th>EU AI Act</th><th>Obligation</th><th>Status</th></tr>
 {uncovered_rows}
 </table>
 
@@ -126,7 +130,9 @@ pre{{background:#111;padding:1rem;border-radius:8px;overflow-x:auto;font-size:.8
 <pre>{anchor_text}</pre>
 
 <p>Full conformity requires all 12 procedures across inference, model governance, guardrails, and explainability domains.</p>
+<a class="cta-secondary" href="https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public">See Live Auditor View →</a>
 <a class="cta" href="https://sovereign.tenova.io/signup?ref=sdk_demo">Close the Gap — Free Account</a>
+<p style="margin-top:.75rem;font-size:.8rem;color:#9CA3AF">Preview a real tenant's EU AI Act posture (no account required) — then create your own.</p>
 
 <div class="footer">
 <p>SWT3 Protocol — Patent Pending — Apache 2.0</p>
@@ -228,18 +234,18 @@ def main() -> None:
     print(f"  {BOLD}REGULATORY COVERAGE SUMMARY (NIST AI RMF / EU AI ACT){RESET}")
     print()
 
-    # Covered obligations — mapped to EU AI Act articles
+    # Demonstrated obligations — mapped to EU AI Act articles
     coverage_map = [
-        ("AI-INF.1", "Art. 12(1)", "Automatic Logging of Use Periods", "PASS"),
-        ("AI-MDL.1", "Art. 9(4a)", "Model Risk Identification",       "PASS"),
-        ("AI-GRD.1", "Art. 9(2a)", "Risk Mitigation Measures",        "PASS"),
+        ("AI-INF.1", "Art. 12(1)", "Automatic Logging of Use Periods", "DEMONSTRATED"),
+        ("AI-MDL.1", "Art. 9(4a)", "Model Risk Identification",        "DEMONSTRATED"),
+        ("AI-GRD.1", "Art. 9(2a)", "Risk Mitigation Measures",         "DEMONSTRATED"),
     ]
     for proc, article, desc, verdict in coverage_map:
         print(f"  {GREEN}✓{RESET} {WHITE}{proc}{RESET} → {article}: {desc} {GREEN}[{verdict}]{RESET}")
 
     print(f"  {DIM}{'─' * 50}{RESET}")
 
-    # Uncovered obligations
+    # Mapped obligations that need production data
     uncovered = [
         ("AI-INF.2", "Art. 15(3)", "Performance Consistency"),
         ("AI-INF.3", "Art. 12(1)", "Volume & Usage Logging"),
@@ -251,7 +257,7 @@ def main() -> None:
         ("AI-EXPL.1", "Art. 13(1)", "Transparency & Explainability"),
         ("AI-EXPL.2", "Art. 13(3b)", "Confidence Calibration"),
     ]
-    print(f"  {AMBER}⚠ {len(uncovered)}/12 obligations uncovered:{RESET}")
+    print(f"  {CYAN}{len(uncovered)} additional obligations mapped (need production data):{RESET}")
     for proc, article, desc in uncovered:
         print(f"  {DIM}  {proc} → {article}: {desc}{RESET}")
 
@@ -266,6 +272,9 @@ def main() -> None:
         print(f"  {_color}EU AI Act enforcement in {_days_left} days (Aug 2, 2026){RESET}")
         print()
 
+    print(f"  {DIM}Preview a live auditor view (no account required):{RESET}")
+    print(f"  {CYAN}https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public{RESET}")
+    print()
     print(f"  {DIM}Full conformity requires all 12 procedures. Connect to close the gap:{RESET}")
     print(f"  {CYAN}https://sovereign.tenova.io/signup?ref=sdk_demo{RESET}")
     print()

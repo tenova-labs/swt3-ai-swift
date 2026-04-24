@@ -123,11 +123,11 @@ async function main() {
   console.log(`  ${B}REGULATORY COVERAGE SUMMARY (NIST AI RMF / EU AI ACT)${R}`);
   console.log();
 
-  // Covered obligations — mapped to EU AI Act articles
+  // Demonstrated obligations — mapped to EU AI Act articles
   const coverageMap: [string, string, string, string][] = [
-    ["AI-INF.1", "Art. 12(1)",  "Automatic Logging of Use Periods", "PASS"],
-    ["AI-MDL.1", "Art. 9(4a)",  "Model Risk Identification",        "PASS"],
-    ["AI-GRD.1", "Art. 9(2a)",  "Risk Mitigation Measures",         "PASS"],
+    ["AI-INF.1", "Art. 12(1)",  "Automatic Logging of Use Periods", "DEMONSTRATED"],
+    ["AI-MDL.1", "Art. 9(4a)",  "Model Risk Identification",        "DEMONSTRATED"],
+    ["AI-GRD.1", "Art. 9(2a)",  "Risk Mitigation Measures",         "DEMONSTRATED"],
   ];
   for (const [proc, article, desc, verdict] of coverageMap) {
     console.log(`  ${G}✓${R} ${W}${proc}${R} → ${article}: ${desc} ${G}[${verdict}]${R}`);
@@ -135,7 +135,7 @@ async function main() {
 
   console.log(`  ${D}${"─".repeat(50)}${R}`);
 
-  // Uncovered obligations
+  // Mapped obligations that need production data
   const uncovered: [string, string, string][] = [
     ["AI-INF.2",  "Art. 15(3)",  "Performance Consistency"],
     ["AI-INF.3",  "Art. 12(1)",  "Volume & Usage Logging"],
@@ -147,7 +147,7 @@ async function main() {
     ["AI-EXPL.1", "Art. 13(1)",  "Transparency & Explainability"],
     ["AI-EXPL.2", "Art. 13(3b)", "Confidence Calibration"],
   ];
-  console.log(`  ${A}⚠ ${uncovered.length}/12 obligations uncovered:${R}`);
+  console.log(`  ${C}${uncovered.length} additional obligations mapped (need production data):${R}`);
   for (const [proc, article, desc] of uncovered) {
     console.log(`  ${D}  ${proc} → ${article}: ${desc}${R}`);
   }
@@ -164,6 +164,9 @@ async function main() {
     console.log();
   }
 
+  console.log(`  ${D}Preview a live auditor view (no account required):${R}`);
+  console.log(`  ${C}https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public${R}`);
+  console.log();
   console.log(`  ${D}Full conformity requires all 12 procedures. Connect to close the gap:${R}`);
   console.log(`  ${C}https://sovereign.tenova.io/signup?ref=sdk_demo${R}`);
   console.log();
@@ -192,7 +195,7 @@ function generateHtmlReport(
     `<tr><td style="font-family:monospace">${p}</td><td>${a}</td><td>${d}</td><td style="color:#4ADE80;font-weight:700">[${v}]</td></tr>`
   ).join("\n");
   const uncoveredRows = uncoveredList.map(([p, a, d]) =>
-    `<tr><td style="font-family:monospace;color:#FBBF24">${p}</td><td>${a}</td><td>${d}</td></tr>`
+    `<tr><td style="font-family:monospace">${p}</td><td>${a}</td><td>${d}</td><td style="color:#9CA3AF;font-weight:600">[NEEDS PRODUCTION]</td></tr>`
   ).join("\n");
   const anchorText = anchorList.join("\n");
   const countdown = daysLeft > 0
@@ -222,6 +225,8 @@ pre{background:#111;padding:1rem;border-radius:8px;overflow-x:auto;font-size:.8r
 .countdown{font-size:1rem;font-weight:600;color:#FBBF24;margin:1.5rem 0}
 .cta{display:inline-block;margin-top:1.25rem;padding:.75rem 2rem;background:#E8A87C;color:#070504;font-weight:700;text-decoration:none;border-radius:6px;font-size:.9rem;letter-spacing:.03em}
 .cta:hover{opacity:.9}
+.cta-secondary{display:inline-block;margin-top:1.25rem;margin-right:.75rem;padding:.75rem 2rem;background:transparent;color:#E8A87C;border:1px solid #E8A87C;font-weight:600;text-decoration:none;border-radius:6px;font-size:.9rem;letter-spacing:.03em}
+.cta-secondary:hover{background:rgba(232,168,124,.1)}
 .footer{color:#6B7280;font-size:.75rem;margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid #222}
 .warn{color:#FBBF24}
 .sep{border:none;border-top:1px solid #222;margin:1.5rem 0}
@@ -230,19 +235,20 @@ pre{background:#111;padding:1rem;border-radius:8px;overflow-x:auto;font-size:.8r
 <body>
 <div class="c">
 <h1>SWT3 AI Witness \u2014 Coverage Report</h1>
-<p class="meta">Generated ${ts} UTC | SWT3 Protocol v0.2.9 | Demo Environment</p>
+<p class="meta">Generated ${ts} UTC | SWT3 Protocol v0.3.3 | Demo Environment</p>
 
-<div class="score"><span class="pass">3</span><span class="total"> / 12 obligations covered</span></div>
+<div class="score"><span class="pass">12</span><span class="total"> / 12 obligations mapped</span></div>
+<p style="color:#9CA3AF;font-size:.95rem;margin-top:-.5rem">3 demonstrated locally \u00b7 9 need production data</p>
 
-<h2>Covered \u2014 EU AI Act Article Mapping</h2>
+<h2>Demonstrated Locally</h2>
 <table>
 <tr><th>Procedure</th><th>EU AI Act</th><th>Obligation</th><th>Status</th></tr>
 ${coveredRows}
 </table>
 
-<h2 class="warn">Uncovered Obligations (${uncoveredList.length})</h2>
+<h2>Mapped \u2014 Needs Production Data (${uncoveredList.length})</h2>
 <table>
-<tr><th>Procedure</th><th>EU AI Act</th><th>Obligation</th></tr>
+<tr><th>Procedure</th><th>EU AI Act</th><th>Obligation</th><th>Status</th></tr>
 ${uncoveredRows}
 </table>
 
@@ -254,7 +260,9 @@ ${uncoveredRows}
 <pre>${anchorText}</pre>
 
 <p>Full conformity requires all 12 procedures across inference, model governance, guardrails, and explainability domains.</p>
+<a class="cta-secondary" href="https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public">See Live Auditor View \u2192</a>
 <a class="cta" href="https://sovereign.tenova.io/signup?ref=sdk_demo">Close the Gap \u2014 Free Account</a>
+<p style="margin-top:.75rem;font-size:.8rem;color:#9CA3AF">Preview a real tenant's EU AI Act posture (no account required) \u2014 then create your own.</p>
 
 <div class="footer">
 <p>SWT3 Protocol \u2014 Patent Pending \u2014 Apache 2.0</p>

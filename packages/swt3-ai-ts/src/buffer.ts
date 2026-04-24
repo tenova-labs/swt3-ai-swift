@@ -24,10 +24,12 @@ export class WitnessBuffer {
   private stopped = false;
   private consecutiveFailures = 0;
   private ctaShown = false;
+  private onFlush?: (payloads: WitnessPayload[], receipts: WitnessReceipt[]) => void;
 
   constructor(config: WitnessConfig, maxRetryBuffer = DEFAULT_MAX_RETRY_BUFFER) {
     this.config = config;
     this.maxRetryBuffer = maxRetryBuffer;
+    this.onFlush = config.onFlush;
     this.startTimer();
   }
 
@@ -157,6 +159,15 @@ export class WitnessBuffer {
             `\n  [SWT3] Dashboard & audit reports \u2192 https://sovereign.tenova.io/signup?ref=sdk` +
             `\n  [SWT3] EU AI Act deadline: Aug 2, 2026. Is your AI ready?\n`
           );
+        }
+
+        // Invoke on_flush callback (never let callback errors break the pipeline)
+        if (this.onFlush && receipts.length > 0) {
+          try {
+            this.onFlush(payloads, receipts);
+          } catch (cbErr) {
+            console.warn(`[swt3-ai] onFlush callback error (non-fatal):`, cbErr);
+          }
         }
 
         return receipts;

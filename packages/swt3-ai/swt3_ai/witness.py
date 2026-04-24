@@ -30,7 +30,7 @@ from typing import Any, Callable, List, Optional, TypeVar
 
 from .types import WitnessConfig, WitnessPayload, WitnessReceipt, InferenceRecord
 from .buffer import WitnessBuffer
-from .clearing import extract_payloads
+from .clearing import extract_payloads, extract_revocation_payload, REVOCATION_REASONS
 from .fingerprint import sha256_truncated
 from .handoff import write_handoff_files
 
@@ -450,6 +450,63 @@ class Witness:
         if fn is not None:
             return decorator(fn)
         return decorator
+
+    def revoke(
+        self,
+        fingerprint: str,
+        reason: str = "unspecified",
+    ) -> str:
+        """Revoke a previously-issued witness anchor (AI-REV.1).
+
+        Mints an AI-REV.1 anchor that references the target anchor's
+        fingerprint, creating an immutable revocation receipt. The
+        revocation is enqueued for flush like any other anchor.
+
+        Args:
+            fingerprint: The 12-character anchor fingerprint to revoke.
+            reason: Revocation reason. One of: model_recall, policy_violation,
+                data_contamination, consent_withdrawal, regulatory_order,
+                error_correction, unspecified.
+
+        Returns:
+            The fingerprint of the revocation anchor itself.
+
+        Raises:
+            ValueError: If fingerprint is empty or reason is not recognized.
+        """
+        if not fingerprint or not fingerprint.strip():
+            raise ValueError("fingerprint is required for revocation")
+        if reason not in REVOCATION_REASONS:
+            raise ValueError(
+                f"Unknown revocation reason: {reason!r}. "
+                f"Valid: {', '.join(sorted(REVOCATION_REASONS.keys()))}"
+            )
+
+        policy_hash = (
+            sha256_truncated(self._config.policy_version, 12)
+            if self._config.policy_version else None
+        )
+        payload = extract_revocation_payload(
+            tenant_id=self._tenant_id,
+            target_fingerprint=fingerprint.strip(),
+            reason=reason,
+            clearing_level=self._config.clearing_level,
+            agent_id=self._config.agent_id,
+            signing_key=self._config.signing_key,
+            cycle_id=self._config.cycle_id,
+            policy_version_hash=policy_hash,
+            jurisdiction=self._config.jurisdiction,
+            legal_basis=self._config.legal_basis,
+            purpose_class=self._config.purpose_class,
+        )
+        self._buffer.enqueue_many([payload])
+
+        logger.info(
+            "Revocation anchor minted: %s -> target %s (reason: %s)",
+            payload.anchor_fingerprint, fingerprint, reason,
+        )
+
+        return payload.anchor_fingerprint
 
     def record(
         self,

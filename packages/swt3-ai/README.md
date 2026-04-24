@@ -8,7 +8,7 @@ Witness your AI. Prove it followed the rules. Cryptographic accountability for e
 
 **SWT3 AI Witness SDK**: tamper-proof evidence that your AI is doing what you say it does. Every inference hashed. Every tool call recorded. Every resource access checked against scope. No prompts or responses ever leave your infrastructure.
 
-The EU AI Act takes effect **August 2, 2026**. When regulators ask "prove your AI followed the rules," you need more than logs. You need cryptographic proof.
+EU AI Act high-risk obligations take effect **August 2, 2026**. This SDK gives you the evidence chain.
 
 ## See It Work (No Account Needed)
 
@@ -71,7 +71,7 @@ def search(query: str) -> list:
 #   - Success or failure
 ```
 
-This produces an **AI-TOOL.1** anchor. When an auditor asks "what tools did your agent use and did they work?" you have the cryptographic record.
+This produces an **AI-TOOL.1** anchor recording the tool name, input/output hashes, latency, and success or failure.
 
 ## Witness Agent Resource Access
 
@@ -92,7 +92,7 @@ This produces an **AI-ACC.1** anchor with three factors:
 - **Was it within scope?** (yes/no)
 - **Was access granted?** (yes/no)
 
-When a CISO asks "can you prove your AI agent only accessed what it was authorized to access?" this is the answer.
+Out-of-scope access produces a FAIL verdict with a full evidence trail.
 
 ## Detect Instruction Drift
 
@@ -123,6 +123,72 @@ The `agent_id` survives all clearing levels. The `signing_key` produces a crypto
 - Fleet-wide governance dashboards
 - Agent-scoped evidence packages for auditors
 
+## Gatekeeper Mode (Pre-Call Enforcement)
+
+New in v0.3.4. Require guardrails to be active *before* the model is called, not just observed after:
+
+```python
+witness = Witness(
+    endpoint="...",
+    api_key="axm_...",
+    tenant_id="...",
+    strict=True,
+    guardrails_required=2,
+    guardrail_names=["content-filter", "pii-scanner"],
+)
+
+client = witness.wrap(OpenAI())
+
+# If fewer than 2 guardrails are active, this raises GatekeeperError
+# BEFORE the model call happens. No inference runs without safeguards.
+try:
+    response = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": "..."}],
+    )
+except GatekeeperError as e:
+    print(f"Blocked: {e}")
+    # An AI-GRD.3 FAIL anchor is minted recording the gate failure
+```
+
+Gatekeeper mode mints an **AI-GRD.3** anchor with:
+- **factor_a** = required guardrail count
+- **factor_b** = actual guardrail count
+- **factor_c** = 1 if gate passed, 0 if blocked
+
+Import the exception: `from swt3_ai import GatekeeperError`
+
+## Multi-Agent Chain Linking
+
+New in v0.3.4. Link anchors across agents in a multi-step pipeline using `cycle_id`:
+
+```python
+witness = Witness(
+    endpoint="...",
+    api_key="axm_...",
+    tenant_id="...",
+    agent_id="step-1-classifier",
+    cycle_id="txn-review-abc123",  # shared across all agents in the chain
+)
+```
+
+The `cycle_id` survives all clearing levels and appears in every anchor. An auditor can reconstruct the full decision chain by filtering on a single cycle ID.
+
+## Policy Version Binding
+
+New in v0.3.4. Tie every anchor to the specific policy configuration that was in effect:
+
+```python
+witness = Witness(
+    endpoint="...",
+    api_key="axm_...",
+    tenant_id="...",
+    policy_version="v2.1.0-prod-2026-04-20",
+)
+```
+
+The SDK hashes the policy version string (SHA-256, first 12 characters) and includes it in every payload. When policies change between audit periods, the hash changes — proving which rules were in effect for each inference.
+
 ## What Gets Witnessed
 
 Each inference produces anchors for these checks. Every check maps to a regulation.
@@ -138,6 +204,27 @@ Each inference produces anchors for these checks. Every check maps to a regulati
 | AI-TOOL.1 | Tool/function call was recorded | "Did the tool call succeed?" | NIST AI RMF MANAGE 4.1 |
 | AI-ACC.1 | Resource access was within scope | "Was the access authorized?" | EU AI Act Art. 14 |
 | AI-ID.1 | Agent identity was attested | "Is the agent identified?" | EU AI Act Art. 13 |
+
+### EU AI Act Article Mapping
+
+All 12 SWT3 AI witnessing procedures map to specific EU AI Act obligations:
+
+| Procedure | EU AI Act Article | Obligation | Demo | Production |
+|-----------|-------------------|------------|------|------------|
+| AI-INF.1 | Art. 12(1) | Automatic Logging of Use Periods | ✓ | ✓ |
+| AI-INF.2 | Art. 15(3) | Performance Consistency Monitoring | — | ✓ |
+| AI-INF.3 | Art. 12(1) | Volume & Usage Logging | — | ✓ |
+| AI-MDL.1 | Art. 9(4a) | Model Risk Identification | ✓ | ✓ |
+| AI-MDL.2 | Art. 12(2b) | Version & Lineage Tracking | — | ✓ |
+| AI-MDL.3 | Art. 72(1) | Post-Market Drift Monitoring | — | ✓ |
+| AI-MDL.4 | Art. 15(4) | Feedback Loop Isolation | — | ✓ |
+| AI-GRD.1 | Art. 9(2a) | Risk Mitigation Measures | ✓ | ✓ |
+| AI-GRD.2 | Art. 9(4b) | Content Safety Filtering | — | ✓ |
+| AI-GRD.3 | Art. 10(2f) | PII & Data Protection | — | ✓ |
+| AI-EXPL.1 | Art. 13(1) | Transparency & Explainability | — | ✓ |
+| AI-EXPL.2 | Art. 13(3b) | Confidence Calibration | — | ✓ |
+
+The demo demonstrates 3 procedures using simulated data. All 12 are available in production with real inference data. [See live conformity →](https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public)
 
 ## How Verdicts Work
 
@@ -179,6 +266,7 @@ Translation: "Access attempt occurred. Target was outside declared scope. Access
 | AI-MDL.2 | 1 (required) | 1 if version recorded | 0 | PASS if b >= a |
 | AI-GRD.1 | Required count | Active count | 1 if all passed | PASS if b >= a |
 | AI-GRD.2 | 1 (clean expected) | 0 if refusal | 0 | PASS if b >= a |
+| AI-GRD.3 | Required count | Active count | 1=passed, 0=blocked | PASS if b >= a AND c == 1 |
 | AI-TOOL.1 | 1 (called) | Latency (ms) | 1=success, 0=error | PASS if b >= a |
 | AI-ACC.1 | 1 (accessed) | 1=in scope, 0=out | 1=granted, 0=denied | PASS if b >= a |
 | AI-ID.1 | 1 (required) | 1 if identity present | 0 | PASS if b >= a |
@@ -247,19 +335,59 @@ response = client.chat.completions.create(
 | EU AI Act conformity | No | Yes (Pro) |
 | Auditor evidence packages | No | Yes (Pro) |
 | Access violation tracking | No | Yes (Pro) |
-| **Survives an audit** | **No** | **Yes** |
+| Audit-ready evidence chain | No | Yes |
 
-> Local anchors prove it to you. A connected engine proves it to your auditor.
+> Local mode is for development and testing. Connected mode is for production evidence.
 
 ## Supported Providers
 
 | Provider | Client | Status |
 |----------|--------|--------|
-| OpenAI | `openai.OpenAI` | Supported |
-| Anthropic | `anthropic.Anthropic` | Supported |
+| OpenAI | `openai.OpenAI` / `openai.AsyncOpenAI` | Supported |
+| Anthropic | `anthropic.Anthropic` / `anthropic.AsyncAnthropic` | Supported |
 | Azure OpenAI | `openai.AzureOpenAI` | Supported (via openai SDK) |
 | Ollama / vLLM | `openai.OpenAI(base_url=...)` | Supported (OpenAI-compatible) |
-| AWS Bedrock | `bedrock-runtime` | Planned |
+| AWS Bedrock | `boto3` (`bedrock-runtime`) | Supported |
+| LiteLLM | `litellm` module | Supported (100+ providers) |
+
+### LiteLLM (100+ Providers)
+
+New in v0.3.6. One adapter covers every provider LiteLLM supports:
+
+```python
+import litellm
+from swt3_ai import Witness
+
+witness = Witness(endpoint="...", api_key="axm_...", tenant_id="...")
+llm = witness.wrap(litellm)
+
+# Works with any LiteLLM-supported model
+response = llm.completion(model="gpt-4o", messages=[...])
+response = llm.completion(model="claude-sonnet-4-20250514", messages=[...])
+response = llm.completion(model="bedrock/anthropic.claude-3", messages=[...])
+
+# Async variant
+response = await llm.acompletion(model="gpt-4o", messages=[...])
+```
+
+Install: `pip install swt3-ai litellm`
+
+### Async Support
+
+New in v0.3.6. The SDK detects async clients automatically:
+
+```python
+from openai import AsyncOpenAI
+
+client = witness.wrap(AsyncOpenAI())
+response = await client.chat.completions.create(model="gpt-4o", messages=[...])
+
+# Async flush and stop
+await witness.flush_async()
+await witness.stop_async()
+```
+
+Works with `AsyncOpenAI`, `AsyncAnthropic`, and `litellm.acompletion`.
 
 ## Resilience (Flight Recorder)
 
@@ -295,8 +423,66 @@ witness = Witness(
 | `guardrail_names` | [] | Names of active guardrails |
 | `agent_id` | None | Agent identity (survives all clearing levels) |
 | `signing_key` | None | HMAC-SHA256 key for payload signing |
+| `cycle_id` | None | Multi-agent chain link (survives all clearing levels) |
+| `policy_version` | None | Policy config identifier (hashed in payloads) |
+| `strict` | False | Gatekeeper mode: block inference if guardrails insufficient |
+| `on_flush` | None | Callback `(payloads, receipts)` after each flush |
 | `factor_handoff` | None | "file" for local factor export |
 | `factor_handoff_path` | None | Directory for handoff files |
+
+## OpenTelemetry Export
+
+New in v0.3.6. Send SWT3 anchors to your existing observability stack as OTel spans:
+
+```python
+from swt3_ai import Witness
+from swt3_ai.exporters.otel import OTelExporter
+
+exporter = OTelExporter(tracer_name="swt3-witness")
+witness = Witness(..., on_flush=exporter.export)
+
+# Anchors now appear as spans in Datadog, Grafana, Jaeger, Honeycomb, etc.
+# Span attributes: swt3.procedure_id, swt3.verdict, swt3.fingerprint, swt3.model_id, ...
+```
+
+Install: `pip install swt3-ai[otel]`
+
+The `on_flush` callback fires after each successful batch transmission. You can use it for any custom export destination, not just OTel.
+
+## LangChain Integration
+
+Use SWT3 with LangChain by wrapping the underlying provider client:
+
+```python
+from langchain_openai import ChatOpenAI
+from openai import OpenAI
+from swt3_ai import Witness
+
+witness = Witness(endpoint="...", api_key="axm_...", tenant_id="...")
+witnessed_client = witness.wrap(OpenAI())
+
+# Pass the witnessed client to LangChain
+llm = ChatOpenAI(client=witnessed_client)
+
+# Or with LiteLLM (covers all LangChain-supported providers):
+import litellm
+llm_ns = witness.wrap(litellm)
+# Use llm_ns.completion() in your LangChain custom LLM
+```
+
+Witness LangChain tools with `@witness.wrap_tool()`:
+
+```python
+from langchain.tools import tool
+
+@witness.wrap_tool(tool_name="search_docs")
+@tool
+def search_docs(query: str) -> str:
+    """Search the document database."""
+    return retriever.invoke(query)
+
+# Every LangChain tool invocation is now witnessed with an AI-TOOL.1 anchor
+```
 
 ## Installation
 
@@ -306,6 +492,7 @@ pip install swt3-ai
 # With provider extras
 pip install swt3-ai[openai]
 pip install swt3-ai[anthropic]
+pip install swt3-ai[otel]
 pip install swt3-ai[all]
 ```
 

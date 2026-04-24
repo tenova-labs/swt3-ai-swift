@@ -22,7 +22,7 @@
 
 import { randomUUID } from "node:crypto";
 import { sha256Truncated } from "./fingerprint.js";
-import { extractPayloads, extractGatekeeperPayload } from "./clearing.js";
+import { extractPayloads, extractGatekeeperPayload, extractRevocationPayload, REVOCATION_REASONS } from "./clearing.js";
 import { WitnessBuffer } from "./buffer.js";
 import { writeHandoffFiles } from "./handoff.js";
 import { wrapOpenAI } from "./adapters/openai.js";
@@ -364,6 +364,49 @@ export class Witness {
     };
 
     return wrapper as unknown as T;
+  }
+
+  /**
+   * Revoke a previously-issued witness anchor (AI-REV.1).
+   *
+   * Mints an AI-REV.1 anchor that references the target anchor's
+   * fingerprint, creating an immutable revocation receipt.
+   *
+   * @param fingerprint - The 12-character anchor fingerprint to revoke.
+   * @param reason - Revocation reason: model_recall, policy_violation,
+   *   data_contamination, consent_withdrawal, regulatory_order,
+   *   error_correction, or unspecified.
+   * @returns The fingerprint of the revocation anchor itself.
+   */
+  revoke(fingerprint: string, reason: string = "unspecified"): string {
+    if (!fingerprint?.trim()) {
+      throw new Error("fingerprint is required for revocation");
+    }
+    if (!(reason in REVOCATION_REASONS)) {
+      throw new Error(
+        `Unknown revocation reason: "${reason}". Valid: ${Object.keys(REVOCATION_REASONS).sort().join(", ")}`,
+      );
+    }
+
+    const policyHash = this.config.policyVersion
+      ? sha256Truncated(this.config.policyVersion, 12)
+      : undefined;
+    const payload = extractRevocationPayload(
+      this.config.tenantId,
+      fingerprint.trim(),
+      reason,
+      this.config.clearingLevel,
+      this.config.agentId,
+      this.config.signingKey,
+      this.config.cycleId,
+      policyHash,
+      this.config.jurisdiction,
+      this.config.legalBasis,
+      this.config.purposeClass,
+    );
+    this.buffer.enqueueMany([payload]);
+
+    return payload.anchor_fingerprint;
   }
 
   /**

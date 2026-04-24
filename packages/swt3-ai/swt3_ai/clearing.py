@@ -39,7 +39,19 @@ AI_PROCEDURES = [
     "AI-GRD.2",  # Content Safety Filter
     "AI-GRD.3",  # Gatekeeper Gate (pre-call enforcement)
     "AI-EXPL.2", # Confidence Scoring (when available)
+    "AI-REV.1",  # Anchor Revocation
 ]
+
+# Revocation reason code mapping
+REVOCATION_REASONS: Dict[str, int] = {
+    "unspecified": 0,
+    "model_recall": 1,
+    "policy_violation": 2,
+    "data_contamination": 3,
+    "consent_withdrawal": 4,
+    "regulatory_order": 5,
+    "error_correction": 6,
+}
 
 # Procedures emitted per inference call (subset of the 17)
 PER_INFERENCE_PROCEDURES = [
@@ -409,6 +421,58 @@ def extract_gatekeeper_payload(
         anchor_fingerprint=fp,
         anchor_epoch=epoch,
         fingerprint_timestamp_ms=ts,
+    )
+
+    _apply_operational_metadata(
+        payload, agent_id=agent_id, cycle_id=cycle_id,
+        signing_key=signing_key, policy_version_hash=policy_version_hash,
+        jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
+    )
+
+    return payload
+
+
+def extract_revocation_payload(
+    tenant_id: str,
+    target_fingerprint: str,
+    reason: str,
+    clearing_level: int,
+    agent_id: Optional[str] = None,
+    signing_key: Optional[str] = None,
+    cycle_id: Optional[str] = None,
+    policy_version_hash: Optional[str] = None,
+    jurisdiction: Optional[str] = None,
+    legal_basis: Optional[str] = None,
+    purpose_class: Optional[str] = None,
+) -> WitnessPayload:
+    """Mint an AI-REV.1 (Anchor Revocation) payload.
+
+    factor_a = 1 (revocation event occurred)
+    factor_b = 1 (target declared valid by caller)
+    factor_c = reason code (integer from REVOCATION_REASONS)
+    Verdict: always PASS (the revocation itself is valid evidence)
+
+    The revocation_target and revocation_reason fields survive all
+    clearing levels as operational metadata.
+    """
+    ts, epoch = timestamp_ms()
+    reason_code = float(REVOCATION_REASONS.get(reason, 0))
+    fa = 1.0
+    fb = 1.0
+    fc = reason_code
+    fp = mint_fingerprint(tenant_id, "AI-REV.1", fa, fb, fc, ts)
+
+    payload = WitnessPayload(
+        procedure_id="AI-REV.1",
+        factor_a=fa,
+        factor_b=fb,
+        factor_c=fc,
+        clearing_level=clearing_level,
+        anchor_fingerprint=fp,
+        anchor_epoch=epoch,
+        fingerprint_timestamp_ms=ts,
+        revocation_target=target_fingerprint,
+        revocation_reason=reason,
     )
 
     _apply_operational_metadata(

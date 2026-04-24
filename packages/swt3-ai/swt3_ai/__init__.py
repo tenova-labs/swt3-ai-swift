@@ -25,14 +25,15 @@ Usage:
 Copyright (c) 2026 Tenable Nova LLC. Apache 2.0. Patent pending.
 """
 
-__version__ = "0.2.6"
+__version__ = "0.3.6"
 
-from .witness import Witness
+from .witness import Witness, GatekeeperError
 from .types import WitnessConfig, WitnessReceipt, WitnessPayload
 from .signing import sign_payload
 
 __all__ = [
     "Witness",
+    "GatekeeperError",
     "WitnessConfig",
     "WitnessReceipt",
     "WitnessPayload",

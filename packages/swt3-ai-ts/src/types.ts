@@ -62,6 +62,8 @@ export interface WitnessPayload {
   legal_basis?: string;
   purpose_class?: string;
   authorization_id?: string;
+  revocation_target?: string;
+  revocation_reason?: string;
 }
 
 export interface WitnessReceipt {
@@ -119,4 +121,5 @@ export const AI_PROCEDURES = new Set([
   "AI-TOOL.1",
   "AI-ID.1",
   "AI-ACC.1",
+  "AI-REV.1",
 ]);

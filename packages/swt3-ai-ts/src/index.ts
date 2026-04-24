@@ -14,7 +14,7 @@
  *   const client = witness.wrap(new OpenAI()) as OpenAI;
  */
 
-export { Witness } from "./witness.js";
+export { Witness, GatekeeperError } from "./witness.js";
 export type { WitnessOptions } from "./witness.js";
 export type {
   WitnessConfig,
@@ -24,5 +24,5 @@ export type {
   BatchResponse,
 } from "./types.js";
 export { mintFingerprint, sha256Truncated, sha256Hex, timestampMs } from "./fingerprint.js";
-export { extractPayloads } from "./clearing.js";
+export { extractPayloads, extractGatekeeperPayload, extractRevocationPayload, REVOCATION_REASONS } from "./clearing.js";
 export { signPayload } from "./signing.js";

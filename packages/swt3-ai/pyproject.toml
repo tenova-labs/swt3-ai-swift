@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "swt3-ai"
-version = "0.3.0"
+version = "0.3.6"
 description = "SWT3 AI Witness SDK: cryptographic attestation for AI inference"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -32,7 +32,8 @@ dependencies = []
 [project.optional-dependencies]
 openai = ["openai>=1.0"]
 anthropic = ["anthropic>=0.20"]
-all = ["openai>=1.0", "anthropic>=0.20"]
+otel = ["opentelemetry-api>=1.0"]
+all = ["openai>=1.0", "anthropic>=0.20", "opentelemetry-api>=1.0"]
 dev = ["pytest", "pytest-cov", "mypy", "ruff"]
 
 [project.urls]
@@ -40,6 +41,11 @@ Homepage = "https://tenova.io"
 Documentation = "https://sovereign.tenova.io/docs/"
 Repository = "https://github.com/tenova-labs/swt3-ai"
 Issues = "https://github.com/tenova-labs/swt3-ai/issues"
+
+[tool.hatch.build]
+# Do not respect parent repo's allowlist .gitignore — it blocks the package source
+ignore-vcs = true
+include = ["swt3_ai/**/*.py", "README.md", "LICENSE"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["swt3_ai"]

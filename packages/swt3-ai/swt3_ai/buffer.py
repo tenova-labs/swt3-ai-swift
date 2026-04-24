@@ -51,8 +51,10 @@ class WitnessBuffer:
         self,
         config: WitnessConfig,
         max_retry_buffer: int = DEFAULT_MAX_RETRY_BUFFER,
+        on_flush: Optional[Any] = None,
     ) -> None:
         self._config = config
+        self._on_flush = on_flush
         self._queue: queue.Queue[WitnessPayload] = queue.Queue()
         self._dead_letter: Deque[WitnessPayload] = collections.deque(
             maxlen=max_retry_buffer,
@@ -114,6 +116,18 @@ class WitnessBuffer:
                 remaining,
             )
         return receipts
+
+    async def flush_async(self) -> List[WitnessReceipt]:
+        """Async force-flush. Runs the sync flush in a thread pool executor."""
+        import asyncio
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, self.flush)
+
+    async def stop_async(self) -> List[WitnessReceipt]:
+        """Async stop. Runs the sync stop in a thread pool executor."""
+        import asyncio
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, self.stop)
 
     @property
     def pending(self) -> int:
@@ -260,6 +274,13 @@ class WitnessBuffer:
                         f"\n  [SWT3] Dashboard & audit reports \u2192 https://sovereign.tenova.io/signup?ref=sdk"
                         f"\n  [SWT3] EU AI Act deadline: Aug 2, 2026. Is your AI ready?\n"
                     )
+
+                # Invoke on_flush callback (never let callback errors break the pipeline)
+                if self._on_flush and receipts:
+                    try:
+                        self._on_flush(payloads, receipts)
+                    except Exception as cb_err:
+                        logger.warning("on_flush callback error (non-fatal): %s", cb_err)
 
                 return receipts
 

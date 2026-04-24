@@ -1,6 +1,6 @@
 {
   "name": "@tenova/swt3-ai",
-  "version": "0.3.1",
+  "version": "0.3.6",
   "description": "SWT3 AI Witness SDK: cryptographic attestation for AI inference",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,6 +9,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./exporters/otel": {
+      "import": "./dist/exporters/otel.js",
+      "types": "./dist/exporters/otel.d.ts"
     }
   },
   "bin": {
@@ -46,10 +50,14 @@
     "url": "https://github.com/tenova-labs/swt3-ai/issues"
   },
   "peerDependencies": {
-    "openai": ">=4.0.0"
+    "openai": ">=4.0.0",
+    "@opentelemetry/api": ">=1.0.0"
   },
   "peerDependenciesMeta": {
     "openai": {
+      "optional": true
+    },
+    "@opentelemetry/api": {
       "optional": true
     }
   },

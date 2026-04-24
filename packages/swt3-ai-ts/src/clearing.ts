@@ -368,3 +368,59 @@ export function extractGatekeeperPayload(
 
   return payload;
 }
+
+/** Revocation reason code mapping. */
+export const REVOCATION_REASONS: Record<string, number> = {
+  unspecified: 0,
+  model_recall: 1,
+  policy_violation: 2,
+  data_contamination: 3,
+  consent_withdrawal: 4,
+  regulatory_order: 5,
+  error_correction: 6,
+};
+
+/**
+ * Mint an AI-REV.1 (Anchor Revocation) payload.
+ *
+ * factor_a = 1 (revocation event occurred)
+ * factor_b = 1 (target declared valid by caller)
+ * factor_c = reason code (integer from REVOCATION_REASONS)
+ */
+export function extractRevocationPayload(
+  tenantId: string,
+  targetFingerprint: string,
+  reason: string,
+  clearingLevel: 0 | 1 | 2 | 3,
+  agentId?: string,
+  signingKey?: string,
+  cycleId?: string,
+  policyVersionHash?: string,
+  jurisdiction?: string,
+  legalBasis?: string,
+  purposeClass?: string,
+): WitnessPayload {
+  const [ts, epoch] = timestampMs();
+  const reasonCode = REVOCATION_REASONS[reason] ?? 0;
+  const fa = 1;
+  const fb = 1;
+  const fc = reasonCode;
+  const fp = mintFingerprint(tenantId, "AI-REV.1", fa, fb, fc, ts);
+
+  const payload: WitnessPayload = {
+    procedure_id: "AI-REV.1",
+    factor_a: fa,
+    factor_b: fb,
+    factor_c: fc,
+    clearing_level: clearingLevel,
+    anchor_fingerprint: fp,
+    anchor_epoch: epoch,
+    fingerprint_timestamp_ms: ts,
+    revocation_target: targetFingerprint,
+    revocation_reason: reason,
+  };
+
+  applyOperationalMetadata(payload, fp, agentId, signingKey, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass);
+
+  return payload;
+}
