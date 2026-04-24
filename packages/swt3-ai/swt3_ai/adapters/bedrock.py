@@ -94,6 +94,11 @@ def _make_converse_interceptor(
         prompt_text = _extract_converse_prompt(messages)
         prompt_hash = sha256_truncated(prompt_text)
 
+        # Gatekeeper pre-call check (strict mode only)
+        authorization_id = None
+        if witness._strict:
+            authorization_id = witness.gate_check(messages, model_id)
+
         # Call and measure
         start = time.monotonic()
         response = real_method(*args, **kwargs)
@@ -101,7 +106,7 @@ def _make_converse_interceptor(
 
         # Extract record
         record = _extract_converse_record(response, model_id, prompt_hash, elapsed_ms)
-        witness.record(record)
+        witness.record(record, authorization_id=authorization_id)
 
         return response
 
@@ -131,6 +136,11 @@ def _make_invoke_model_interceptor(
         prompt_text = _extract_invoke_prompt(body, model_id)
         prompt_hash = sha256_truncated(prompt_text)
 
+        # Gatekeeper pre-call check (strict mode only)
+        authorization_id = None
+        if witness._strict:
+            authorization_id = witness.gate_check(body, model_id)
+
         # Call and measure
         start = time.monotonic()
         response = real_method(*args, **kwargs)
@@ -138,7 +148,7 @@ def _make_invoke_model_interceptor(
 
         # Extract record from invoke_model response
         record = _extract_invoke_record(response, model_id, prompt_hash, elapsed_ms)
-        witness.record(record)
+        witness.record(record, authorization_id=authorization_id)
 
         return response
 

@@ -37,6 +37,7 @@ AI_PROCEDURES = [
     "AI-MDL.2",  # Model Version Tracking
     "AI-GRD.1",  # Guardrail Enforcement
     "AI-GRD.2",  # Content Safety Filter
+    "AI-GRD.3",  # Gatekeeper Gate (pre-call enforcement)
     "AI-EXPL.2", # Confidence Scoring (when available)
 ]
 
@@ -60,6 +61,11 @@ def extract_payloads(
     agent_id: Optional[str] = None,
     signing_key: Optional[str] = None,
     cycle_id: Optional[str] = None,
+    policy_version_hash: Optional[str] = None,
+    jurisdiction: Optional[str] = None,
+    legal_basis: Optional[str] = None,
+    purpose_class: Optional[str] = None,
+    authorization_id: Optional[str] = None,
 ) -> List[WitnessPayload]:
     """Extract witness payloads from an inference record.
 
@@ -114,13 +120,12 @@ def extract_payloads(
                 if cycle_id:
                     payload.ai_context["cycle_id"] = cycle_id
 
-            if agent_id:
-                payload.agent_id = agent_id
-            if cycle_id:
-                payload.cycle_id = cycle_id
-            if signing_key:
-                from .signing import sign_payload
-                payload.payload_signature = sign_payload(signing_key, fp, agent_id)
+            _apply_operational_metadata(
+                payload, agent_id=agent_id, cycle_id=cycle_id,
+                signing_key=signing_key, policy_version_hash=policy_version_hash,
+                jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
+                authorization_id=authorization_id,
+            )
 
             payloads.append(payload)
 
@@ -170,14 +175,12 @@ def extract_payloads(
                 if cycle_id:
                     payload.ai_context["cycle_id"] = cycle_id
 
-            # agent_id and cycle_id survive all clearing levels
-            if agent_id:
-                payload.agent_id = agent_id
-            if cycle_id:
-                payload.cycle_id = cycle_id
-            if signing_key:
-                from .signing import sign_payload
-                payload.payload_signature = sign_payload(signing_key, fp, agent_id)
+            _apply_operational_metadata(
+                payload, agent_id=agent_id, cycle_id=cycle_id,
+                signing_key=signing_key, policy_version_hash=policy_version_hash,
+                jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
+                authorization_id=authorization_id,
+            )
 
             payloads.append(payload)
 
@@ -275,18 +278,49 @@ def extract_payloads(
         # Apply clearing level to determine what metadata travels on the wire
         _apply_clearing(payload, record, clearing_level)
 
-        # agent_id and cycle_id survive all clearing levels (operational metadata)
-        if agent_id:
-            payload.agent_id = agent_id
-        if cycle_id:
-            payload.cycle_id = cycle_id
-        if signing_key:
-            from .signing import sign_payload
-            payload.payload_signature = sign_payload(signing_key, fp, agent_id)
+        # Operational metadata survives all clearing levels
+        _apply_operational_metadata(
+            payload, agent_id=agent_id, cycle_id=cycle_id,
+            signing_key=signing_key, policy_version_hash=policy_version_hash,
+            jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
+            authorization_id=authorization_id,
+        )
 
         payloads.append(payload)
 
     return payloads
+
+
+def _apply_operational_metadata(
+    payload: WitnessPayload,
+    *,
+    agent_id: Optional[str] = None,
+    cycle_id: Optional[str] = None,
+    signing_key: Optional[str] = None,
+    policy_version_hash: Optional[str] = None,
+    jurisdiction: Optional[str] = None,
+    legal_basis: Optional[str] = None,
+    purpose_class: Optional[str] = None,
+    authorization_id: Optional[str] = None,
+) -> None:
+    """Apply operational metadata that survives all clearing levels."""
+    if agent_id:
+        payload.agent_id = agent_id
+    if cycle_id:
+        payload.cycle_id = cycle_id
+    if policy_version_hash:
+        payload.policy_version_hash = policy_version_hash
+    if jurisdiction:
+        payload.jurisdiction = jurisdiction
+    if legal_basis:
+        payload.legal_basis = legal_basis
+    if purpose_class:
+        payload.purpose_class = purpose_class
+    if authorization_id:
+        payload.authorization_id = authorization_id
+    if signing_key:
+        from .signing import sign_payload
+        payload.payload_signature = sign_payload(signing_key, payload.anchor_fingerprint, agent_id)
 
 
 def _apply_clearing(
@@ -337,3 +371,50 @@ def _apply_clearing(
         payload.ai_input_tokens = None
         payload.ai_output_tokens = None
         payload.ai_context = None
+
+
+def extract_gatekeeper_payload(
+    tenant_id: str,
+    required: int,
+    active: int,
+    gate_passed: bool,
+    clearing_level: int,
+    agent_id: Optional[str] = None,
+    signing_key: Optional[str] = None,
+    cycle_id: Optional[str] = None,
+    policy_version_hash: Optional[str] = None,
+    jurisdiction: Optional[str] = None,
+    legal_basis: Optional[str] = None,
+    purpose_class: Optional[str] = None,
+) -> WitnessPayload:
+    """Mint an AI-GRD.3 (Gatekeeper Gate) payload.
+
+    factor_a = required guardrail count
+    factor_b = actual guardrail count at call time
+    factor_c = 1 if gate passed, 0 if blocked
+    Verdict: PASS if b >= a AND c == 1
+    """
+    ts, epoch = timestamp_ms()
+    fa = float(required)
+    fb = float(active)
+    fc = 1.0 if gate_passed else 0.0
+    fp = mint_fingerprint(tenant_id, "AI-GRD.3", fa, fb, fc, ts)
+
+    payload = WitnessPayload(
+        procedure_id="AI-GRD.3",
+        factor_a=fa,
+        factor_b=fb,
+        factor_c=fc,
+        clearing_level=clearing_level,
+        anchor_fingerprint=fp,
+        anchor_epoch=epoch,
+        fingerprint_timestamp_ms=ts,
+    )
+
+    _apply_operational_metadata(
+        payload, agent_id=agent_id, cycle_id=cycle_id,
+        signing_key=signing_key, policy_version_hash=policy_version_hash,
+        jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
+    )
+
+    return payload

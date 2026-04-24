@@ -89,13 +89,19 @@ async function handleConverse(
   const promptText = extractConversePrompt(messages);
   const promptHash = sha256Truncated(promptText);
 
+  // Gatekeeper pre-call check (strict mode only)
+  let authorizationId: string | undefined;
+  if ((witness as any).strict) {
+    authorizationId = (witness as any).gateCheck(messages, modelId);
+  }
+
   const start = performance.now();
   const response = await realSend.call(thisArg, ...args);
   const elapsedMs = Math.round(performance.now() - start);
 
   const resp = response as Record<string, unknown>;
   const record = extractConverseRecord(resp, modelId, promptHash, elapsedMs);
-  witness.record(record);
+  witness.record(record, authorizationId);
 
   return response;
 }
@@ -124,13 +130,19 @@ async function handleInvokeModel(
   const promptText = extractInvokePrompt(body, modelId);
   const promptHash = sha256Truncated(promptText);
 
+  // Gatekeeper pre-call check (strict mode only)
+  let authorizationId: string | undefined;
+  if ((witness as any).strict) {
+    authorizationId = (witness as any).gateCheck(body, modelId);
+  }
+
   const start = performance.now();
   const response = await realSend.call(thisArg, ...args);
   const elapsedMs = Math.round(performance.now() - start);
 
   const resp = response as Record<string, unknown>;
   const record = extractInvokeRecord(resp, modelId, promptHash, elapsedMs);
-  witness.record(record);
+  witness.record(record, authorizationId);
 
   return response;
 }

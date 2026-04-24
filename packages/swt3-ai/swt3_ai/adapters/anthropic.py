@@ -17,6 +17,7 @@ Factor mapping:
 
 from __future__ import annotations
 
+import asyncio
 import time
 from typing import Any, Set, TYPE_CHECKING
 
@@ -76,6 +77,8 @@ class _MessagesProxy:
         real_attr = getattr(target, name)
 
         if name == "create":
+            if asyncio.iscoroutinefunction(real_attr):
+                return _make_async_interceptor(real_attr, witness)
             return _make_interceptor(real_attr, witness)
 
         return real_attr
@@ -97,6 +100,11 @@ def _make_interceptor(real_method: Any, witness: "Witness") -> Any:
         system_prompt_text = _extract_system_only(system)
         system_prompt_hash = sha256_truncated(system_prompt_text) if system_prompt_text else None
 
+        # ── Gatekeeper pre-call check (strict mode only) ──
+        authorization_id = None
+        if witness._strict:
+            authorization_id = witness.gate_check(messages, model)
+
         # ── Call the real method and measure latency ──
         start = time.monotonic()
         response = real_method(*args, **kwargs)
@@ -104,9 +112,42 @@ def _make_interceptor(real_method: Any, witness: "Witness") -> Any:
 
         # ── Post-call: extract factors ──
         record = _extract_record(response, model, prompt_hash, elapsed_ms, system_prompt_hash)
-        witness.record(record)
+        witness.record(record, authorization_id=authorization_id)
 
         # ── Return UNTOUCHED response ──
+        return response
+
+    interceptor.__name__ = "create"
+    interceptor.__qualname__ = "messages.create"
+    interceptor.__doc__ = getattr(real_method, "__doc__", None)
+    return interceptor
+
+
+def _make_async_interceptor(real_method: Any, witness: "Witness") -> Any:
+    """Create an async interceptor for AsyncAnthropic messages.create()."""
+
+    async def interceptor(*args: Any, **kwargs: Any) -> Any:
+        messages = kwargs.get("messages", args[0] if args else [])
+        system = kwargs.get("system", "")
+        model = kwargs.get("model", "unknown")
+
+        prompt_text = _extract_prompt_text(messages, system)
+        prompt_hash = sha256_truncated(prompt_text)
+
+        system_prompt_text = _extract_system_only(system)
+        system_prompt_hash = sha256_truncated(system_prompt_text) if system_prompt_text else None
+
+        authorization_id = None
+        if witness._strict:
+            authorization_id = witness.gate_check(messages, model)
+
+        start = time.monotonic()
+        response = await real_method(*args, **kwargs)
+        elapsed_ms = int((time.monotonic() - start) * 1000)
+
+        record = _extract_record(response, model, prompt_hash, elapsed_ms, system_prompt_hash)
+        witness.record(record, authorization_id=authorization_id)
+
         return response
 
     interceptor.__name__ = "create"

@@ -30,6 +30,11 @@ export function extractPayloads(
   agentId?: string,
   signingKey?: string,
   cycleId?: string,
+  policyVersionHash?: string,
+  jurisdiction?: string,
+  legalBasis?: string,
+  purposeClass?: string,
+  authorizationId?: string,
 ): WitnessPayload[] {
   const [ts, epoch] = timestampMs();
   const payloads: WitnessPayload[] = [];
@@ -80,9 +85,7 @@ export function extractPayloads(
         payload.ai_context = ctx;
       }
 
-      if (agentId) payload.agent_id = agentId;
-      if (cycleId) payload.cycle_id = cycleId;
-      if (signingKey) payload.payload_signature = signPayload(signingKey, fp, agentId);
+      applyOperationalMetadata(payload, fp, agentId, signingKey, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass, authorizationId);
 
       payloads.push(payload);
     }
@@ -129,9 +132,7 @@ export function extractPayloads(
         payload.ai_context = ctx;
       }
 
-      if (agentId) payload.agent_id = agentId;
-      if (cycleId) payload.cycle_id = cycleId;
-      if (signingKey) payload.payload_signature = signPayload(signingKey, fp, agentId);
+      applyOperationalMetadata(payload, fp, agentId, signingKey, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass, authorizationId);
 
       payloads.push(payload);
     }
@@ -233,15 +234,36 @@ export function extractPayloads(
     // absent from JSON.stringify output, not just null.
     applyClearingLevel(payload, record, clearingLevel);
 
-    // agent_id and cycle_id survive all clearing levels (operational metadata)
-    if (agentId) payload.agent_id = agentId;
-    if (cycleId) payload.cycle_id = cycleId;
-    if (signingKey) payload.payload_signature = signPayload(signingKey, fp, agentId);
+    // Operational metadata survives all clearing levels
+    applyOperationalMetadata(payload, fp, agentId, signingKey, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass, authorizationId);
 
     payloads.push(payload);
   }
 
   return payloads;
+}
+
+/** Apply operational metadata that survives all clearing levels. */
+function applyOperationalMetadata(
+  payload: WitnessPayload,
+  fingerprint: string,
+  agentId?: string,
+  signingKey?: string,
+  cycleId?: string,
+  policyVersionHash?: string,
+  jurisdiction?: string,
+  legalBasis?: string,
+  purposeClass?: string,
+  authorizationId?: string,
+): void {
+  if (agentId) payload.agent_id = agentId;
+  if (cycleId) payload.cycle_id = cycleId;
+  if (policyVersionHash) payload.policy_version_hash = policyVersionHash;
+  if (jurisdiction) payload.jurisdiction = jurisdiction;
+  if (legalBasis) payload.legal_basis = legalBasis;
+  if (purposeClass) payload.purpose_class = purposeClass;
+  if (authorizationId) payload.authorization_id = authorizationId;
+  if (signingKey) payload.payload_signature = signPayload(signingKey, fingerprint, agentId);
 }
 
 /**
@@ -301,4 +323,48 @@ function applyClearingLevel(
     delete payload.ai_output_tokens;
     // ai_context is never assigned
   }
+}
+
+/**
+ * Mint an AI-GRD.3 (Gatekeeper Gate) payload.
+ *
+ * factor_a = required guardrail count
+ * factor_b = actual guardrail count at call time
+ * factor_c = 1 if gate passed, 0 if blocked
+ * Verdict: PASS if b >= a AND c == 1
+ */
+export function extractGatekeeperPayload(
+  tenantId: string,
+  required: number,
+  active: number,
+  gatePassed: boolean,
+  clearingLevel: 0 | 1 | 2 | 3,
+  agentId?: string,
+  signingKey?: string,
+  cycleId?: string,
+  policyVersionHash?: string,
+  jurisdiction?: string,
+  legalBasis?: string,
+  purposeClass?: string,
+): WitnessPayload {
+  const [ts, epoch] = timestampMs();
+  const fa = required;
+  const fb = active;
+  const fc = gatePassed ? 1 : 0;
+  const fp = mintFingerprint(tenantId, "AI-GRD.3", fa, fb, fc, ts);
+
+  const payload: WitnessPayload = {
+    procedure_id: "AI-GRD.3",
+    factor_a: fa,
+    factor_b: fb,
+    factor_c: fc,
+    clearing_level: clearingLevel,
+    anchor_fingerprint: fp,
+    anchor_epoch: epoch,
+    fingerprint_timestamp_ms: ts,
+  };
+
+  applyOperationalMetadata(payload, fp, agentId, signingKey, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass);
+
+  return payload;
 }

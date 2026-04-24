@@ -23,6 +23,10 @@ class WitnessConfig:
     agent_id: Optional[str] = None  # SDK instance identity (survives all clearing levels)
     signing_key: Optional[str] = None  # HMAC-SHA256 shared secret for payload signing
     cycle_id: Optional[str] = None  # Multi-agent chain link (survives all clearing levels)
+    policy_version: Optional[str] = None  # Policy config identifier for version binding
+    jurisdiction: Optional[str] = None  # ISO 3166-1 jurisdiction code (e.g., "DE", "US-VA")
+    legal_basis: Optional[str] = None  # GDPR legal basis (e.g., "consent", "legitimate_interest")
+    purpose_class: Optional[str] = None  # CJT purpose classification (e.g., "clinical_decision_support")
 
     def __post_init__(self) -> None:
         if not self.endpoint:
@@ -62,6 +66,11 @@ class WitnessPayload:
     agent_id: Optional[str] = None  # operational metadata, survives all clearing levels
     cycle_id: Optional[str] = None  # multi-agent chain link, survives all clearing levels
     payload_signature: Optional[str] = None  # HMAC-SHA256 hex string
+    policy_version_hash: Optional[str] = None  # SHA-256[:12] of policy_version (survives all clearing levels)
+    jurisdiction: Optional[str] = None  # ISO 3166-1 code (survives all clearing levels)
+    legal_basis: Optional[str] = None  # GDPR legal basis (survives all clearing levels)
+    purpose_class: Optional[str] = None  # CJT purpose classification (survives all clearing levels)
+    authorization_id: Optional[str] = None  # CJT pre-inference authorization receipt (survives all clearing levels)
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to dict for JSON transmission."""
@@ -98,6 +107,16 @@ class WitnessPayload:
             d["cycle_id"] = self.cycle_id
         if self.payload_signature is not None:
             d["payload_signature"] = self.payload_signature
+        if self.policy_version_hash is not None:
+            d["policy_version_hash"] = self.policy_version_hash
+        if self.jurisdiction is not None:
+            d["jurisdiction"] = self.jurisdiction
+        if self.legal_basis is not None:
+            d["legal_basis"] = self.legal_basis
+        if self.purpose_class is not None:
+            d["purpose_class"] = self.purpose_class
+        if self.authorization_id is not None:
+            d["authorization_id"] = self.authorization_id
         return d
 
 

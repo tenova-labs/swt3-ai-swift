@@ -20,6 +20,11 @@ export interface WitnessConfig {
   agentId?: string;
   signingKey?: string;
   cycleId?: string;
+  policyVersion?: string;
+  jurisdiction?: string;
+  legalBasis?: string;
+  purposeClass?: string;
+  onFlush?: (payloads: WitnessPayload[], receipts: WitnessReceipt[]) => void;
 }
 
 export interface WitnessPayload {
@@ -52,6 +57,11 @@ export interface WitnessPayload {
   agent_id?: string;
   cycle_id?: string;
   payload_signature?: string;
+  policy_version_hash?: string;
+  jurisdiction?: string;
+  legal_basis?: string;
+  purpose_class?: string;
+  authorization_id?: string;
 }
 
 export interface WitnessReceipt {

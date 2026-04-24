@@ -39,12 +39,40 @@ logger = logging.getLogger("swt3_ai")
 F = TypeVar("F", bound=Callable[..., Any])
 
 
+class GatekeeperError(Exception):
+    """Raised when strict mode blocks an inference due to insufficient guardrails.
+
+    Attributes:
+        required: Number of guardrails required by policy.
+        active: Number of guardrails active at call time.
+        missing_names: Guardrail names required but not configured.
+    """
+
+    def __init__(
+        self,
+        required: int,
+        active: int,
+        missing_names: Optional[List[str]] = None,
+    ) -> None:
+        self.required = required
+        self.active = active
+        self.missing_names = missing_names or []
+        msg = f"Gatekeeper blocked: {active} guardrails active, {required} required"
+        if self.missing_names:
+            msg += f". Missing: {', '.join(self.missing_names)}"
+        super().__init__(msg)
+
+
 class Witness:
     """SWT3 AI Witness — cryptographic attestation for AI inference.
 
     The Witness observes AI inferences, extracts compliance factors,
-    applies clearing, and anchors evidence to the SWT3 ledger. It never
-    blocks the inference path — anchoring happens in a background thread.
+    applies clearing, and anchors evidence to the SWT3 ledger.
+
+    By default, anchoring happens in a background thread (non-blocking).
+    When ``strict=True`` (gatekeeper mode), the Witness checks guardrail
+    requirements BEFORE each inference and raises ``GatekeeperError`` if
+    the configured policy is not met. The inference never reaches the model.
     """
 
     def __init__(
@@ -67,6 +95,12 @@ class Witness:
         agent_id: Optional[str] = None,
         signing_key: Optional[str] = None,
         cycle_id: Optional[str] = None,
+        strict: bool = False,
+        policy_version: Optional[str] = None,
+        jurisdiction: Optional[str] = None,
+        legal_basis: Optional[str] = None,
+        purpose_class: Optional[str] = None,
+        on_flush: Optional[Callable] = None,
     ) -> None:
         # Validate handoff config
         if factor_handoff and factor_handoff != "file":
@@ -88,11 +122,16 @@ class Witness:
             agent_id=agent_id,
             signing_key=signing_key,
             cycle_id=cycle_id,
+            policy_version=policy_version,
+            jurisdiction=jurisdiction,
+            legal_basis=legal_basis,
+            purpose_class=purpose_class,
         )
-        self._buffer = WitnessBuffer(self._config)
+        self._buffer = WitnessBuffer(self._config, on_flush=on_flush)
         self._latency_threshold_ms = latency_threshold_ms
         self._guardrails_required = guardrails_required
         self._guardrail_names = guardrail_names or []
+        self._strict = strict
         if not tenant_id:
             raise ValueError("tenant_id is required (e.g., 'MY_ENCLAVE')")
         self._tenant_id = tenant_id
@@ -101,13 +140,19 @@ class Witness:
         """Wrap an AI client with transparent witnessing.
 
         Supported clients:
-            - openai.OpenAI
-            - anthropic.Anthropic (planned)
-            - Any object with a compatible interface
+            - openai.OpenAI / openai.AsyncOpenAI
+            - anthropic.Anthropic / anthropic.AsyncAnthropic
+            - boto3 BedrockRuntimeClient
+            - litellm module (returns namespace with .completion / .acompletion)
 
         Returns a proxy that behaves identically to the original client
         but silently witnesses every inference.
         """
+        # Module-level detection (litellm is passed as the module itself)
+        if hasattr(client, "__name__") and "litellm" in getattr(client, "__name__", ""):
+            from .adapters.litellm import wrap_litellm
+            return wrap_litellm(client, self)
+
         client_type = type(client).__module__
 
         if "openai" in client_type:
@@ -124,8 +169,51 @@ class Witness:
 
         raise TypeError(
             f"Unsupported client type: {type(client).__name__}. "
-            f"Supported: openai.OpenAI, anthropic.Anthropic, boto3 BedrockRuntimeClient."
+            f"Supported: openai.OpenAI, anthropic.Anthropic, "
+            f"boto3 BedrockRuntimeClient, litellm."
         )
+
+    def gate_check(self, messages: Any = None, model: str = "unknown") -> str:
+        """Pre-call guardrail gate (strict mode only).
+
+        Evaluates whether configured guardrail requirements are met BEFORE
+        the inference call reaches the AI model. If requirements are not met,
+        raises ``GatekeeperError`` and mints an AI-GRD.3 anchor recording
+        the rejection. The rejection is evidence — it is enqueued for flush
+        like any other anchor.
+
+        This method is SYNCHRONOUS — it evaluates local config only, no network.
+        """
+        required = self._guardrails_required
+        active = len(self._guardrail_names)
+        gate_passed = active >= required
+
+        # Mint AI-GRD.3 anchor regardless of outcome — rejection is evidence
+        from .clearing import extract_gatekeeper_payload
+        policy_hash = (
+            sha256_truncated(self._config.policy_version, 12)
+            if self._config.policy_version else None
+        )
+        payload = extract_gatekeeper_payload(
+            tenant_id=self._tenant_id,
+            required=required,
+            active=active,
+            gate_passed=gate_passed,
+            clearing_level=self._config.clearing_level,
+            agent_id=self._config.agent_id,
+            signing_key=self._config.signing_key,
+            cycle_id=self._config.cycle_id,
+            policy_version_hash=policy_hash,
+            jurisdiction=self._config.jurisdiction,
+            legal_basis=self._config.legal_basis,
+            purpose_class=self._config.purpose_class,
+        )
+        self._buffer.enqueue_many([payload])
+
+        if not gate_passed:
+            raise GatekeeperError(required, active)
+
+        return payload.anchor_fingerprint
 
     def inference(
         self,
@@ -368,6 +456,7 @@ class Witness:
         inference: InferenceRecord,
         *,
         procedures: Optional[List[str]] = None,
+        authorization_id: Optional[str] = None,
     ) -> None:
         """Record a witnessed inference. Extracts factors, applies clearing,
         and enqueues payloads for background flush.
@@ -385,6 +474,10 @@ class Witness:
             inference.guardrails_active = len(self._guardrail_names)
             inference.guardrails_required = self._guardrails_required
 
+        policy_hash = (
+            sha256_truncated(self._config.policy_version, 12)
+            if self._config.policy_version else None
+        )
         payloads = extract_payloads(
             record=inference,
             tenant_id=self._tenant_id,
@@ -395,6 +488,11 @@ class Witness:
             agent_id=self._config.agent_id,
             signing_key=self._config.signing_key,
             cycle_id=self._config.cycle_id,
+            policy_version_hash=policy_hash,
+            jurisdiction=self._config.jurisdiction,
+            legal_basis=self._config.legal_basis,
+            purpose_class=self._config.purpose_class,
+            authorization_id=authorization_id,
         )
 
         # Factor handoff: write full (uncleared) data to custody destination
@@ -433,9 +531,17 @@ class Witness:
         """Force-flush all buffered payloads. Returns receipts."""
         return self._buffer.flush()
 
+    async def flush_async(self) -> List[WitnessReceipt]:
+        """Async force-flush. Non-blocking from the caller's event loop."""
+        return await self._buffer.flush_async()
+
     def stop(self) -> List[WitnessReceipt]:
         """Stop the witness and flush remaining payloads."""
         return self._buffer.stop()
+
+    async def stop_async(self) -> List[WitnessReceipt]:
+        """Async stop. Non-blocking from the caller's event loop."""
+        return await self._buffer.stop_async()
 
     @property
     def pending(self) -> int:

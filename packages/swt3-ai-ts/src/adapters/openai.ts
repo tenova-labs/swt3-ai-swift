@@ -78,6 +78,12 @@ function createInterceptor(
     const systemPromptText = extractSystemPrompt(messages);
     const systemPromptHash = systemPromptText ? sha256Truncated(systemPromptText) : undefined;
 
+    // Gatekeeper pre-call check (strict mode only)
+    let authorizationId: string | undefined;
+    if ((witness as any).strict) {
+      authorizationId = (witness as any).gateCheck(messages, model);
+    }
+
     // Start latency timer
     const start = performance.now();
 
@@ -86,14 +92,14 @@ function createInterceptor(
 
     if (isStreaming) {
       // Streaming: wrap the async iterable to accumulate chunks
-      return handleStreaming(result, witness, model, promptHash, start, systemPromptHash);
+      return handleStreaming(result, witness, model, promptHash, start, systemPromptHash, authorizationId);
     }
 
     // Non-streaming: result is a Promise<ChatCompletion>
     return (result as Promise<unknown>).then((response: unknown) => {
       const elapsedMs = Math.round(performance.now() - start);
       const record = extractRecord(response, model, promptHash, elapsedMs, systemPromptHash);
-      witness.record(record);
+      witness.record(record, authorizationId);
       return response; // Return UNTOUCHED
     });
   };
@@ -117,6 +123,7 @@ async function* streamAccumulator(
   promptHash: string,
   startTime: number,
   systemPromptHash?: string,
+  authorizationId?: string,
 ): AsyncGenerator<unknown, void, undefined> {
   const textParts: string[] = [];
   let actualModel = model;
@@ -186,7 +193,7 @@ async function* streamAccumulator(
     guardrailNames: [],
   };
 
-  witness.record(record);
+  witness.record(record, authorizationId);
 }
 
 function handleStreaming(
@@ -196,17 +203,18 @@ function handleStreaming(
   promptHash: string,
   startTime: number,
   systemPromptHash?: string,
+  authorizationId?: string,
 ): unknown {
   // The stream result is a Promise that resolves to the stream object
   // (OpenAI SDK returns Promise<Stream<ChatCompletionChunk>>)
   if (streamResult && typeof (streamResult as Promise<unknown>).then === "function") {
     return (streamResult as Promise<unknown>).then((stream: unknown) => {
-      return wrapStream(stream, witness, model, promptHash, startTime, systemPromptHash);
+      return wrapStream(stream, witness, model, promptHash, startTime, systemPromptHash, authorizationId);
     });
   }
 
   // Direct stream object (shouldn't happen but handle gracefully)
-  return wrapStream(streamResult, witness, model, promptHash, startTime, systemPromptHash);
+  return wrapStream(streamResult, witness, model, promptHash, startTime, systemPromptHash, authorizationId);
 }
 
 function wrapStream(
@@ -216,6 +224,7 @@ function wrapStream(
   promptHash: string,
   startTime: number,
   systemPromptHash?: string,
+  authorizationId?: string,
 ): unknown {
   const s = stream as Record<string | symbol, unknown>;
 
@@ -227,6 +236,7 @@ function wrapStream(
     promptHash,
     startTime,
     systemPromptHash,
+    authorizationId,
   );
 
   // Return a proxy that preserves all stream methods but overrides the iterator

@@ -147,6 +147,18 @@
       "fingerprint_timestamp_ms": 1774800011000,
       "clearing_level": 1,
       "expected_fingerprint": "4811dc8af96a"
+    },
+    {
+      "id": 13,
+      "description": "AI-GRD.3 Gatekeeper Gate - blocked (0/2 active guardrails)",
+      "tenant_id": "ACME_DEFENSE",
+      "procedure_id": "AI-GRD.3",
+      "factor_a": 2,
+      "factor_b": 0,
+      "factor_c": 0,
+      "fingerprint_timestamp_ms": 1774800012000,
+      "clearing_level": 1,
+      "expected_fingerprint": "62251b4cf593"
     }
   ],
   "signing_vectors": [
@@ -186,7 +198,7 @@
     },
     {
       "input": "You are a helpful fraud detection assistant. Flag any transaction over $10,000.",
-      "expected_16": "27af40902672f666",
+      "expected_16": "479eaa1ee804f844",
       "description": "System prompt hash for instruction drift detection"
     }
   ]

@@ -22,7 +22,7 @@
 
 import { randomUUID } from "node:crypto";
 import { sha256Truncated } from "./fingerprint.js";
-import { extractPayloads } from "./clearing.js";
+import { extractPayloads, extractGatekeeperPayload } from "./clearing.js";
 import { WitnessBuffer } from "./buffer.js";
 import { writeHandoffFiles } from "./handoff.js";
 import { wrapOpenAI } from "./adapters/openai.js";
@@ -49,12 +49,39 @@ export interface WitnessOptions {
   agentId?: string;
   signingKey?: string;
   cycleId?: string;
+  strict?: boolean;
+  policyVersion?: string;
+  jurisdiction?: string;
+  legalBasis?: string;
+  purposeClass?: string;
+  onFlush?: (payloads: WitnessPayload[], receipts: WitnessReceipt[]) => void;
+}
+
+/**
+ * Raised when strict (gatekeeper) mode blocks an inference due to
+ * insufficient guardrails. The inference never reaches the AI model.
+ */
+export class GatekeeperError extends Error {
+  readonly required: number;
+  readonly active: number;
+  readonly missingNames: string[];
+
+  constructor(required: number, active: number, missingNames: string[] = []) {
+    const msg = `Gatekeeper blocked: ${active} guardrails active, ${required} required` +
+      (missingNames.length ? `. Missing: ${missingNames.join(", ")}` : "");
+    super(msg);
+    this.name = "GatekeeperError";
+    this.required = required;
+    this.active = active;
+    this.missingNames = missingNames;
+  }
 }
 
 export class Witness {
   private config: WitnessConfig;
   private buffer: WitnessBuffer;
   private handoffWarned = false;
+  private _strict: boolean;
 
   constructor(options: WitnessOptions) {
     if (!options.endpoint) throw new Error("endpoint is required");
@@ -86,8 +113,14 @@ export class Witness {
       agentId: options.agentId,
       signingKey: options.signingKey,
       cycleId: options.cycleId,
+      policyVersion: options.policyVersion,
+      jurisdiction: options.jurisdiction,
+      legalBasis: options.legalBasis,
+      purposeClass: options.purposeClass,
+      onFlush: options.onFlush,
     };
 
+    this._strict = options.strict ?? false;
     this.buffer = new WitnessBuffer(this.config);
   }
 
@@ -124,6 +157,55 @@ export class Witness {
     throw new TypeError(
       `Unsupported client: ${name || "unknown"}. Supported: OpenAI, Anthropic, BedrockRuntimeClient.`,
     );
+  }
+
+  /** Whether strict (gatekeeper) mode is enabled. Used by adapters. */
+  get strict(): boolean {
+    return this._strict;
+  }
+
+  /**
+   * Pre-call guardrail gate (strict mode only).
+   *
+   * Evaluates whether configured guardrail requirements are met BEFORE
+   * the inference call reaches the AI model. If requirements are not met,
+   * throws `GatekeeperError` and mints an AI-GRD.3 anchor recording
+   * the rejection. The rejection is evidence — it is enqueued for flush.
+   *
+   * This method is SYNCHRONOUS — evaluates local config only, no network.
+   *
+   * @throws {GatekeeperError} if guardrail requirements are not met
+   */
+  gateCheck(_messages?: unknown, _model?: string): string {
+    const required = this.config.guardrailsRequired;
+    const active = this.config.guardrailNames.length;
+    const gatePassed = active >= required;
+
+    // Mint AI-GRD.3 anchor regardless of outcome — rejection is evidence
+    const policyHash = this.config.policyVersion
+      ? sha256Truncated(this.config.policyVersion, 12)
+      : undefined;
+    const payload = extractGatekeeperPayload(
+      this.config.tenantId,
+      required,
+      active,
+      gatePassed,
+      this.config.clearingLevel,
+      this.config.agentId,
+      this.config.signingKey,
+      this.config.cycleId,
+      policyHash,
+      this.config.jurisdiction,
+      this.config.legalBasis,
+      this.config.purposeClass,
+    );
+    this.buffer.enqueueMany([payload]);
+
+    if (!gatePassed) {
+      throw new GatekeeperError(required, active);
+    }
+
+    return payload.anchor_fingerprint;
   }
 
   /**
@@ -292,7 +374,7 @@ export class Witness {
    * destination BEFORE clearing proceeds. If the handoff fails, the
    * payload is NOT transmitted.
    */
-  record(inference: InferenceRecord): void {
+  record(inference: InferenceRecord, authorizationId?: string): void {
     // Merge guardrail config
     if (this.config.guardrailNames.length > 0 && inference.guardrailNames.length === 0) {
       inference.guardrailNames = this.config.guardrailNames;
@@ -300,6 +382,9 @@ export class Witness {
       inference.guardrailsRequired = this.config.guardrailsRequired;
     }
 
+    const policyHash = this.config.policyVersion
+      ? sha256Truncated(this.config.policyVersion, 12)
+      : undefined;
     const payloads = extractPayloads(
       inference,
       this.config.tenantId,
@@ -310,6 +395,11 @@ export class Witness {
       this.config.agentId,
       this.config.signingKey,
       this.config.cycleId,
+      policyHash,
+      this.config.jurisdiction,
+      this.config.legalBasis,
+      this.config.purposeClass,
+      authorizationId,
     );
 
     // Factor handoff: write full (uncleared) data to custody destination

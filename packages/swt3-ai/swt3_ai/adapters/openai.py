@@ -23,6 +23,7 @@ The developer's code sees zero difference from using the raw OpenAI client.
 
 from __future__ import annotations
 
+import asyncio
 import time
 from typing import Any, Callable, Dict, Set, TYPE_CHECKING
 
@@ -80,6 +81,8 @@ class _OpenAIProxy:
         parent_path = path  # e.g., "chat.completions"
         if parent_path in INTERCEPTED_METHODS and name in INTERCEPTED_METHODS[parent_path]:
             # This IS the method to intercept — wrap it
+            if asyncio.iscoroutinefunction(real_attr):
+                return _make_async_interceptor(real_attr, witness, name, parent_path)
             return _make_interceptor(real_attr, witness, name, parent_path)
 
         # Check if this path could lead to interceptable methods
@@ -119,6 +122,11 @@ def _make_interceptor(
         system_prompt = _extract_system_prompt(messages)
         system_prompt_hash = sha256_truncated(system_prompt) if system_prompt else None
 
+        # ── Gatekeeper pre-call check (strict mode only) ──
+        authorization_id = None
+        if witness._strict:
+            authorization_id = witness.gate_check(messages, model)
+
         # ── Call the real method and measure latency ──
         start = time.monotonic()
         response = real_method(*args, **kwargs)
@@ -128,12 +136,50 @@ def _make_interceptor(
         record = _extract_record(response, model, prompt_hash, elapsed_ms, system_prompt_hash)
 
         # ── Hand to witness (non-blocking) ──
-        witness.record(record)
+        witness.record(record, authorization_id=authorization_id)
 
         # ── Return UNTOUCHED response to developer ──
         return response
 
     # Preserve the original method's signature for IDE support
+    interceptor.__name__ = method_name
+    interceptor.__qualname__ = f"{path}.{method_name}"
+    interceptor.__doc__ = getattr(real_method, "__doc__", None)
+
+    return interceptor
+
+
+def _make_async_interceptor(
+    real_method: Callable[..., Any],
+    witness: "Witness",
+    method_name: str,
+    path: str,
+) -> Callable[..., Any]:
+    """Create an async interceptor for AsyncOpenAI / AsyncAnthropic clients."""
+
+    async def interceptor(*args: Any, **kwargs: Any) -> Any:
+        messages = kwargs.get("messages", args[0] if args else [])
+        model = kwargs.get("model", "unknown")
+
+        prompt_text = _extract_prompt_text(messages)
+        prompt_hash = sha256_truncated(prompt_text)
+
+        system_prompt = _extract_system_prompt(messages)
+        system_prompt_hash = sha256_truncated(system_prompt) if system_prompt else None
+
+        authorization_id = None
+        if witness._strict:
+            authorization_id = witness.gate_check(messages, model)
+
+        start = time.monotonic()
+        response = await real_method(*args, **kwargs)
+        elapsed_ms = int((time.monotonic() - start) * 1000)
+
+        record = _extract_record(response, model, prompt_hash, elapsed_ms, system_prompt_hash)
+        witness.record(record, authorization_id=authorization_id)
+
+        return response
+
     interceptor.__name__ = method_name
     interceptor.__qualname__ = f"{path}.{method_name}"
     interceptor.__doc__ = getattr(real_method, "__doc__", None)

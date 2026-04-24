@@ -86,20 +86,26 @@ function createInterceptor(
     const systemPromptText = extractSystemOnly(system);
     const systemPromptHash = systemPromptText ? sha256Truncated(systemPromptText) : undefined;
 
+    // Gatekeeper pre-call check (strict mode only)
+    let authorizationId: string | undefined;
+    if ((witness as any).strict) {
+      authorizationId = (witness as any).gateCheck(messages, model);
+    }
+
     const start = performance.now();
 
     const result = realMethod.call(this, ...args);
 
     if (isStreaming) {
       // Streaming via create({ stream: true }) — returns a Stream
-      return handleStreaming(result, witness, model, promptHash, start, systemPromptHash);
+      return handleStreaming(result, witness, model, promptHash, start, systemPromptHash, authorizationId);
     }
 
     // Non-streaming — result is Promise<Message>
     return (result as Promise<unknown>).then((response: unknown) => {
       const elapsedMs = Math.round(performance.now() - start);
       const record = extractRecord(response, model, promptHash, elapsedMs, systemPromptHash);
-      witness.record(record);
+      witness.record(record, authorizationId);
       return response;
     });
   };
@@ -123,10 +129,16 @@ function createStreamInterceptor(
     const systemPromptText = extractSystemOnly(system);
     const systemPromptHash = systemPromptText ? sha256Truncated(systemPromptText) : undefined;
 
+    // Gatekeeper pre-call check (strict mode only)
+    let authorizationId: string | undefined;
+    if ((witness as any).strict) {
+      authorizationId = (witness as any).gateCheck(messages, model);
+    }
+
     const start = performance.now();
 
     const result = realMethod.call(this, ...args);
-    return handleStreaming(result, witness, model, promptHash, start, systemPromptHash);
+    return handleStreaming(result, witness, model, promptHash, start, systemPromptHash, authorizationId);
   };
 }
 
@@ -139,6 +151,7 @@ async function* streamAccumulator(
   promptHash: string,
   startTime: number,
   systemPromptHash?: string,
+  authorizationId?: string,
 ): AsyncGenerator<unknown, void, undefined> {
   const textParts: string[] = [];
   let actualModel = model;
@@ -197,7 +210,7 @@ async function* streamAccumulator(
     guardrailNames: [],
   };
 
-  witness.record(record);
+  witness.record(record, authorizationId);
 }
 
 function handleStreaming(
@@ -207,15 +220,16 @@ function handleStreaming(
   promptHash: string,
   startTime: number,
   systemPromptHash?: string,
+  authorizationId?: string,
 ): unknown {
   // Anthropic's stream() returns a MessageStream directly (not a Promise)
   // But create({ stream: true }) may return a Promise<Stream>
   if (streamResult && typeof (streamResult as Promise<unknown>).then === "function") {
     return (streamResult as Promise<unknown>).then((stream: unknown) =>
-      wrapAnthropicStream(stream, witness, model, promptHash, startTime, systemPromptHash),
+      wrapAnthropicStream(stream, witness, model, promptHash, startTime, systemPromptHash, authorizationId),
     );
   }
-  return wrapAnthropicStream(streamResult, witness, model, promptHash, startTime, systemPromptHash);
+  return wrapAnthropicStream(streamResult, witness, model, promptHash, startTime, systemPromptHash, authorizationId);
 }
 
 function wrapAnthropicStream(
@@ -225,6 +239,7 @@ function wrapAnthropicStream(
   promptHash: string,
   startTime: number,
   systemPromptHash?: string,
+  authorizationId?: string,
 ): unknown {
   const s = stream as Record<string | symbol, unknown>;
 
@@ -235,6 +250,7 @@ function wrapAnthropicStream(
     promptHash,
     startTime,
     systemPromptHash,
+    authorizationId,
   );
 
   return new Proxy(s, {
