@@ -156,21 +156,21 @@ async function main() {
   console.log();
 
   // EU AI Act countdown
-  const deadline = new Date("2026-08-02T00:00:00Z");
+  const deadline = new Date("2027-12-02T00:00:00Z");
   const daysLeft = Math.ceil((deadline.getTime() - Date.now()) / 86400000);
   if (daysLeft > 0) {
     const dc = daysLeft < 60 ? RD : daysLeft < 120 ? A : C;
-    console.log(`  ${dc}EU AI Act enforcement in ${daysLeft} days (Aug 2, 2026)${R}`);
+    console.log(`  ${dc}EU AI Act high-risk enforcement in ${daysLeft} days (Dec 2, 2027)${R}`);
     console.log();
   }
 
   console.log(`  ${D}Preview a live auditor view (no account required):${R}`);
   console.log(`  ${C}https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public${R}`);
   console.log();
-  console.log(`  ${D}Full conformity requires all 12 procedures. Connect to close the gap:${R}`);
+  console.log(`  ${D}Full conformity requires all 40 AI procedures. Connect to close the gap:${R}`);
   console.log(`  ${C}https://sovereign.tenova.io/signup?ref=sdk_demo${R}`);
   console.log();
-  console.log(`  ${D}SDK docs:     ${C}https://sovereign.tenova.io/docs/${R}`);
+  console.log(`  ${D}SDK docs:     ${C}https://sovereign.tenova.io/docs${R}`);
   console.log(`  ${D}Book a pilot: ${C}https://calendly.com/tenova-axiom/30min${R}`);
   console.log(`  ${D}GitHub:       ${C}https://github.com/tenova-labs/swt3-ai${R}`);
   console.log();
@@ -199,8 +199,8 @@ function generateHtmlReport(
   ).join("\n");
   const anchorText = anchorList.join("\n");
   const countdown = daysLeft > 0
-    ? `EU AI Act enforcement in ${daysLeft} days (August 2, 2026)`
-    : "EU AI Act enforcement has begun.";
+    ? `EU AI Act high-risk enforcement in ${daysLeft} days (December 2, 2027)`
+    : "EU AI Act high-risk enforcement has begun.";
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -259,7 +259,7 @@ ${uncoveredRows}
 <h2>Anchor Evidence (Demo)</h2>
 <pre>${anchorText}</pre>
 
-<p>Full conformity requires all 12 procedures across inference, model governance, guardrails, and explainability domains.</p>
+<p>Full conformity requires all 40 AI procedures across inference, model governance, guardrails, RAG, skills, and explainability domains.</p>
 <a class="cta-secondary" href="https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public">See Live Auditor View \u2192</a>
 <a class="cta" href="https://sovereign.tenova.io/signup?ref=sdk_demo">Close the Gap \u2014 Free Account</a>
 <p style="margin-top:.75rem;font-size:.8rem;color:#9CA3AF">Preview a real tenant's EU AI Act posture (no account required) \u2014 then create your own.</p>
@@ -274,4 +274,101 @@ ${uncoveredRows}
 </html>`;
 }
 
-main();
+export async function runMeshTest() {
+  const {
+    TrustRegistry, verifyCredential, signCredential,
+    TRUST_LEVEL_NAMES, TRUST_DENIED,
+  } = await import("./trust.js");
+  const { createHash } = await import("node:crypto");
+
+  console.log();
+  console.log(`${B}SWT3 Trust Mesh Simulation${R}`);
+  console.log(`${D}Two agents. One handshake. Zero network calls.${R}`);
+  console.log(`${D}${"─".repeat(56)}${R}`);
+  console.log();
+
+  // ── Agent Setup ──
+  console.log(`  ${C}Agents:${R}`);
+  console.log(`    ${G}Alice${R}  tenant=EU_REGULATED  profile=eu-ai-act-high-risk  ${D}(signed, guardrails, CL2)${R}`);
+  console.log(`    ${A}Bob${R}    tenant=DEV_SANDBOX   profile=minimal              ${D}(unsigned, no guardrails, CL0)${R}`);
+  console.log();
+
+  const now = Date.now();
+  const fp = (s: string) => createHash("sha256").update(s).digest("hex").slice(0, 12);
+
+  // Alice: strict, signed, high clearing
+  const aliceRegistry = new TrustRegistry();
+  aliceRegistry.setMinTrustLevel(2);
+  aliceRegistry.setRequireSignature(true);
+  aliceRegistry.trustTenant("DEV_SANDBOX");
+
+  const aliceCredential = {
+    agentId: "alice-agent", tenantId: "EU_REGULATED",
+    anchorFingerprint: fp("alice-anchor-" + now),
+    anchorTimestampMs: now,
+    isSigned: true, procedures: ["AI-INF.1", "AI-GRD.1", "AI-FAIR.1"],
+    clearingLevel: 2, hasGuardrails: true, hasHardwareAttestation: false,
+  };
+
+  // Bob: permissive, unsigned, minimal
+  const bobRegistry = new TrustRegistry();
+  bobRegistry.setMinTrustLevel(0);
+  bobRegistry.trustTenant("EU_REGULATED");
+
+  const bobCredential = {
+    agentId: "bob-agent", tenantId: "DEV_SANDBOX",
+    anchorFingerprint: fp("bob-anchor-" + now),
+    anchorTimestampMs: now,
+    isSigned: false, procedures: [] as string[],
+    clearingLevel: 0, hasGuardrails: false, hasHardwareAttestation: false,
+  };
+
+  // ── Step 1: Alice presents ──
+  console.log(`  ${C}Step 1: Alice presents credential to Bob${R}`);
+  console.log(`    Procedures: ${G}${aliceCredential.procedures.join(", ")}${R}`);
+  console.log(`    Signed: ${G}yes${R} | Guardrails: ${G}yes${R} | Hardware: ${A}no${R} | Clearing: ${G}${aliceCredential.clearingLevel}${R}`);
+  console.log();
+
+  // ── Step 2: Bob verifies Alice ──
+  console.log(`  ${C}Step 2: Bob verifies Alice's credential${R}`);
+  const bobResult = verifyCredential(aliceCredential, bobRegistry, "DEV_SANDBOX");
+  console.log(`    Checks: ${bobResult.checksPerformed} performed, ${bobResult.checksPassed} passed`);
+  console.log(`    Trust level: ${bobResult.trustLevel} (${TRUST_LEVEL_NAMES[bobResult.trustLevel] ?? "unknown"})`);
+  if (bobResult.granted) {
+    console.log(`    Result: ${G}GRANTED${R}`);
+  } else {
+    console.log(`    Denial reason: ${RD}${bobResult.denialReason}${R}`);
+    console.log(`    Result: ${RD}DENIED${R}`);
+  }
+  console.log();
+
+  // ── Step 3: Bob presents ──
+  console.log(`  ${C}Step 3: Bob presents credential to Alice${R}`);
+  console.log(`    Procedures: ${D}(none)${R}`);
+  console.log(`    Signed: ${RD}no${R} | Guardrails: ${RD}no${R} | Hardware: ${A}no${R} | Clearing: ${A}${bobCredential.clearingLevel}${R}`);
+  console.log();
+
+  // ── Step 4: Alice verifies Bob ──
+  console.log(`  ${C}Step 4: Alice verifies Bob's credential${R}`);
+  const aliceResult = verifyCredential(bobCredential, aliceRegistry, "EU_REGULATED");
+  console.log(`    Checks: ${aliceResult.checksPerformed} performed, ${aliceResult.checksPassed} passed`);
+  console.log(`    Trust level: ${aliceResult.trustLevel} (${TRUST_LEVEL_NAMES[aliceResult.trustLevel] ?? "unknown"})`);
+  if (aliceResult.granted) {
+    console.log(`    Result: ${G}GRANTED${R}`);
+  } else {
+    console.log(`    Denial reason: ${RD}${aliceResult.denialReason}${R}`);
+    console.log(`    Result: ${RD}DENIED${R}`);
+  }
+  console.log();
+
+  // ── Summary ──
+  console.log(`  ${B}Summary:${R} Asymmetric trust -- Alice is ${G}accepted${R}, Bob is ${RD}rejected${R}.`);
+  console.log(`  ${D}This is how .swt3.yaml policy controls who your agent communicates with.${R}`);
+  console.log();
+}
+
+if (process.argv.includes("--mesh-test")) {
+  runMeshTest();
+} else {
+  main();
+}

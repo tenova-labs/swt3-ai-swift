@@ -58,8 +58,8 @@ def _generate_html_report(
     anchors: list[str],
     days_left: int,
 ) -> str:
-    from datetime import datetime
-    ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    from datetime import datetime, timezone
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     covered_rows = "".join(
         f'<tr><td style="font-family:monospace">{p}</td><td>{a}</td><td>{d}</td>'
         f'<td style="color:#4ADE80;font-weight:700">[{v}]</td></tr>'
@@ -71,7 +71,7 @@ def _generate_html_report(
         for p, a, d in uncovered
     )
     anchor_text = "\n".join(anchors)
-    countdown = f"EU AI Act enforcement in {days_left} days (August 2, 2026)" if days_left > 0 else "EU AI Act enforcement has begun."
+    countdown = f"EU AI Act high-risk enforcement in {days_left} days (December 2, 2027)" if days_left > 0 else "EU AI Act high-risk enforcement has begun."
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -105,10 +105,10 @@ pre{{background:#111;padding:1rem;border-radius:8px;overflow-x:auto;font-size:.8
 <body>
 <div class="c">
 <h1>SWT3 AI Witness — Coverage Report</h1>
-<p class="meta">Generated {ts} UTC | SWT3 Protocol v0.3.3 | Demo Environment</p>
+<p class="meta">Generated {ts} UTC | SWT3 Protocol v0.4.2 | Demo Environment</p>
 
-<div class="score"><span class="pass">12</span><span class="total"> / 12 obligations mapped</span></div>
-<p style="color:#9CA3AF;font-size:.95rem;margin-top:-.5rem">3 demonstrated locally · 9 need production data</p>
+<div class="score"><span class="pass">14</span><span class="total"> / 14 obligations mapped</span></div>
+<p style="color:#9CA3AF;font-size:.95rem;margin-top:-.5rem">5 demonstrated locally · 9 need production data</p>
 
 <h2>Demonstrated Locally</h2>
 <table>
@@ -129,7 +129,7 @@ pre{{background:#111;padding:1rem;border-radius:8px;overflow-x:auto;font-size:.8
 <h2>Anchor Evidence (Demo)</h2>
 <pre>{anchor_text}</pre>
 
-<p>Full conformity requires all 12 procedures across inference, model governance, guardrails, and explainability domains.</p>
+<p>Full conformity requires all 40 AI procedures across inference, model governance, guardrails, RAG, skills, and explainability domains.</p>
 <a class="cta-secondary" href="https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public">See Live Auditor View →</a>
 <a class="cta" href="https://sovereign.tenova.io/signup?ref=sdk_demo">Close the Gap — Free Account</a>
 <p style="margin-top:.75rem;font-size:.8rem;color:#9CA3AF">Preview a real tenant's EU AI Act posture (no account required) — then create your own.</p>
@@ -227,18 +227,64 @@ def main() -> None:
     print(f"   Match:      {GREEN}✓ Anchor is independently verifiable{RESET}")
     print()
 
+    # ── RAG Context Witnessing ──
+    print(f"{CYAN}7. RAG Context Witnessing (AI-RAG.1 + AI-RAG.2)...{RESET}")
+    print()
+
+    rag_chunks = [
+        ("EU AI Act Article 12 requires providers to build in automatic logging...", 0.94),
+        ("High-risk systems must maintain logs of each period of use...", 0.87),
+        ("Article 9 mandates proportionate risk management measures...", 0.72),
+    ]
+
+    rag_chunk_hashes = []
+    for text, score in rag_chunks:
+        h = _sha256(text, 16)
+        rag_chunk_hashes.append(h)
+        bar = f"{GREEN}{'█' * int(score * 10)}{DIM}{'░' * (10 - int(score * 10))}{RESET}"
+        print(f"   {bar} {WHITE}{score:.2f}{RESET}  {DIM}{text[:45]}...{RESET}")
+    print()
+
+    # AI-RAG.1: Context Retrieval Provenance
+    rag_fa = len(rag_chunks)
+    rag_fb = 1  # corpus identified
+    rag_fc = 0
+    rag_fp1 = _mint_fingerprint(tenant, "AI-RAG.1", rag_fa, rag_fb, rag_fc, ts_ms)
+    rag_anchor1 = _mint_anchor(tenant, provider, "AI-RAG.1", "PASS", epoch, rag_fp1)
+    anchors_list.append(rag_anchor1)
+    print(f"   {GREEN}■ PASS{RESET}  {WHITE}AI-RAG.1{RESET}  {DIM}3 chunks from 'eu-ai-act-corpus' witnessed{RESET}")
+    print(f"     {DIM}{rag_anchor1}{RESET}")
+    print()
+
+    # AI-RAG.2: Context Relevance
+    scores = [s for _, s in rag_chunks]
+    avg_sim = sum(scores) / len(scores)
+    threshold = 0.75
+    below = sum(1 for s in scores if s < threshold)
+    rag_fa2 = round(threshold * 1000)
+    rag_fb2 = round(avg_sim * 1000)
+    rag_fc2 = below
+    rag_fp2 = _mint_fingerprint(tenant, "AI-RAG.2", rag_fa2, rag_fb2, rag_fc2, ts_ms)
+    rag_anchor2 = _mint_anchor(tenant, provider, "AI-RAG.2", "PASS", epoch, rag_fp2)
+    anchors_list.append(rag_anchor2)
+    print(f"   {GREEN}■ PASS{RESET}  {WHITE}AI-RAG.2{RESET}  {DIM}avg similarity {avg_sim:.2f}, {below} below {threshold}{RESET}")
+    print(f"     {DIM}{rag_anchor2}{RESET}")
+    print()
+
     # ── Regulatory Translation Layer ──
     print()
-    print(f"  {GREEN}[SWT3] 3 Evidence Anchors Verified.{RESET}")
+    print(f"  {GREEN}[SWT3] 5 Evidence Anchors Verified.{RESET}")
     print(f"  {DIM}{'─' * 50}{RESET}")
     print(f"  {BOLD}REGULATORY COVERAGE SUMMARY (NIST AI RMF / EU AI ACT){RESET}")
     print()
 
     # Demonstrated obligations — mapped to EU AI Act articles
     coverage_map = [
-        ("AI-INF.1", "Art. 12(1)", "Automatic Logging of Use Periods", "DEMONSTRATED"),
-        ("AI-MDL.1", "Art. 9(4a)", "Model Risk Identification",        "DEMONSTRATED"),
-        ("AI-GRD.1", "Art. 9(2a)", "Risk Mitigation Measures",         "DEMONSTRATED"),
+        ("AI-INF.1",  "Art. 12(1)",    "Automatic Logging of Use Periods",  "DEMONSTRATED"),
+        ("AI-MDL.1",  "Art. 9(4a)",    "Model Risk Identification",         "DEMONSTRATED"),
+        ("AI-GRD.1",  "Art. 9(2a)",    "Risk Mitigation Measures",          "DEMONSTRATED"),
+        ("AI-RAG.1",  "Art. 12(2)(a)", "Reference Database Logging",        "DEMONSTRATED"),
+        ("AI-RAG.2",  "Art. 10(2)",    "Data Quality & Relevance",          "DEMONSTRATED"),
     ]
     for proc, article, desc, verdict in coverage_map:
         print(f"  {GREEN}✓{RESET} {WHITE}{proc}{RESET} → {article}: {desc} {GREEN}[{verdict}]{RESET}")
@@ -266,16 +312,16 @@ def main() -> None:
 
     # EU AI Act countdown
     from datetime import date as _date
-    _days_left = (_date(2026, 8, 2) - _date.today()).days
+    _days_left = (_date(2027, 12, 2) - _date.today()).days
     if _days_left > 0:
         _color = RED if _days_left < 60 else AMBER if _days_left < 120 else CYAN
-        print(f"  {_color}EU AI Act enforcement in {_days_left} days (Aug 2, 2026){RESET}")
+        print(f"  {_color}EU AI Act high-risk enforcement in {_days_left} days (Dec 2, 2027){RESET}")
         print()
 
     print(f"  {DIM}Preview a live auditor view (no account required):{RESET}")
     print(f"  {CYAN}https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public{RESET}")
     print()
-    print(f"  {DIM}Full conformity requires all 12 procedures. Connect to close the gap:{RESET}")
+    print(f"  {DIM}Full conformity requires all 40 AI procedures. Connect to close the gap:{RESET}")
     print(f"  {CYAN}https://sovereign.tenova.io/signup?ref=sdk_demo{RESET}")
     print()
     print(f"  {DIM}SDK docs:     {CYAN}https://sovereign.tenova.io/docs/{RESET}")
@@ -294,5 +340,102 @@ def main() -> None:
         pass  # best-effort — never fail the demo
 
 
+def run_mesh_test() -> None:
+    from .trust import (
+        TrustRegistry, TrustCredential, verify_credential,
+        TRUST_LEVEL_NAMES, TRUST_DENIED,
+    )
+    import hashlib
+
+    print()
+    print(f"{BOLD}SWT3 Trust Mesh Simulation{RESET}")
+    print(f"{DIM}Two agents. One handshake. Zero network calls.{RESET}")
+    print(f"{DIM}{'─' * 56}{RESET}")
+    print()
+
+    # ── Agent Setup ──
+    print(f"  {CYAN}Agents:{RESET}")
+    print(f"    {GREEN}Alice{RESET}  tenant=EU_REGULATED  profile=eu-ai-act-high-risk  {DIM}(signed, guardrails, CL2){RESET}")
+    print(f"    {AMBER}Bob{RESET}    tenant=DEV_SANDBOX   profile=minimal              {DIM}(unsigned, no guardrails, CL0){RESET}")
+    print()
+
+    now_ms = int(time.time() * 1000)
+    def fp(s: str) -> str:
+        return hashlib.sha256(s.encode("utf-8")).hexdigest()[:12]
+
+    # Alice: strict, signed, high clearing
+    alice_registry = TrustRegistry()
+    alice_registry.set_min_trust_level(2)
+    alice_registry.set_require_signature(True)
+    alice_registry.trust_tenant("DEV_SANDBOX")
+
+    alice_cred = TrustCredential(
+        agent_id="alice-agent", tenant_id="EU_REGULATED",
+        anchor_fingerprint=fp(f"alice-anchor-{now_ms}"),
+        anchor_timestamp_ms=now_ms,
+        is_signed=True, procedures=["AI-INF.1", "AI-GRD.1", "AI-FAIR.1"],
+        clearing_level=2, has_guardrails=True, has_hardware_attestation=False,
+    )
+
+    # Bob: permissive, unsigned, minimal
+    bob_registry = TrustRegistry()
+    bob_registry.set_min_trust_level(0)
+    bob_registry.trust_tenant("EU_REGULATED")
+
+    bob_cred = TrustCredential(
+        agent_id="bob-agent", tenant_id="DEV_SANDBOX",
+        anchor_fingerprint=fp(f"bob-anchor-{now_ms}"),
+        anchor_timestamp_ms=now_ms,
+        is_signed=False, procedures=[],
+        clearing_level=0, has_guardrails=False, has_hardware_attestation=False,
+    )
+
+    # ── Step 1: Alice presents ──
+    print(f"  {CYAN}Step 1: Alice presents credential to Bob{RESET}")
+    print(f"    Procedures: {GREEN}{', '.join(alice_cred.procedures)}{RESET}")
+    print(f"    Signed: {GREEN}yes{RESET} | Guardrails: {GREEN}yes{RESET} | Hardware: {AMBER}no{RESET} | Clearing: {GREEN}{alice_cred.clearing_level}{RESET}")
+    print()
+
+    # ── Step 2: Bob verifies Alice ──
+    print(f"  {CYAN}Step 2: Bob verifies Alice's credential{RESET}")
+    bob_result = verify_credential(alice_cred, bob_registry, "DEV_SANDBOX")
+    print(f"    Checks: {bob_result.checks_performed} performed, {bob_result.checks_passed} passed")
+    level_name = TRUST_LEVEL_NAMES.get(bob_result.trust_level, "unknown")
+    print(f"    Trust level: {bob_result.trust_level} ({level_name})")
+    if bob_result.granted:
+        print(f"    Result: {GREEN}GRANTED{RESET}")
+    else:
+        print(f"    Denial reason: {RED}{bob_result.denial_reason}{RESET}")
+        print(f"    Result: {RED}DENIED{RESET}")
+    print()
+
+    # ── Step 3: Bob presents ──
+    print(f"  {CYAN}Step 3: Bob presents credential to Alice{RESET}")
+    print(f"    Procedures: {DIM}(none){RESET}")
+    print(f"    Signed: {RED}no{RESET} | Guardrails: {RED}no{RESET} | Hardware: {AMBER}no{RESET} | Clearing: {AMBER}{bob_cred.clearing_level}{RESET}")
+    print()
+
+    # ── Step 4: Alice verifies Bob ──
+    print(f"  {CYAN}Step 4: Alice verifies Bob's credential{RESET}")
+    alice_result = verify_credential(bob_cred, alice_registry, "EU_REGULATED")
+    level_name = TRUST_LEVEL_NAMES.get(alice_result.trust_level, "unknown")
+    print(f"    Checks: {alice_result.checks_performed} performed, {alice_result.checks_passed} passed")
+    print(f"    Trust level: {alice_result.trust_level} ({level_name})")
+    if alice_result.granted:
+        print(f"    Result: {GREEN}GRANTED{RESET}")
+    else:
+        print(f"    Denial reason: {RED}{alice_result.denial_reason}{RESET}")
+        print(f"    Result: {RED}DENIED{RESET}")
+    print()
+
+    # ── Summary ──
+    print(f"  {BOLD}Summary:{RESET} Asymmetric trust -- Alice is {GREEN}accepted{RESET}, Bob is {RED}rejected{RESET}.")
+    print(f"  {DIM}This is how .swt3.yaml policy controls who your agent communicates with.{RESET}")
+    print()
+
+
 if __name__ == "__main__":
-    main()
+    if "--mesh-test" in sys.argv:
+        run_mesh_test()
+    else:
+        main()

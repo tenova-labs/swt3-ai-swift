@@ -1,6 +1,6 @@
 {
   "name": "@tenova/swt3-ai",
-  "version": "0.3.6",
+  "version": "0.5.2",
   "description": "SWT3 AI Witness SDK: cryptographic attestation for AI inference",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,10 +16,12 @@
     }
   },
   "bin": {
-    "swt3-demo": "./dist/demo.js"
+    "swt3-demo": "./dist/demo.js",
+    "swt3": "./dist/cli.js"
   },
   "files": [
     "dist",
+    "templates",
     "README.md"
   ],
   "scripts": {
@@ -37,7 +39,39 @@
     "eu-ai-act",
     "nist-ai-rmf",
     "openai",
-    "anthropic"
+    "anthropic",
+    "ai-governance",
+    "ai-audit",
+    "ai-accountability",
+    "ai-observability",
+    "llm-monitoring",
+    "llm-observability",
+    "model-risk-management",
+    "compliance-as-code",
+    "responsible-ai",
+    "ai-safety",
+    "ai-trust",
+    "mlops",
+    "nist-800-53",
+    "cmmc",
+    "fedramp",
+    "gdpr",
+    "sr-11-7",
+    "cryptographic-attestation",
+    "audit-trail",
+    "agentic-ai",
+    "multi-agent",
+    "ai-agent",
+    "guardrails",
+    "ai-risk",
+    "model-governance",
+    "inference-logging",
+    "ai-compliance-automation",
+    "ollama",
+    "vllm",
+    "bedrock",
+    "vercel-ai",
+    "nvidia-dynamo"
   ],
   "author": "TeNova <engineering@tenovaai.com>",
   "license": "Apache-2.0",
@@ -50,8 +84,8 @@
     "url": "https://github.com/tenova-labs/swt3-ai/issues"
   },
   "peerDependencies": {
-    "openai": ">=4.0.0",
-    "@opentelemetry/api": ">=1.0.0"
+    "@opentelemetry/api": ">=1.0.0",
+    "openai": ">=4.0.0"
   },
   "peerDependenciesMeta": {
     "openai": {
@@ -65,6 +99,9 @@
     "openai": "^4.70.0",
     "tsx": "^4.0.0",
     "typescript": "^5.5.0",
-    "vitest": "^4.1.2"
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "yaml": "^2.8.3"
   }
 }

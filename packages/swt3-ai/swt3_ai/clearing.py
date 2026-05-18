@@ -40,6 +40,16 @@ AI_PROCEDURES = [
     "AI-GRD.3",  # Gatekeeper Gate (pre-call enforcement)
     "AI-EXPL.2", # Confidence Scoring (when available)
     "AI-REV.1",  # Anchor Revocation
+    "AI-SEC.1",  # Adversarial Detection
+    "AI-SEC.2",  # Input Validation
+    "AI-RAG.1",  # Context Retrieval Provenance
+    "AI-RAG.2",  # Context Relevance
+    "AI-MDL.5",  # Weight File Integrity
+    "AI-MDL.6",  # Adapter Stack Attestation
+    "AI-MDL.7",  # Quantization Attestation
+    "AI-SKILL.1",  # Skill Manifest Attestation
+    "AI-SKILL.2",  # Memory Context Binding
+    "AI-SKILL.3",  # Reward Model Binding
 ]
 
 # Revocation reason code mapping
@@ -72,6 +82,8 @@ def extract_payloads(
     procedures: Optional[List[str]] = None,
     agent_id: Optional[str] = None,
     signing_key: Optional[str] = None,
+    signing_key_id: Optional[str] = None,
+    signing_key_version: Optional[int] = None,
     cycle_id: Optional[str] = None,
     policy_version_hash: Optional[str] = None,
     jurisdiction: Optional[str] = None,
@@ -134,7 +146,9 @@ def extract_payloads(
 
             _apply_operational_metadata(
                 payload, agent_id=agent_id, cycle_id=cycle_id,
-                signing_key=signing_key, policy_version_hash=policy_version_hash,
+                signing_key=signing_key, signing_key_id=signing_key_id,
+                signing_key_version=signing_key_version,
+                policy_version_hash=policy_version_hash,
                 jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
                 authorization_id=authorization_id,
             )
@@ -189,7 +203,9 @@ def extract_payloads(
 
             _apply_operational_metadata(
                 payload, agent_id=agent_id, cycle_id=cycle_id,
-                signing_key=signing_key, policy_version_hash=policy_version_hash,
+                signing_key=signing_key, signing_key_id=signing_key_id,
+                signing_key_version=signing_key_version,
+                policy_version_hash=policy_version_hash,
                 jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
                 authorization_id=authorization_id,
             )
@@ -293,7 +309,9 @@ def extract_payloads(
         # Operational metadata survives all clearing levels
         _apply_operational_metadata(
             payload, agent_id=agent_id, cycle_id=cycle_id,
-            signing_key=signing_key, policy_version_hash=policy_version_hash,
+            signing_key=signing_key, signing_key_id=signing_key_id,
+            signing_key_version=signing_key_version,
+            policy_version_hash=policy_version_hash,
             jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
             authorization_id=authorization_id,
         )
@@ -309,6 +327,8 @@ def _apply_operational_metadata(
     agent_id: Optional[str] = None,
     cycle_id: Optional[str] = None,
     signing_key: Optional[str] = None,
+    signing_key_id: Optional[str] = None,
+    signing_key_version: Optional[int] = None,
     policy_version_hash: Optional[str] = None,
     jurisdiction: Optional[str] = None,
     legal_basis: Optional[str] = None,
@@ -333,6 +353,10 @@ def _apply_operational_metadata(
     if signing_key:
         from .signing import sign_payload
         payload.payload_signature = sign_payload(signing_key, payload.anchor_fingerprint, agent_id)
+        if signing_key_id:
+            payload.signing_key_id = signing_key_id
+        if signing_key_version is not None:
+            payload.signing_key_version = signing_key_version
 
 
 def _apply_clearing(
@@ -393,6 +417,8 @@ def extract_gatekeeper_payload(
     clearing_level: int,
     agent_id: Optional[str] = None,
     signing_key: Optional[str] = None,
+    signing_key_id: Optional[str] = None,
+    signing_key_version: Optional[int] = None,
     cycle_id: Optional[str] = None,
     policy_version_hash: Optional[str] = None,
     jurisdiction: Optional[str] = None,
@@ -425,7 +451,9 @@ def extract_gatekeeper_payload(
 
     _apply_operational_metadata(
         payload, agent_id=agent_id, cycle_id=cycle_id,
-        signing_key=signing_key, policy_version_hash=policy_version_hash,
+        signing_key=signing_key, signing_key_id=signing_key_id,
+        signing_key_version=signing_key_version,
+        policy_version_hash=policy_version_hash,
         jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
     )
 
@@ -439,6 +467,8 @@ def extract_revocation_payload(
     clearing_level: int,
     agent_id: Optional[str] = None,
     signing_key: Optional[str] = None,
+    signing_key_id: Optional[str] = None,
+    signing_key_version: Optional[int] = None,
     cycle_id: Optional[str] = None,
     policy_version_hash: Optional[str] = None,
     jurisdiction: Optional[str] = None,
@@ -477,7 +507,9 @@ def extract_revocation_payload(
 
     _apply_operational_metadata(
         payload, agent_id=agent_id, cycle_id=cycle_id,
-        signing_key=signing_key, policy_version_hash=policy_version_hash,
+        signing_key=signing_key, signing_key_id=signing_key_id,
+        signing_key_version=signing_key_version,
+        policy_version_hash=policy_version_hash,
         jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
     )
 

@@ -46,9 +46,9 @@ INTERCEPTED_METHODS: Dict[str, Set[str]] = {
 # e.g., client.chat.completions → "chat.completions"
 
 
-def wrap_openai(client: Any, witness: "Witness") -> "_OpenAIProxy":
+def wrap_openai(client: Any, witness: "Witness", *, provider: str = "openai") -> "_OpenAIProxy":
     """Wrap an OpenAI client with transparent witnessing."""
-    return _OpenAIProxy(client, witness, path="")
+    return _OpenAIProxy(client, witness, path="", provider=provider)
 
 
 class _OpenAIProxy:
@@ -59,17 +59,19 @@ class _OpenAIProxy:
     wrapped callable. Otherwise, it returns another proxy for the next level.
     """
 
-    __slots__ = ("_target", "_witness", "_path")
+    __slots__ = ("_target", "_witness", "_path", "_provider")
 
-    def __init__(self, target: Any, witness: "Witness", path: str) -> None:
+    def __init__(self, target: Any, witness: "Witness", path: str, provider: str = "openai") -> None:
         object.__setattr__(self, "_target", target)
         object.__setattr__(self, "_witness", witness)
         object.__setattr__(self, "_path", path)
+        object.__setattr__(self, "_provider", provider)
 
     def __getattr__(self, name: str) -> Any:
         target = object.__getattribute__(self, "_target")
         witness = object.__getattribute__(self, "_witness")
         path = object.__getattribute__(self, "_path")
+        provider = object.__getattribute__(self, "_provider")
 
         # Resolve the real attribute from the target
         real_attr = getattr(target, name)
@@ -82,8 +84,8 @@ class _OpenAIProxy:
         if parent_path in INTERCEPTED_METHODS and name in INTERCEPTED_METHODS[parent_path]:
             # This IS the method to intercept — wrap it
             if asyncio.iscoroutinefunction(real_attr):
-                return _make_async_interceptor(real_attr, witness, name, parent_path)
-            return _make_interceptor(real_attr, witness, name, parent_path)
+                return _make_async_interceptor(real_attr, witness, name, parent_path, provider)
+            return _make_interceptor(real_attr, witness, name, parent_path, provider)
 
         # Check if this path could lead to interceptable methods
         # e.g., "chat" could lead to "chat.completions"
@@ -91,7 +93,7 @@ class _OpenAIProxy:
 
         if has_children:
             # Keep proxying deeper
-            return _OpenAIProxy(real_attr, witness, current_path)
+            return _OpenAIProxy(real_attr, witness, current_path, provider)
 
         # No interception needed — return the real attribute directly
         return real_attr
@@ -106,6 +108,7 @@ def _make_interceptor(
     witness: "Witness",
     method_name: str,
     path: str,
+    provider: str = "openai",
 ) -> Callable[..., Any]:
     """Create an interceptor that wraps an OpenAI API method."""
 
@@ -134,6 +137,7 @@ def _make_interceptor(
 
         # ── Post-call: extract factors from response ──
         record = _extract_record(response, model, prompt_hash, elapsed_ms, system_prompt_hash)
+        record.provider = provider
 
         # ── Hand to witness (non-blocking) ──
         witness.record(record, authorization_id=authorization_id)
@@ -154,6 +158,7 @@ def _make_async_interceptor(
     witness: "Witness",
     method_name: str,
     path: str,
+    provider: str = "openai",
 ) -> Callable[..., Any]:
     """Create an async interceptor for AsyncOpenAI / AsyncAnthropic clients."""
 
@@ -176,6 +181,7 @@ def _make_async_interceptor(
         elapsed_ms = int((time.monotonic() - start) * 1000)
 
         record = _extract_record(response, model, prompt_hash, elapsed_ms, system_prompt_hash)
+        record.provider = provider
         witness.record(record, authorization_id=authorization_id)
 
         return response

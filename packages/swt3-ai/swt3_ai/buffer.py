@@ -24,7 +24,9 @@ import atexit
 import collections
 import json
 import logging
+import os
 import queue
+import re
 import threading
 import time
 from typing import Any, Deque, Dict, List, Optional
@@ -32,6 +34,9 @@ from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
 
 from .types import WitnessConfig, WitnessPayload, WitnessReceipt
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .wal import WriteAheadLog
 
 logger = logging.getLogger("swt3_ai")
 
@@ -52,9 +57,12 @@ class WitnessBuffer:
         config: WitnessConfig,
         max_retry_buffer: int = DEFAULT_MAX_RETRY_BUFFER,
         on_flush: Optional[Any] = None,
+        wal: Optional["WriteAheadLog"] = None,
     ) -> None:
         self._config = config
         self._on_flush = on_flush
+        self._wal = wal
+        self._wal_seq_map: Dict[int, int] = {}  # id(payload) -> WAL seq
         self._queue: queue.Queue[WitnessPayload] = queue.Queue()
         self._dead_letter: Deque[WitnessPayload] = collections.deque(
             maxlen=max_retry_buffer,
@@ -64,6 +72,7 @@ class WitnessBuffer:
         self._receipts: List[WitnessReceipt] = []
         self._consecutive_failures = 0
         self._cta_shown = False
+        self._token_accumulator: int = 0  # cumulative tokens since last flush
 
         # Start daemon flush thread
         self._thread = threading.Thread(target=self._flush_loop, daemon=True)
@@ -77,6 +86,19 @@ class WitnessBuffer:
         if self._stopped:
             logger.warning("Buffer is stopped — payload dropped for %s", payload.procedure_id)
             return
+
+        # WAL: replay protection + persist to disk
+        if self._wal is not None:
+            seq = self._wal.append(payload)
+            if seq == -1:
+                # Duplicate fingerprint -- silently skip
+                return
+            self._wal_seq_map[id(payload)] = seq
+
+        # Track token accumulation for token_budget flush trigger
+        tokens = (payload.ai_input_tokens or 0) + (payload.ai_output_tokens or 0)
+        if tokens > 0:
+            self._token_accumulator += tokens
         self._queue.put(payload)
 
     def enqueue_many(self, payloads: List[WitnessPayload]) -> None:
@@ -140,6 +162,11 @@ class WitnessBuffer:
         return len(self._dead_letter)
 
     @property
+    def tokens_since_flush(self) -> int:
+        """Cumulative tokens accumulated since last flush (for token_budget monitoring)."""
+        return self._token_accumulator
+
+    @property
     def receipts(self) -> List[WitnessReceipt]:
         """All receipts from completed flushes."""
         with self._lock:
@@ -175,9 +202,14 @@ class WitnessBuffer:
                 pass
 
             elapsed = time.monotonic() - last_flush
+            token_budget_hit = (
+                self._config.token_budget is not None
+                and self._token_accumulator >= self._config.token_budget
+            )
             should_flush = (
                 len(buffer) >= self._config.buffer_size
                 or (len(buffer) > 0 and elapsed >= self._config.flush_interval)
+                or (len(buffer) > 0 and token_budget_hit)
             )
 
             # Also flush dead-letter backlog if we have new items to send
@@ -197,6 +229,7 @@ class WitnessBuffer:
                 self._send_batch(buffer)
                 buffer = []
                 last_flush = time.monotonic()
+                self._token_accumulator = 0
 
             # If we have dead-letter items but no new items, retry periodically
             # Use exponential backoff: 10s, 20s, 40s, 80s, max 300s
@@ -214,13 +247,18 @@ class WitnessBuffer:
                     last_flush = time.monotonic()
 
     def _send_batch(self, payloads: List[WitnessPayload]) -> List[WitnessReceipt]:
-        """Send a batch of payloads to the witness endpoint with retry.
+        """Send a batch of payloads to the configured flush target.
 
-        On final failure, payloads go to the dead-letter queue instead of
-        being dropped. They will be retried on the next flush cycle.
+        Routes to Redis Streams when flush_target="redis", otherwise
+        uses the standard HTTP batch endpoint. On final failure, payloads
+        go to the dead-letter queue.
         """
         if not payloads:
             return []
+
+        # Route to Redis if configured
+        if self._config.flush_target == "redis":
+            return self._send_redis(payloads)
 
         url = f"{self._config.endpoint}/api/v1/witness/batch"
         body = json.dumps({
@@ -258,6 +296,16 @@ class WitnessBuffer:
                     self._receipts.extend(receipts)
                     self._consecutive_failures = 0  # Reset on success
 
+                # WAL: mark flushed entries
+                if self._wal is not None:
+                    max_seq = 0
+                    for p in payloads:
+                        s = self._wal_seq_map.pop(id(p), 0)
+                        if s > max_seq:
+                            max_seq = s
+                    if max_seq > 0:
+                        self._wal.mark_flushed(max_seq)
+
                 accepted = result.get("accepted", 0)
                 rejected = result.get("rejected", 0)
                 if rejected > 0:
@@ -272,7 +320,7 @@ class WitnessBuffer:
                     print(
                         f"\n  [SWT3] {accepted} anchors delivered to {self._config.endpoint}"
                         f"\n  [SWT3] Dashboard & audit reports \u2192 https://sovereign.tenova.io/signup?ref=sdk"
-                        f"\n  [SWT3] EU AI Act deadline: Aug 2, 2026. Is your AI ready?\n"
+                        f"\n  [SWT3] EU AI Act high-risk deadline: Dec 2, 2027. GPAI obligations enforceable now.\n"
                     )
 
                 # Invoke on_flush callback (never let callback errors break the pipeline)
@@ -285,7 +333,9 @@ class WitnessBuffer:
                 return receipts
 
             except HTTPError as e:
-                last_error = f"HTTP {e.code}: {e.read().decode('utf-8', errors='replace')[:200]}"
+                raw_err = e.read().decode("utf-8", errors="replace")[:200]
+                # Scrub any key material from error response body
+                last_error = f"HTTP {e.code}: {re.sub(r'(?i)(?:Bearer|Authorization|api[_-]?key|signing[_-]?key)\\s*[^\\s,;\"]{4,}', '[REDACTED]', raw_err)}"
                 if e.code < 500:
                     # Client error (4xx) — don't retry, don't dead-letter
                     # These are validation errors, not transient failures
@@ -324,3 +374,86 @@ class WitnessBuffer:
             )
 
         return receipts
+
+    def _send_redis(self, payloads: List[WitnessPayload]) -> List[WitnessReceipt]:
+        """Push payloads to a Redis Stream for high-throughput decoupled intake.
+
+        The Axiom Engine (or a separate processor) consumes from this stream
+        and writes to the ledger. This decouples intake speed from storage
+        speed -- the "Shock Absorber" pattern for token factory workloads.
+
+        Requires: redis package (pip install redis)
+        """
+        try:
+            import redis as redis_lib
+        except ImportError:
+            logger.error(
+                "Redis flush target requires the 'redis' package. "
+                "Install with: pip install redis"
+            )
+            with self._lock:
+                for p in payloads:
+                    self._dead_letter.append(p)
+            return []
+
+        redis_url = self._config.redis_url or os.environ.get("SWT3_REDIS_URL", "redis://localhost:6379")
+        stream_name = self._config.redis_stream or os.environ.get("SWT3_REDIS_STREAM", "swt3:anchors")
+
+        try:
+            r = redis_lib.from_url(redis_url, decode_responses=True)
+
+            # XADD each payload to the stream. Redis Streams guarantee
+            # ordering and persistence -- "Sequential Truth" for audits.
+            receipts: List[WitnessReceipt] = []
+            for p in payloads:
+                r.xadd(stream_name, {
+                    "payload": json.dumps(p.to_dict()),
+                    "api_key": self._config.api_key,
+                    "clearing_level": str(p.clearing_level),
+                    "procedure_id": p.procedure_id,
+                })
+                receipts.append(WitnessReceipt(
+                    procedure_id=p.procedure_id,
+                    verdict="QUEUED",
+                    swt3_anchor="",
+                    clearing_level=p.clearing_level,
+                    witnessed_at="",
+                    verification_url="",
+                    ok=True,
+                    error=None,
+                ))
+
+            with self._lock:
+                self._receipts.extend(receipts)
+                self._consecutive_failures = 0
+
+            # WAL: mark flushed entries
+            if self._wal is not None:
+                max_seq = 0
+                for p in payloads:
+                    s = self._wal_seq_map.pop(id(p), 0)
+                    if s > max_seq:
+                        max_seq = s
+                if max_seq > 0:
+                    self._wal.mark_flushed(max_seq)
+
+            logger.debug(
+                "Redis flush: %d payloads pushed to stream '%s'",
+                len(payloads), stream_name,
+            )
+
+            if self._on_flush and receipts:
+                try:
+                    self._on_flush(payloads, receipts)
+                except Exception as cb_err:
+                    logger.warning("on_flush callback error (non-fatal): %s", cb_err)
+
+            return receipts
+
+        except Exception as e:
+            logger.warning("Redis flush failed: %s — moving to dead-letter", e)
+            with self._lock:
+                self._consecutive_failures += 1
+                for p in payloads:
+                    self._dead_letter.append(p)
+            return []

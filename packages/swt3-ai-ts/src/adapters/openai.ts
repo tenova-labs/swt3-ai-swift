@@ -27,11 +27,11 @@ const INTERCEPT_PATHS: Record<string, Set<string>> = {
 /**
  * Wrap an OpenAI client with an ES6 Proxy for transparent witnessing.
  */
-export function wrapOpenAI(client: unknown, witness: Witness): unknown {
-  return createProxy(client, witness, "");
+export function wrapOpenAI(client: unknown, witness: Witness, provider = "openai"): unknown {
+  return createProxy(client, witness, "", provider);
 }
 
-function createProxy(target: unknown, witness: Witness, path: string): unknown {
+function createProxy(target: unknown, witness: Witness, path: string, provider: string): unknown {
   return new Proxy(target as object, {
     get(obj: object, prop: string | symbol): unknown {
       if (typeof prop === "symbol") return Reflect.get(obj, prop);
@@ -42,7 +42,7 @@ function createProxy(target: unknown, witness: Witness, path: string): unknown {
       // Check if this property is an interceptable method
       if (path in INTERCEPT_PATHS && INTERCEPT_PATHS[path].has(prop)) {
         // This IS the method to intercept
-        return createInterceptor(realValue as (...args: unknown[]) => unknown, witness);
+        return createInterceptor(realValue as (...args: unknown[]) => unknown, witness, provider);
       }
 
       // Check if this path could lead to interceptable methods
@@ -51,7 +51,7 @@ function createProxy(target: unknown, witness: Witness, path: string): unknown {
       );
 
       if (hasChildren && typeof realValue === "object" && realValue !== null) {
-        return createProxy(realValue, witness, currentPath);
+        return createProxy(realValue, witness, currentPath, provider);
       }
 
       // Pass through
@@ -63,6 +63,7 @@ function createProxy(target: unknown, witness: Witness, path: string): unknown {
 function createInterceptor(
   realMethod: (...args: unknown[]) => unknown,
   witness: Witness,
+  provider: string,
 ): (...args: unknown[]) => unknown {
   return function interceptedCreate(this: unknown, ...args: unknown[]): unknown {
     const kwargs = (args[0] ?? {}) as Record<string, unknown>;
@@ -92,13 +93,13 @@ function createInterceptor(
 
     if (isStreaming) {
       // Streaming: wrap the async iterable to accumulate chunks
-      return handleStreaming(result, witness, model, promptHash, start, systemPromptHash, authorizationId);
+      return handleStreaming(result, witness, model, promptHash, start, systemPromptHash, authorizationId, provider);
     }
 
     // Non-streaming: result is a Promise<ChatCompletion>
     return (result as Promise<unknown>).then((response: unknown) => {
       const elapsedMs = Math.round(performance.now() - start);
-      const record = extractRecord(response, model, promptHash, elapsedMs, systemPromptHash);
+      const record = extractRecord(response, model, promptHash, elapsedMs, systemPromptHash, provider);
       witness.record(record, authorizationId);
       return response; // Return UNTOUCHED
     });
@@ -124,6 +125,7 @@ async function* streamAccumulator(
   startTime: number,
   systemPromptHash?: string,
   authorizationId?: string,
+  provider = "openai",
 ): AsyncGenerator<unknown, void, undefined> {
   const textParts: string[] = [];
   let actualModel = model;
@@ -187,7 +189,7 @@ async function* streamAccumulator(
     guardrailsRequired: 0,
     guardrailPassed: true,
     hasRefusal,
-    provider: "openai",
+    provider,
     systemFingerprint,
     systemPromptHash,
     guardrailNames: [],
@@ -204,17 +206,18 @@ function handleStreaming(
   startTime: number,
   systemPromptHash?: string,
   authorizationId?: string,
+  provider = "openai",
 ): unknown {
   // The stream result is a Promise that resolves to the stream object
   // (OpenAI SDK returns Promise<Stream<ChatCompletionChunk>>)
   if (streamResult && typeof (streamResult as Promise<unknown>).then === "function") {
     return (streamResult as Promise<unknown>).then((stream: unknown) => {
-      return wrapStream(stream, witness, model, promptHash, startTime, systemPromptHash, authorizationId);
+      return wrapStream(stream, witness, model, promptHash, startTime, systemPromptHash, authorizationId, provider);
     });
   }
 
   // Direct stream object (shouldn't happen but handle gracefully)
-  return wrapStream(streamResult, witness, model, promptHash, startTime, systemPromptHash, authorizationId);
+  return wrapStream(streamResult, witness, model, promptHash, startTime, systemPromptHash, authorizationId, provider);
 }
 
 function wrapStream(
@@ -225,6 +228,7 @@ function wrapStream(
   startTime: number,
   systemPromptHash?: string,
   authorizationId?: string,
+  provider = "openai",
 ): unknown {
   const s = stream as Record<string | symbol, unknown>;
 
@@ -237,6 +241,7 @@ function wrapStream(
     startTime,
     systemPromptHash,
     authorizationId,
+    provider,
   );
 
   // Return a proxy that preserves all stream methods but overrides the iterator
@@ -317,6 +322,7 @@ function extractRecord(
   promptHash: string,
   elapsedMs: number,
   systemPromptHash?: string,
+  provider = "openai",
 ): InferenceRecord {
   const r = response as Record<string, unknown>;
   let responseText = "";
@@ -359,7 +365,7 @@ function extractRecord(
     guardrailsRequired: 0,
     guardrailPassed: true,
     hasRefusal,
-    provider: "openai",
+    provider,
     systemFingerprint,
     systemPromptHash,
     guardrailNames: [],

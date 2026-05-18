@@ -3,8 +3,8 @@
 ## Sovereign Witness Traceability Protocol
 
 **Status:** Proposed Standard
-**Version:** 1.3.0
-**Date:** 2026-04-17
+**Version:** 1.4.0
+**Date:** 2026-05-03
 **Authors:** Tenable Nova LLC (DBA TeNova)
 **License:** Apache 2.0
 
@@ -25,23 +25,23 @@ SWT3 (Sovereign Witness Traceability) is an open protocol for cryptographically
 anchoring evidence to immutable witness records while preserving data sovereignty.
 The "3" in SWT3 represents the three phases of the evidence lifecycle:
 
-1. **Provenance** — Evidence collection and factor capture at the point of observation.
+1. **Provenance**  --  Evidence collection and factor capture at the point of observation.
    Raw telemetry is decomposed into a structured Factor Matrix and cryptographically
    bound to a sub-second hardware epoch, establishing an immutable record of what was
    observed, when, and under what conditions.
 
-2. **Verification** — SHA-256 fingerprint computation binding factors to a self-describing,
+2. **Verification**  --  SHA-256 fingerprint computation binding factors to a self-describing,
    portable anchor token. Any party can independently re-derive the fingerprint from
-   the original factors and confirm that evidence has not been altered — without network
+   the original factors and confirm that evidence has not been altered  --  without network
    access, without database connectivity, and without trust in the issuing system.
 
-3. **Clearing** — Controlled purging of raw evidence after anchoring, ensuring that
+3. **Clearing**  --  Controlled purging of raw evidence after anchoring, ensuring that
    sensitive telemetry (command outputs, configuration files, API responses, log entries)
    does not persist beyond its operational usefulness. The cryptographic proof survives;
    the underlying data does not. This achieves 100% integrity verification and 100%
-   data sovereignty simultaneously — not as a tradeoff, but as complementary guarantees.
+   data sovereignty simultaneously  --  not as a tradeoff, but as complementary guarantees.
 
-SWT3 enables any party — auditor, assessor, or automated system — to independently
+SWT3 enables any party  --  auditor, assessor, or automated system  --  to independently
 verify that a piece of evidence has not been altered since the moment it was
 witnessed, even after the raw source data has been cleared.
 
@@ -91,7 +91,7 @@ SWT3-{TIER}-{PROVIDER}-{UCT}-{PROCEDURE}-{VERDICT}-{EPOCH}-{FINGERPRINT}
 The Universal Control Taxonomy (UCT) is a framework-agnostic classification
 system that categorizes every witnessed control into a domain. UCT codes are
 the bridge that allows SWT3 anchors to be meaningful across compliance
-frameworks — a `CRY` anchor carries the same semantic meaning whether it
+frameworks  --  a `CRY` anchor carries the same semantic meaning whether it
 originated from a NIST SC-13 check, a PCI-DSS Requirement 4 assessment, or
 a HIPAA §164.312(a)(2)(iv) encryption review.
 
@@ -106,24 +106,24 @@ compliance framework. All SWT3 implementations MUST recognize core codes.
 
 | Code | Domain | Description |
 |------|--------|-------------|
-| `ACC` | Access Control | Authorization, privileges, least privilege, account management — who can get in and what they can do |
-| `AUD` | Audit & Accountability | Logging, log retention, audit review, event correlation — proving who did what |
-| `CFG` | Configuration Management | Baselines, hardening, change control, inventory — how systems are set |
+| `ACC` | Access Control | Authorization, privileges, least privilege, account management  --  who can get in and what they can do |
+| `AUD` | Audit & Accountability | Logging, log retention, audit review, event correlation  --  proving who did what |
+| `CFG` | Configuration Management | Baselines, hardening, change control, inventory  --  how systems are set |
 | `CRY` | Cryptography | Encryption at rest, encryption in transit, key management, certificate lifecycle |
-| `IDN` | Identity & Authentication | Authentication mechanisms, MFA, credential management — proving who you are |
-| `INT` | System Integrity | Patching, file integrity monitoring, malware defense, code signing — tamper evidence |
-| `NET` | Network Security | Firewalls, segmentation, boundary protection, traffic filtering — network boundaries |
-| `BCP` | Business Continuity | Backup, disaster recovery, contingency planning, availability — surviving failure |
-| `GOV` | Governance & Policy | Security policy, planning, system security plans, authorization — the policy layer |
-| `IRP` | Incident Response | Detection, response, recovery, lessons learned — handling the breach |
-| `PHY` | Physical Security | Facility access, media protection, environmental controls — the physical layer |
+| `IDN` | Identity & Authentication | Authentication mechanisms, MFA, credential management  --  proving who you are |
+| `INT` | System Integrity | Patching, file integrity monitoring, malware defense, code signing  --  tamper evidence |
+| `NET` | Network Security | Firewalls, segmentation, boundary protection, traffic filtering  --  network boundaries |
+| `BCP` | Business Continuity | Backup, disaster recovery, contingency planning, availability  --  surviving failure |
+| `GOV` | Governance & Policy | Security policy, planning, system security plans, authorization  --  the policy layer |
+| `IRP` | Incident Response | Detection, response, recovery, lessons learned  --  handling the breach |
+| `PHY` | Physical Security | Facility access, media protection, environmental controls  --  the physical layer |
 
 #### 3.2.2 Extended Codes
 
 Extended codes represent specialized domains that apply in specific regulatory
 contexts or industry verticals. Implementations SHOULD recognize extended codes
 relevant to their compliance scope. Unrecognized extended codes MUST NOT cause
-verification failure — the anchor remains valid; only the domain classification
+verification failure  --  the anchor remains valid; only the domain classification
 is opaque to that implementation.
 
 | Code | Domain | Description |
@@ -198,7 +198,7 @@ UCT codes map consistently across major compliance frameworks:
 - **Immutability:** Published codes are never removed, renamed, or redefined
 - **Deprecation:** A code may be marked DEPRECATED with a recommended successor, but MUST remain valid for parsing and verification indefinitely
 - **Reserved codes:** `SWT`, `UCT`, `NIL`, `ERR`, `RAW`, `TBD` are reserved and MUST NOT be assigned
-- **Legacy code — `POL`:** Pre-v1.0 implementations used `POL` (Policy) as a catch-all for governance, personnel, incident response, training, physical security, risk, and acquisition domains. Anchors minted with `POL` remain valid and MUST be accepted by all implementations. New anchors SHOULD use the specific code from the registry. Implementations MAY reclassify historical `POL` anchors using the procedure ID prefix and the NIST Family Mapping (Section 3.2.3).
+- **Legacy code  --  `POL`:** Pre-v1.0 implementations used `POL` (Policy) as a catch-all for governance, personnel, incident response, training, physical security, risk, and acquisition domains. Anchors minted with `POL` remain valid and MUST be accepted by all implementations. New anchors SHOULD use the specific code from the registry. Implementations MAY reclassify historical `POL` anchors using the procedure ID prefix and the NIST Family Mapping (Section 3.2.3).
 
 ### 3.3 Examples
 
@@ -258,7 +258,7 @@ WITNESS:{tenant_id}:{procedure_id}:{factor_a}:{factor_b}:{factor_c}:{timestamp_m
 |-------|------|-------------|
 | `WITNESS` | literal | Domain separator prefix (REQUIRED since v1.1.0) |
 | `tenant_id` | string | The organization/tenant identifier |
-| `procedure_id` | string | The procedure identifier (e.g., `SC-7.6`) — original format, NOT normalized |
+| `procedure_id` | string | The procedure identifier (e.g., `SC-7.6`)  --  original format, NOT normalized |
 | `factor_a` | integer | Baseline/threshold factor (string representation of decimal integer) |
 | `factor_b` | integer | Measured/observed factor |
 | `factor_c` | integer | Delta factor (typically `factor_b - factor_a`) |
@@ -266,7 +266,7 @@ WITNESS:{tenant_id}:{procedure_id}:{factor_a}:{factor_b}:{factor_c}:{timestamp_m
 
 **IMPORTANT:** The `procedure_id` in the fingerprint input retains its original
 format (e.g., `SC-7.6`), while the anchor token uses the normalized form (e.g.,
-`SC76`). This distinction is intentional — the anchor is human-readable; the
+`SC76`). This distinction is intentional  --  the anchor is human-readable; the
 fingerprint is cryptographic.
 
 #### 4.1.1 Legacy Formula (Pre-v1.1.0)
@@ -338,8 +338,8 @@ The Clearing phase is the third pillar of SWT3 and the mechanism by which data
 sovereignty is achieved without sacrificing integrity.
 
 After an anchor is minted and its fingerprint is sealed, the **raw evidence**
-used during Provenance — command outputs, file contents, API responses, log
-entries, sensor readings, and any other source telemetry — SHOULD be purged
+used during Provenance  --  command outputs, file contents, API responses, log
+entries, sensor readings, and any other source telemetry  --  SHOULD be purged
 from the witness system. Only the **Factor Matrix** (factor_a, factor_b,
 factor_c), the **timestamp**, and the **anchor token** should persist.
 
@@ -367,7 +367,7 @@ security posture.
 
 Clearing levels 0 and 1 support full self-contained verification (the verifier
 has both the anchor and the factors). Clearing levels 2 and 3 require
-out-of-band factor exchange — the factors must be transmitted to the verifier
+out-of-band factor exchange  --  the factors must be transmitted to the verifier
 before or at the time of clearing. This is appropriate for classified or
 air-gapped environments where the minting system cannot retain any data.
 
@@ -569,6 +569,111 @@ Multiple evidence factors MAY be transported as a JSON array:
 }
 ```
 
+### 8.3 Payload Signing and Server-Side Validation
+
+SDKs MAY sign witness payloads using HMAC-SHA256 to enable server-side
+authenticity verification. This provides a second layer of security beyond
+API key authentication: the API key authenticates transport, while the
+signing key authenticates payload origin.
+
+**Signature Formula (LOCKED):**
+```
+message = agent_id ? "{fingerprint}:{agent_id}" : "{fingerprint}"
+signature = HMAC-SHA256(signing_key, message)  // 64-char lowercase hex
+```
+
+Cross-language parity is required. All SDK implementations MUST produce
+identical signatures for the same inputs. Test vectors are provided in
+`test-vectors.json` (signing_vectors).
+
+**Server-Side Validation:**
+
+Compliant servers MUST implement progressive enforcement:
+
+1. If the payload carries no `payload_signature`, accept it (status: "unsigned").
+2. If the payload carries a `payload_signature` but the tenant has no
+   registered signing keys, accept it (status: "unverified").
+3. If the payload carries a `payload_signature` and the tenant has registered
+   signing keys, re-compute the HMAC for each active key. If any key produces
+   a matching signature, accept it (status: "verified"). If no key matches,
+   reject the payload with HTTP 422 (status: "failed").
+
+Signature comparison MUST use constant-time comparison to prevent timing
+side-channel attacks.
+
+Signing keys MUST be stored encrypted at rest. Implementations SHOULD use
+envelope encryption (e.g., AES-256-GCM with a server-side master key).
+
+The `payload_signature` field survives all clearing levels (0-3). It is
+classified as operational metadata, not evidence content.
+
+### 8.3.1 Key Identification Fields
+
+SDKs MAY include optional key identification metadata alongside the signature
+to enable efficient server-side validation and rotation auditing:
+
+- `signing_key_id` (string, optional) -- Identifies which registered key
+  produced the signature. When present, the server SHOULD look up that
+  specific key for O(1) validation rather than iterating all active keys.
+  If the key_id is not found or inactive, the server MUST fall back to
+  iterating all active keys before rejecting.
+
+- `signing_key_version` (integer, optional) -- Monotonically increasing
+  version counter for the same logical key. Set by the operator during key
+  rotation. Enables audit queries like "which key generation signed this
+  anchor?" without decrypting key material.
+
+These fields are NOT part of the HMAC message. The signing formula remains
+locked. They are routing and auditing metadata only.
+
+### 8.3.2 Signing Security Tiers
+
+Implementations SHOULD classify signing key posture into one of four tiers.
+This classification is informational -- servers MUST NOT reject payloads
+based on tier alone, but SHOULD record the tier in observations for audit.
+
+| Tier | Name | Key Storage | Rotation | Use Case |
+|------|------|-------------|----------|----------|
+| 0 | Development | Plaintext env var or config file | Manual, ad-hoc | Local development, CI test suites |
+| 1 | Standard | Encrypted at rest (AES-256-GCM or equivalent) | Manual with key_version tracking | Production SaaS deployments |
+| 2 | Enterprise | KMS-managed (AWS KMS, GCP CMEK, Azure Key Vault) | Automatic, policy-driven (30-90 day cycle) | Regulated enterprise, SOC 2 |
+| 3 | Sovereign | HSM-backed (FIPS 140-2 Level 3+) or OIDC ephemeral | Per-session or per-deployment | FedRAMP, defense, air-gapped enclaves |
+
+**Tier Requirements:**
+
+- **Tier 0**: No encryption requirement. Key MAY be stored in plaintext.
+  Suitable only for development and testing.
+
+- **Tier 1**: Key MUST be encrypted at rest using authenticated encryption
+  (AES-256-GCM or equivalent). Key material MUST NOT appear in logs,
+  environment variable dumps, or error messages. The Axiom reference
+  implementation uses AES-256-GCM with a server-side master key.
+
+- **Tier 2**: Key MUST be managed by a dedicated key management service.
+  Rotation MUST be automated with configurable policy (recommended: 90 days
+  maximum). Key material MUST never leave the KMS boundary in plaintext
+  except for the signing operation itself.
+
+- **Tier 3**: Key MUST be backed by a hardware security module (HSM)
+  certified to FIPS 140-2 Level 3 or higher, OR generated ephemerally via
+  OIDC identity binding (Sigstore/Fulcio model) where the key exists only
+  for the duration of the signing session. Air-gapped deployments MUST use
+  HSM-backed keys; cloud-native deployments MAY use OIDC ephemeral signing.
+
+**Compliance Mapping:**
+
+- NIST 800-53 SC-12 (Cryptographic Key Establishment): Tier 1+ satisfies.
+- CMMC L2 SC.L2-3.13.10 (Key Management): Tier 1+ satisfies.
+- FedRAMP Moderate SC-12: Tier 2+ recommended, Tier 3 for High.
+- EU AI Act Art. 15 (Cybersecurity): Tier 1+ for standard risk, Tier 2+
+  for high-risk AI systems.
+
+**Server Reporting:**
+
+When a server can determine the signing tier (e.g., from key metadata or
+tenant configuration), it SHOULD include `signing_tier` in the observations
+JSONB alongside `signature_status`.
+
 ## 9. AI Witnessing Profile
 
 This section defines the application of SWT3 to artificial intelligence and
@@ -595,13 +700,15 @@ AI procedures use the `AI` UCT code and follow the naming convention
 | `AI-MDL.1` | Model Integrity | Witness that deployed weights match the approved registry hash | EU AI Act Art. 9(4)(b), NIST AI RMF MANAGE 1.3 |
 | `AI-MDL.2` | Model Version | Witness which model version served production traffic | EU AI Act Art. 12(2)(a) |
 | `AI-MDL.3` | Model Drift | Witness accuracy/performance degradation against baseline | NIST AI RMF MEASURE 1.1 |
-| `AI-GRD.1` | Guardrail Enforcement | Witness that required safety filters were active | EU AI Act Art. 9(4)(a), NIST AI RMF MANAGE 4.1 |
+| `AI-GRD.1` | Guardrail Enforcement | Witness that required safety filters were active | EU AI Act Art. 9(4)(a), NIST AI RMF GOVERN 1.5 |
 | `AI-GRD.2` | Content Safety | Witness content filter activation and block rate | EU AI Act Art. 9(8) |
 | `AI-GRD.3` | PII Redaction | Witness PII detection and scrubbing before/after inference | GDPR Art. 25, NIST AI RMF GOVERN 1.7 |
 | `AI-FAIR.1` | Bias Measurement | Witness demographic parity or equalized odds metrics | EU AI Act Art. 10(2)(f), NIST AI RMF MEASURE 2.11 |
 | `AI-FAIR.2` | Fairness Threshold | Witness pass/fail against defined fairness bounds | NIST AI RMF MAP 2.3 |
 | `AI-DATA.1` | Training Data Provenance | Witness dataset hash at training time | EU AI Act Art. 10, NIST AI RMF MAP 4.1 |
 | `AI-DATA.2` | Training Data License | Witness that training data provenance includes license verification | EU AI Act Art. 53(1)(d) |
+| `AI-DATA.3` | Training Data Statistics | Witness summary statistics of training dataset (row count, feature count, class balance) | EU AI Act Art. 10(3), NIST AI RMF MAP 4.1 |
+| `AI-DATA.4` | Training Data PII Lifecycle | Witness pseudonymization, access restriction, or deletion of personal data used in training | EU AI Act Art. 10(5), GDPR Art. 25 |
 | `AI-HITL.1` | Human Review | Witness that a human reviewed an AI-generated decision | EU AI Act Art. 14, NIST AI RMF GOVERN 1.4 |
 | `AI-HITL.2` | Override Decision | Witness that a human overrode the AI recommendation | EU AI Act Art. 14(4)(a) |
 | `AI-EXPL.1` | Explainability | Witness that an explanation was generated alongside output | EU AI Act Art. 13, NIST AI RMF GOVERN 1.5 |
@@ -610,6 +717,26 @@ AI procedures use the `AI` UCT code and follow the naming convention
 | `AI-ID.1` | Agent Identity | Witness that an AI agent's cryptographic identity was asserted | EU AI Act Art. 50(2), NIST AI RMF GOVERN 1.2 |
 | `AI-ACC.1` | Access Control | Witness an AI agent's access to external resources with scope | EU AI Act Art. 9(4)(c), NIST AI RMF MANAGE 2.3 |
 | `AI-REV.1` | Anchor Revocation | Witness the revocation of a previously-issued anchor with reason | EU AI Act Art. 12(3), GDPR Art. 17 |
+| `AI-SEC.1` | Adversarial Detection | Witness that adversarial threat detection was performed on an inference (prompt injection, data poisoning, model extraction) | EU AI Act Art. 15(4), NIST AI RMF MANAGE 3.2 |
+| `AI-SEC.2` | Input Validation | Witness that input was validated and sanitized before inference | EU AI Act Art. 15(3), NIST AI RMF MEASURE 2.7 |
+| `AI-RAG.1` | Context Retrieval Provenance | Witness what context chunks were retrieved and from which corpus in a RAG pipeline | EU AI Act Art. 12(2)(a), NIST AI RMF MAP 3.5 |
+| `AI-RAG.2` | Context Relevance | Witness similarity scoring and relevance thresholds for retrieved context chunks | EU AI Act Art. 10(2), NIST AI RMF MEASURE 2.6 |
+| `AI-MDL.5` | Weight File Integrity | Witness SHA-256 hash of actual model weight files for tamper detection | EU AI Act Art. 15(4), NIST AI RMF MANAGE 1.3 |
+| `AI-MDL.6` | Adapter Stack Attestation | Witness which LoRA/QLoRA/PEFT adapters are active on a base model | EU AI Act Art. 12(2)(b), NIST AI RMF MAP 2.3 |
+| `AI-MDL.7` | Quantization Attestation | Witness the quantization method applied to model weights | EU AI Act Art. 15(3), NIST AI RMF MEASURE 2.5 |
+| `AI-SKILL.1` | Skill Manifest Attestation | Witness which skills, tools, and plugins are loaded in an AI agent | EU AI Act Art. 12(2)(b), NIST AI RMF GOVERN 1.7 |
+| `AI-SKILL.2` | Memory Context Binding | Witness what persistent memory sources influenced an AI decision | EU AI Act Art. 12(2)(a), NIST AI RMF MAP 3.5 |
+| `AI-SKILL.3` | Reward Model Binding | Witness which RLHF/DPO reward model scored or filtered the output | EU AI Act Art. 9(4)(a), NIST AI RMF MEASURE 2.6 |
+| `AI-CHAIN.1` | Multi-Agent Chain Witnessing | Witness a handoff between agents in a multi-agent chain with cycle tracking | EU AI Act Art. 12(2)(a), NIST AI RMF MANAGE 4.1 |
+| `AI-VIO.1` | Violation Reporting | Witness a policy violation detected during or after inference | EU AI Act Art. 9(4)(a), NIST AI RMF MANAGE 3.2 |
+| `AI-CHR.1` | Agent Charter Attestation | Witness the charter or system prompt hash governing an agent's behavior | EU AI Act Art. 13, NIST AI RMF GOVERN 1.2 |
+| `AI-MDL.8` | Model Registry Check | Witness that a model was verified against an approved registry before deployment | EU AI Act Art. 51, NIST AI RMF MANAGE 1.3 |
+| `AI-HITL.3` | Reviewer Identity Binding | Witness the identity of the natural person who performed a human review or override | EU AI Act Art. 12(3)(d), Art. 14(5) |
+| `AI-SAFE.1` | Safe State Attestation | Witness that a stop or interrupt mechanism exists and the system reached safe state | EU AI Act Art. 14(4)(e), NIST AI RMF MANAGE 4.1 |
+| `AI-HW.1` | Hardware Attestation | Witness accelerator hardware inventory (GPU count, topology, interconnect) at service startup | EU AI Act Art. 15(4), NIST AI RMF MANAGE 1.3 |
+| `AI-HW.3` | TPM Platform Attestation | Witness TPM 2.0 PCR register state proving host firmware integrity and hardware root of trust | NIST 800-53 SC-12, EU AI Act Art. 15(4) |
+| `AI-TRUST.1` | Trust Verification | Witness mutual compliance trust verification between AI agents before interaction | EU AI Act Art. 9(4)(c), NIST AI RMF GOVERN 1.2 |
+| `AI-TRUST.2` | Trust Handshake | Witness the detailed handshake result (checks performed, checks passed) of a trust verification | EU AI Act Art. 12(2)(a), NIST AI RMF MANAGE 4.1 |
 
 ### 9.2 Factor Matrix Semantics for AI
 
@@ -632,6 +759,8 @@ factor semantics. Implementations MUST use these semantics for interoperability.
 | `AI-FAIR.2` | Fairness bound (× 1000) | Measured fairness score (× 1000) | `factor_b - factor_a` |
 | `AI-DATA.1` | Approved dataset hash (first 10 digits) | Actual training hash (first 10 digits) | Match flag (1 = match, 0 = unauthorized) |
 | `AI-DATA.2` | Required license flags (bitmask) | Verified license flags (bitmask) | `factor_b AND factor_a` XOR `factor_a` (0 = compliant) |
+| `AI-DATA.3` | Row count (total samples) | Feature count (dimensions) | Class balance ratio (x1000, e.g., 850 = 85% balance) |
+| `AI-DATA.4` | Records affected (count) | 1 if event completed, 0 if partial/failed | Event type code (0=unspecified, 1=pseudonymization, 2=anonymization, 3=access_restriction, 4=deletion, 5=encryption) |
 | `AI-HITL.1` | Review required flag (1 = yes) | Review completed flag (1 = yes) | `factor_b - factor_a` (0 = compliant) |
 | `AI-HITL.2` | AI recommendation hash (first 10 digits) | Final decision hash (first 10 digits) | Override flag (1 = overridden, 0 = accepted) |
 | `AI-EXPL.1` | Explanation required flag (1 = yes) | Explanation generated flag (1 = yes) | `factor_b - factor_a` (0 = compliant) |
@@ -640,6 +769,26 @@ factor semantics. Implementations MUST use these semantics for interoperability.
 | `AI-ID.1` | 1 (identity asserted) | 1 (identity verified) | 0 (reserved) |
 | `AI-ACC.1` | 1 (access attempted) | 1 if within scope, 0 if out of scope | 1 if granted, 0 if denied |
 | `AI-REV.1` | 1 (revocation event) | 1 (target declared) | Reason code (0=unspecified, 1=model_recall, 2=policy_violation, 3=data_contamination, 4=consent_withdrawal, 5=regulatory_order, 6=error_correction) |
+| `AI-SEC.1` | Detection threshold (threat score x 1000) | Observed threat score (x 1000) | Threat type code (0=none, 1=prompt_injection, 2=data_poisoning, 3=model_extraction, 4=jailbreak, 5=adversarial_input) |
+| `AI-SEC.2` | 1 (validation required) | 1 if validation passed, 0 if rejected | 0 if clean, 1 if sanitized, 2 if blocked |
+| `AI-RAG.1` | Chunk count (number of chunks retrieved) | 1 if corpus_id provided, 0 if anonymous | 0 (reserved) |
+| `AI-RAG.2` | Similarity threshold (x 1000, e.g., 750 = 0.75) | Average similarity (x 1000) | Chunks below threshold count |
+| `AI-MDL.5` | 1 (integrity check required) | 1 if weight hash matches expected, 0 if mismatch | 0 (reserved) |
+| `AI-MDL.6` | Adapter count (number loaded) | 1 if all adapter hashes verified, 0 if any unverified | 0 (reserved) |
+| `AI-MDL.7` | 1 (attestation required) | 1 (attested) | Quantization code (0=FP32, 1=FP16, 2=BF16, 3=INT8, 4=INT4, 5=GPTQ, 6=AWQ, 7=GGUF) |
+| `AI-SKILL.1` | Skill count (number loaded) | 1 if manifest hash matches expected, 0 if mismatch | 0 (reserved) |
+| `AI-SKILL.2` | Memory source count | 1 if all sources identified, 0 if any anonymous | 0 (reserved) |
+| `AI-SKILL.3` | 1 (reward model required) | 1 if reward model identified, 0 if unknown | 0 (reserved) |
+| `AI-CHAIN.1` | Chain depth (position in sequence, 1-based) | 1 if cycle_id bound, 0 if standalone | 1 if handoff accepted, 0 if rejected |
+| `AI-VIO.1` | Violation severity (1=low, 2=medium, 3=high, 4=critical) | 1 if auto-detected, 0 if manually reported | Policy code (0=unspecified, 1=content, 2=access, 3=data, 4=safety, 5=regulatory) |
+| `AI-CHR.1` | 1 (charter required) | 1 if charter hash matches expected, 0 if mismatch | 0 (reserved) |
+| `AI-MDL.8` | 1 (registry check required) | 1 if model found in approved registry, 0 if not found | 0 if approved, 1 if pending review, 2 if denied |
+| `AI-HITL.3` | Reviewer count required (e.g., 2 for four-eyes) | Reviewer count actual | Identity binding method (0=none, 1=session, 2=cryptographic) |
+| `AI-SAFE.1` | 1 (stop mechanism required) | 1 if mechanism exists and tested, 0 if absent | 1 if safe state confirmed after last invocation, 0 if not confirmed |
+| `AI-HW.1` | GPU count (number of accelerators detected) | 1 if all healthy and topology matches expected, 0 if mismatch | Topology code (0=single, 1=multi-gpu/DGX, 2=NVL36/NVL72/multi-node, 3=unknown) |
+| `AI-HW.3` | PCR registers read (count) | 1 if all non-zero (healthy), 0 if uninitialized/tampered | 0 (reserved) |
+| `AI-TRUST.1` | 1 (trust verification performed) | 1 if trust granted, 0 if denied | Trust level (0=denied, 1=basic, 2=verified, 3=attested, 4=sovereign) |
+| `AI-TRUST.2` | Checks performed (count) | Checks passed (count) | 1 if trust granted, 0 if denied |
 
 ### 9.3 Clearing Protocol for AI Systems
 
@@ -670,7 +819,7 @@ For AI-INF procedures, the clearing sequence is:
 ```
 
 After step 5, the implementation retains only the anchor and factor matrix.
-The original prompt and response are irrecoverable from the factors — only
+The original prompt and response are irrecoverable from the factors  --  only
 their hashes are preserved, and SHA-256 is pre-image resistant. This satisfies
 GDPR Article 17 (Right to Erasure) while preserving Article 12 (Transparency)
 of the EU AI Act: you can prove the inference happened and verify its integrity
@@ -751,13 +900,18 @@ or restrict it to non-sensitive fields.
 | Art. 9(4)(a) | Risk management measures operational | AI-GRD.1, AI-GRD.2 |
 | Art. 9(4)(b) | Appropriate testing and validation | AI-MDL.1, AI-MDL.3 |
 | Art. 9(8) | Residual risk mitigation | AI-GRD.2, AI-FAIR.1 |
-| Art. 10 | Data governance | AI-DATA.1, AI-DATA.2 |
+| Art. 10 | Data governance | AI-DATA.1, AI-DATA.2, AI-DATA.3 |
+| Art. 10(5) | Personal data safeguards in training | AI-DATA.4 |
 | Art. 10(2)(f) | Bias examination | AI-FAIR.1, AI-FAIR.2 |
 | Art. 12(1) | Automatic logging capability | AI-INF.1 (all inferences anchored) |
-| Art. 12(2)(a) | Log identification of input/output | AI-INF.1 (input/output hashes) |
-| Art. 13 | Transparency and information | AI-EXPL.1, AI-EXPL.2 |
-| Art. 14 | Human oversight | AI-HITL.1, AI-HITL.2 |
+| Art. 12(2)(a) | Log identification of input/output | AI-INF.1 (input/output hashes), AI-CHAIN.1 (multi-agent tracing) |
+| Art. 12(3)(d) | Identification of natural persons verifying results | AI-HITL.3 |
+| Art. 13 | Transparency and information | AI-EXPL.1, AI-EXPL.2, AI-CHR.1 |
+| Art. 14 | Human oversight | AI-HITL.1, AI-HITL.2, AI-HITL.3 |
 | Art. 14(4)(a) | Ability to override | AI-HITL.2 |
+| Art. 14(4)(e) | Stop button and safe state | AI-SAFE.1 |
+| Art. 14(5) | Four-eyes verification (biometrics) | AI-HITL.3 |
+| Art. 51 | Registration in EU database | AI-MDL.8 |
 | Art. 53(1)(d) | Training data transparency (GPAI) | AI-DATA.2 |
 | Art. 72 | Post-market monitoring | AI-MDL.3, AI-FAIR.1 (continuous) |
 
@@ -769,7 +923,7 @@ or restrict it to non-sensitive fields.
 | GOVERN 1.5 | Ongoing monitoring plans | AI-MDL.3, AI-GRD.1 |
 | GOVERN 1.7 | Privacy and civil liberties | AI-GRD.3, AI-FAIR.1 |
 | MAP 2.3 | Fairness criteria defined | AI-FAIR.2 |
-| MAP 4.1 | Data requirements | AI-DATA.1, AI-DATA.2 |
+| MAP 4.1 | Data requirements | AI-DATA.1, AI-DATA.2, AI-DATA.3 |
 | MEASURE 1.1 | Performance measurement | AI-MDL.3, AI-INF.2 |
 | MEASURE 2.6 | Traceability of outputs | AI-INF.1 |
 | MEASURE 2.9 | Confidence characterization | AI-EXPL.2 |
@@ -777,7 +931,8 @@ or restrict it to non-sensitive fields.
 | MANAGE 1.3 | Deployment integrity | AI-MDL.1, AI-MDL.2 |
 | MANAGE 2.2 | Performance monitoring | AI-INF.2, AI-INF.3 |
 | MANAGE 2.4 | Resource allocation | AI-INF.3 |
-| MANAGE 4.1 | Risk controls operational | AI-GRD.1, AI-GRD.2 |
+| MANAGE 3.2 | Incident detection and response | AI-VIO.1, AI-SEC.1 |
+| MANAGE 4.1 | Post-deployment monitoring plans | AI-HITL.2, AI-TOOL.1, AI-CHAIN.1, AI-SAFE.1 |
 
 ## 10. Security Considerations
 
@@ -860,24 +1015,22 @@ SWT3 and Sovereign Witness Traceability are trademarks of Tenable Nova LLC. Pate
 
 ---
 
-*SWT3: Sovereign Witness Traceability — Provenance, Verification, Clearing.*
+*SWT3: Sovereign Witness Traceability  --  Provenance, Verification, Clearing.*
 
 ## Appendix A: Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0.0 | 2026-02-26 | Initial specification. PPA #1 filed. |
+| 1.0.0 | 2026-02-26 | Initial specification. |
 | 1.1.0 | 2026-03-15 | Canonical fingerprint formula with `WITNESS:` domain separator. Legacy fallback defined. |
-| 1.2.0 | 2026-03-29 | AI Witnessing Profile (Section 9). UCT Extended codes. Protocol Lock (Phase 2). PPA #2 filed. |
+| 1.2.0 | 2026-03-29 | AI Witnessing Profile (Section 9). UCT Extended codes. Protocol Lock (Phase 2). |
 | 1.3.0 | 2026-04-17 | RFC 2119 notation. ABNF grammar. Section numbering fixes. Proposed Standard status. |
+| 1.4.0 | 2026-05-03 | AI-DATA.3 (Training Data Statistics), AI-DATA.4 (Training Data PII Lifecycle). 42 total AI procedures. |
 
 ## Appendix B: Intellectual Property
 
-This specification is covered by the following Provisional Patent Applications:
-- **PPA #1** (Feb 26, 2026): Core protocol — fingerprint formula, factor semantics, Clearing Protocol
-- **PPA #2** (Mar 31, 2026): AI Witness SDKs, clearing engine, Merkle rollups, UCT taxonomy
-- **PPA #3** (Apr 12, 2026): Regulatory translation, agent binding, multi-dimensional risk, portable credentials
-
-The protocol specification is published under Apache 2.0. Implementations are
-free to use, modify, and distribute. The patent protection covers specific
-commercial implementations and platform features, not the protocol itself.
+Certain aspects of the SWT3 protocol and its implementations are covered by
+one or more patent applications held by TeNova Labs. The protocol specification
+is published under Apache 2.0. Implementations are free to use, modify, and
+distribute. Patent protection covers specific commercial implementations and
+platform features, not the open protocol itself.

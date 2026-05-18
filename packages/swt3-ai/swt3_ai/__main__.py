@@ -1,5 +1,10 @@
-"""Allow running `python -m swt3_ai` as a demo."""
+"""Allow running `python -m swt3_ai` or `python -m swt3_ai <command>`."""
 
-from .demo import main
+import sys
 
-main()
+if len(sys.argv) > 1 and sys.argv[1] in ("init", "doctor", "help", "--help", "-h"):
+    from .cli import main
+    main()
+else:
+    from .demo import main
+    main()

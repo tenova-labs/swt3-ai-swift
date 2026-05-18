@@ -29,6 +29,8 @@ export function extractPayloads(
   procedures?: string[],
   agentId?: string,
   signingKey?: string,
+  signingKeyId?: string,
+  signingKeyVersion?: number,
   cycleId?: string,
   policyVersionHash?: string,
   jurisdiction?: string,
@@ -85,7 +87,7 @@ export function extractPayloads(
         payload.ai_context = ctx;
       }
 
-      applyOperationalMetadata(payload, fp, agentId, signingKey, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass, authorizationId);
+      applyOperationalMetadata(payload, fp, agentId, signingKey, signingKeyId, signingKeyVersion, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass, authorizationId);
 
       payloads.push(payload);
     }
@@ -132,7 +134,7 @@ export function extractPayloads(
         payload.ai_context = ctx;
       }
 
-      applyOperationalMetadata(payload, fp, agentId, signingKey, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass, authorizationId);
+      applyOperationalMetadata(payload, fp, agentId, signingKey, signingKeyId, signingKeyVersion, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass, authorizationId);
 
       payloads.push(payload);
     }
@@ -235,7 +237,7 @@ export function extractPayloads(
     applyClearingLevel(payload, record, clearingLevel);
 
     // Operational metadata survives all clearing levels
-    applyOperationalMetadata(payload, fp, agentId, signingKey, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass, authorizationId);
+    applyOperationalMetadata(payload, fp, agentId, signingKey, signingKeyId, signingKeyVersion, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass, authorizationId);
 
     payloads.push(payload);
   }
@@ -249,6 +251,8 @@ function applyOperationalMetadata(
   fingerprint: string,
   agentId?: string,
   signingKey?: string,
+  signingKeyId?: string,
+  signingKeyVersion?: number,
   cycleId?: string,
   policyVersionHash?: string,
   jurisdiction?: string,
@@ -263,7 +267,11 @@ function applyOperationalMetadata(
   if (legalBasis) payload.legal_basis = legalBasis;
   if (purposeClass) payload.purpose_class = purposeClass;
   if (authorizationId) payload.authorization_id = authorizationId;
-  if (signingKey) payload.payload_signature = signPayload(signingKey, fingerprint, agentId);
+  if (signingKey) {
+    payload.payload_signature = signPayload(signingKey, fingerprint, agentId);
+    if (signingKeyId) payload.signing_key_id = signingKeyId;
+    if (signingKeyVersion !== undefined) payload.signing_key_version = signingKeyVersion;
+  }
 }
 
 /**
@@ -341,6 +349,8 @@ export function extractGatekeeperPayload(
   clearingLevel: 0 | 1 | 2 | 3,
   agentId?: string,
   signingKey?: string,
+  signingKeyId?: string,
+  signingKeyVersion?: number,
   cycleId?: string,
   policyVersionHash?: string,
   jurisdiction?: string,
@@ -364,7 +374,7 @@ export function extractGatekeeperPayload(
     fingerprint_timestamp_ms: ts,
   };
 
-  applyOperationalMetadata(payload, fp, agentId, signingKey, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass);
+  applyOperationalMetadata(payload, fp, agentId, signingKey, signingKeyId, signingKeyVersion, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass);
 
   return payload;
 }
@@ -394,6 +404,8 @@ export function extractRevocationPayload(
   clearingLevel: 0 | 1 | 2 | 3,
   agentId?: string,
   signingKey?: string,
+  signingKeyId?: string,
+  signingKeyVersion?: number,
   cycleId?: string,
   policyVersionHash?: string,
   jurisdiction?: string,
@@ -420,7 +432,7 @@ export function extractRevocationPayload(
     revocation_reason: reason,
   };
 
-  applyOperationalMetadata(payload, fp, agentId, signingKey, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass);
+  applyOperationalMetadata(payload, fp, agentId, signingKey, signingKeyId, signingKeyVersion, cycleId, policyVersionHash, jurisdiction, legalBasis, purposeClass);
 
   return payload;
 }

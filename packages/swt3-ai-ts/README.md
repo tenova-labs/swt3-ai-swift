@@ -3,6 +3,7 @@ Witness your AI. Prove it followed the rules. Cryptographic accountability for e
 [![npm](https://img.shields.io/npm/v/@tenova/swt3-ai)](https://www.npmjs.com/package/@tenova/swt3-ai)
 [![Downloads](https://img.shields.io/npm/dm/@tenova/swt3-ai)](https://www.npmjs.com/package/@tenova/swt3-ai)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/tenova-labs/swt3-ai/blob/main/LICENSE)
+[![MCP Registry](https://img.shields.io/badge/MCP_Registry-io.tenova%2Fswt3--witness-blue)](https://www.npmjs.com/package/@tenova/swt3-mcp)
 
 # @tenova/swt3-ai
 
@@ -10,7 +11,53 @@ Witness your AI. Prove it followed the rules. Cryptographic accountability for e
 
 Works with OpenAI, Anthropic, AWS Bedrock, Vercel AI SDK, and any OpenAI-compatible endpoint (vLLM, Ollama, Azure, Llama.cpp).
 
-EU AI Act high-risk obligations take effect **August 2, 2026**. This SDK gives you the evidence chain.
+GPAI transparency obligations are enforceable now. EU AI Act high-risk enforcement begins **December 2, 2027**. This SDK gives you the evidence chain.
+
+## MCP Server -- Official Registry
+
+`@tenova/swt3-mcp` is listed on the official Model Context Protocol Registry as `io.tenova/swt3-witness`. Zero-config compliance governance for Claude Code, Cursor, Windsurf, and any MCP-compatible host.
+
+```json
+{
+  "mcpServers": {
+    "swt3-witness": {
+      "command": "npx",
+      "args": ["@tenova/swt3-mcp"]
+    }
+  }
+}
+```
+
+Every tool call your agent makes is witnessed, Merkle-accumulated, and trust-evaluated. No code changes required. [Quick Start](https://www.npmjs.com/package/@tenova/swt3-mcp)
+
+## Secure Agent-to-Agent Communication
+
+The SWT3 Trust Mesh enables mutual cryptographic verification between AI agents before they exchange data, invoke tools, or share context.
+
+```typescript
+// Agent A presents its compliance credential
+const credential = witnessA.presentCredential();
+
+// Agent B verifies Agent A's trust level, signing, and procedures
+const result = witnessB.verifyTrust(credential);
+if (!result.granted) {
+  console.log(`Denied: ${result.denialReason}`);
+}
+```
+
+Configure trust boundaries declaratively in `.swt3.yaml`:
+
+```yaml
+trust_mesh:
+  mode: strict
+  min_trust_level: 2
+  require_signature: true
+  freshness_window: 3600
+  trusted_tenants: ["PARTNER_A", "PARTNER_B"]
+  deny_agents: ["revoked-agent-id"]
+```
+
+All verification is local. Zero cloud overhead. No data exchanged until both agents clear the trust gate. Partners that want to interact with your agents through MCP must initialize the SWT3 witness layer on their side -- compliance becomes the connection protocol.
 
 ## See It Work (No Account Needed)
 
@@ -159,6 +206,164 @@ This happens automatically. No configuration needed. The system prompt hash is e
 
 The hash is included at clearing levels 0 and 1, stripped at levels 2 and 3.
 
+## RAG Context Witnessing
+
+New in v0.4.3. Witness what context chunks your RAG pipeline retrieves, from which corpus, and how relevant they are. Chunk text is never transmitted -- only SHA-256 hashes.
+
+```typescript
+// Zero-friction: pass raw strings, SDK handles hashing
+witness.witnessRagContext({
+  chunks: ["chunk text 1", "chunk text 2", "chunk text 3"],
+  corpusId: "legal-docs-v3",
+});
+```
+
+This mints an AI-RAG.1 (Context Retrieval Provenance) anchor. Add similarity scores to also get AI-RAG.2 (Context Relevance):
+
+```typescript
+import type { RagChunk } from "@tenova/swt3-ai";
+
+witness.witnessRagContext({
+  chunks: [
+    { contentHash: "abc123...", sourceId: "doc-7/p3", similarityScore: 0.92 },
+    { contentHash: "def456...", sourceId: "doc-2/p1", similarityScore: 0.78 },
+    { contentHash: "789abc...", sourceId: "doc-4/p2", similarityScore: 0.61 },
+  ],
+  corpusId: "legal-docs-v3",
+  embeddingModel: "text-embedding-3-small",
+  similarityThreshold: 0.75,  // triggers AI-RAG.2
+});
+```
+
+One call. Two procedures. Complete retrieval attestation.
+
+Maps to: EU AI Act Art. 12(2)(a) (reference database logging), Art. 10(2) (data quality), NIST AI RMF MAP 3.5 (data provenance).
+
+## Model Weight Integrity
+
+Witness the actual model weights, not just the model name string:
+
+```typescript
+// File path: SDK hashes automatically
+witness.witnessModelWeights("/models/llama-3.1-70b.safetensors");
+
+// Pre-computed hash with verification
+witness.witnessModelWeights(
+  { fileHash: "abc123...", format: "safetensors" },
+  { expectedHash: "abc123..." },  // PASS if match, FAIL if mismatch
+);
+
+// Adapter stack + quantization
+witness.witnessAdapterStack(
+  [{ name: "lora-legal", adapterHash: "aaa111" }],
+  "llama-3.1-70b",
+);
+witness.witnessQuantization("gptq", { bits: 4, groupSize: 128 });
+```
+
+Maps to: EU AI Act Art. 15(4) (resilience against modification), Art. 12(2)(b) (version logging).
+
+## TPM Platform Attestation (AI-HW.3)
+
+Prove host firmware integrity via TPM 2.0. Reads PCR registers 0-7 and mints a hardware root-of-trust anchor. All raw values are SHA-256 hashed before leaving the module:
+
+```typescript
+// Auto-detect: reads /dev/tpm0 via tpm2-tools
+witness.witnessTPMAttestation();
+
+// Or provide a pre-computed snapshot
+import { queryTPM } from "@tenova/swt3-ai";
+const snapshot = queryTPM();
+witness.witnessTPMAttestation({ snapshot });
+```
+
+If no TPM is available (cloud VM, dev machine), returns a valid anchor with factor_a=0. No crash, no error. Graceful degradation by design.
+
+Use case: sovereign/air-gapped deployments where you must prove the host was not tampered with. Combined with AI-HW.1 (GPU inventory), gives full hardware root-of-trust from silicon to model.
+
+Maps to: NIST 800-53 SC-12 (cryptographic key establishment). Patent pending.
+
+## Environmental Attestation (Residential and Edge AI)
+
+Witness the physical compute environment for distributed, edge-deployed, or residential AI nodes. Proves the hardware operated within safe thermal and power bounds during inference:
+
+```typescript
+// Zero-config: auto-detects Linux thermal sensors
+witness.witnessEnvironment();
+
+// Manual readings from smart panel APIs or IPMI
+witness.witnessEnvironment({
+  temperatureCelsius: 42,
+  thresholdCelsius: 75,
+  nodeType: "residential",
+});
+
+// Power integrity: draw vs capacity
+witness.witnessEnergyDraw({
+  powerWatts: 1200,
+  capacityWatts: 2400,
+  nodeType: "edge",
+});
+```
+
+If no sensors are available (dev machine, cloud VM), returns a valid anchor with zero readings. No crash, no error.
+
+Use case: enterprises renting compute on distributed residential nodes need cryptographic proof that the node was operating within safe bounds, was not throttled, and was not physically tampered with during their inference window.
+
+Maps to: NIST 800-53 PE-14 (environmental controls), EU AI Act Annex I (product safety for home-integrated AI).
+
+## Skill Manifest Attestation
+
+Witness which skills, tools, and plugins are loaded in your agent:
+
+```typescript
+// Zero-friction: just names
+witness.witnessSkillManifest(["code_exec", "web_search", "file_read"]);
+
+// Memory context
+witness.witnessMemoryContext([
+  { sourceType: "vector_store", sourceId: "pinecone-prod" },
+  { sourceType: "conversation", sourceId: "session-123" },
+]);
+
+// Reward model binding
+witness.witnessRewardModel("rm-v3-legal", { method: "dpo" });
+```
+
+Maps to: EU AI Act Art. 12(2)(b) (capability tracking), NIST AI RMF GOVERN 1.7 (capability documentation).
+
+## Multi-Agent Chains, Violations, and Safety (v0.5.0)
+
+New in v0.5.0. Convenience methods for 8 additional procedures covering multi-agent orchestration, policy enforcement, human oversight, and training data governance:
+
+```typescript
+// Multi-agent chain handoff (AI-CHAIN.1)
+witness.witnessChainHandoff(3, "step-2-reviewer");
+
+// Policy violation reporting (AI-VIO.1)
+witness.witnessViolation(3, "PII in output", { autoDetected: true, policyCategory: "data" });
+
+// Agent charter attestation (AI-CHR.1)
+witness.witnessCharter({ charterText: "You are a fraud detection assistant..." });
+
+// Model registry check (AI-MDL.8)
+witness.witnessModelRegistry("gpt-4o-2025-04-16", "eu-approved-models-v3");
+
+// Reviewer identity binding for four-eyes rule (AI-HITL.3)
+witness.witnessReviewerIdentity(2, 2, { method: "cryptographic" });
+
+// Safe state attestation (AI-SAFE.1)
+witness.witnessSafeState({ mechanismExists: true, safeStateConfirmed: true });
+
+// Training data statistics (AI-DATA.3)
+witness.witnessTrainingStats(50000, 128, { classBalanceRatio: 0.85 });
+
+// Training data PII lifecycle (AI-DATA.4)
+witness.witnessTrainingPiiLifecycle(10000, { eventType: "pseudonymization", datasetId: "training-v3" });
+```
+
+Maps to: EU AI Act Art. 10(3), Art. 10(5), Art. 12(2)(a), Art. 12(3)(d), Art. 13, Art. 14(4)(e), Art. 14(5), Art. 51. NIST AI RMF MANAGE 3.2, MANAGE 4.1, GOVERN 1.2.
+
 ## Agent Identity
 
 Bind a unique identity to every anchor your agent produces:
@@ -173,10 +378,154 @@ const witness = new Witness({
 });
 ```
 
-The `agentId` survives all clearing levels. The `signingKey` produces a cryptographic signature on every anchor, proving which agent instance created it. This enables:
+The `agentId` survives all clearing levels. The `signingKey` produces an HMAC-SHA256 signature on every anchor, proving which agent instance created it. When a signing key is registered server-side, the server validates the signature on ingestion and rejects tampered payloads. This enables:
+- **Payload authenticity** -- server verifies the SDK that minted the anchor held the registered secret
+- **Tamper detection** -- any modification after signing causes rejection (422)
 - Per-agent compliance passports
 - Fleet-wide governance dashboards
 - Agent-scoped evidence packages for auditors
+
+Receipts include `signature_verified: true` when the server confirms the signature.
+
+## Trust Mesh (Mutual Agent Verification)
+
+Before two agents exchange data or invoke each other's tools, each verifies the other's compliance posture. No anchor, no handshake.
+
+```typescript
+// Agent A: present a signed credential
+const credentialA = witnessA.presentCredential();
+// Send credentialA to Agent B over your transport layer
+
+// Agent B: verify Agent A's credential
+witnessB.trustRegistry.trustTenant("TENANT_A");
+witnessB.trustRegistry.registerSigningKey("agent-alpha", "shared-secret-a");
+const result = witnessB.verifyTrust(credentialA);
+
+if (result.granted) {
+  // Trust level: 1=basic, 2=verified, 3=attested, 4=sovereign
+  console.log(`Trusted at level ${result.trustLevel}`);
+} else {
+  console.log(`Denied: ${result.denialReason}`);
+}
+```
+
+**Trust levels:**
+
+| Level | Name | Requires |
+|-------|------|----------|
+| 1 | Basic | Valid credential, unsigned or unverifiable |
+| 2 | Verified | Valid credential + verified HMAC signature |
+| 3 | Attested | Verified + hardware attestation + guardrails |
+| 4 | Sovereign | Attested + clearing level >= 2 |
+
+Unsigned credentials are automatically capped at TRUST_BASIC. You cannot claim a higher trust level without a verified signature.
+
+**Key exchange:** Exchange signing keys out-of-band (environment variables, secrets manager, KMS). Never send keys over the wire alongside credentials. Each agent registers the counterpart's key:
+
+```typescript
+// Agent A registers B's key, B registers A's key
+witnessA.trustRegistry.registerSigningKey("agent-beta", process.env.AGENT_B_KEY!);
+witnessB.trustRegistry.registerSigningKey("agent-alpha", process.env.AGENT_A_KEY!);
+```
+
+**Zero-friction path:** Trust mesh works without signing keys. Agents without keys get TRUST_BASIC (level 1), which is sufficient for non-sensitive coordination. Add keys when you need verified or attested trust.
+
+**Credential auto-population:** `presentCredential()` automatically includes which procedures the agent has witnessed and whether hardware attestation (AI-HW.1 or AI-HW.3) has been performed. No manual tracking needed.
+
+Every verification (pass or fail) mints AI-TRUST.1 + AI-TRUST.2 anchors. Denials produce evidence too.
+
+Maps to: EU AI Act Art. 14 (human oversight and mutual accountability between AI systems).
+
+## Policy-as-Code (swt3.yaml)
+
+New in v0.5.2. Define your entire witnessing policy in a YAML file instead of passing 25+ constructor parameters:
+
+```bash
+npx swt3 init          # interactive profile picker
+npx swt3 init --profile eu-ai-act-high-risk --tenant ACME
+```
+
+This generates a `swt3.yaml` file. Then load it:
+
+```typescript
+const witness = Witness.fromConfig();              // auto-finds swt3.yaml
+const witness = Witness.fromConfig("prod.yaml");   // explicit path
+```
+
+### File Composition (extends)
+
+Layer configs for environment-specific overrides:
+
+```yaml
+# prod.yaml
+extends: base.yaml
+clearing_level: 2
+signing_key_env: SWT3_SIGNING_KEY
+```
+
+Supports single files or chains (`extends: [base.yaml, team.yaml]`). Merge order: extends < profile < explicit config. Cycle detection and depth limit (10) built in.
+
+### Built-in Profiles
+
+Three profiles ship with the SDK:
+
+| Profile | Use Case |
+|---------|----------|
+| `eu-ai-act-high-risk` | EU AI Act high-risk: clearing 2, signing required, jurisdiction required |
+| `nist-ai-rmf` | NIST AI RMF: full procedure coverage, moderate policy |
+| `minimal` | Development: clearing 0, no policy enforcement |
+
+### Diagnostics
+
+```bash
+npx swt3 doctor        # 8 checks: YAML, env vars, profile, extends, sections
+npx swt3 doctor --json  # machine-readable for CI/CD
+```
+
+### Schema Validation
+
+Validate config files programmatically:
+
+```typescript
+import { validateSchema } from "@tenova/swt3-ai";
+
+const result = validateSchema(parsedYaml);
+if (!result.valid) {
+  console.error(result.errors);
+}
+```
+
+## Merkle Accumulator (Session-Level Integrity)
+
+New in v0.5.2. Compute Merkle roots over batches of anchors for tamper-evident session integrity:
+
+```typescript
+import { MerkleAccumulator, verifyMerkleProof } from "@tenova/swt3-ai";
+
+const acc = new MerkleAccumulator({ tenantId: "ACME" });
+
+// Accumulate fingerprints as anchors are minted
+acc.add("abc123def456");
+acc.add("789012345678");
+
+// Compute session root (persisted to JSONL automatically)
+const session = acc.flush();
+console.log(session.root);  // 64-char hex Merkle root
+
+// Generate an inclusion proof for any fingerprint
+const proof = acc.prove("abc123def456");
+console.log(verifyMerkleProof("abc123def456", proof));  // true
+```
+
+Enable via config:
+
+```yaml
+merkle:
+  enabled: true
+  accumulator_interval: 0  # 0 = compute on every flush
+```
+
+Cross-language parity with Python SDK. Domain-separated (SWT3:LEAF: / SWT3:NODE:) to prevent second-preimage attacks.
 
 ## Gatekeeper Mode (Pre-Call Enforcement)
 
@@ -245,7 +594,7 @@ const witness = new Witness({
 });
 ```
 
-The SDK hashes the policy version string (SHA-256, first 12 characters) and includes it in every payload. When policies change between audit periods, the hash changes — proving which rules were in effect for each inference.
+The SDK hashes the policy version string (SHA-256, first 12 characters) and includes it in every payload. When policies change between audit periods, the hash changes -proving which rules were in effect for each inference.
 
 ## What Gets Witnessed
 
@@ -265,24 +614,24 @@ Each inference produces anchors for these checks. Every check maps to a regulati
 
 ### EU AI Act Article Mapping
 
-All 12 SWT3 AI witnessing procedures map to specific EU AI Act obligations:
+All 43 SWT3 AI witnessing procedures map to specific EU AI Act obligations:
 
 | Procedure | EU AI Act Article | Obligation | Demo | Production |
 |-----------|-------------------|------------|------|------------|
 | AI-INF.1 | Art. 12(1) | Automatic Logging of Use Periods | ✓ | ✓ |
-| AI-INF.2 | Art. 15(3) | Performance Consistency Monitoring | — | ✓ |
-| AI-INF.3 | Art. 12(1) | Volume & Usage Logging | — | ✓ |
+| AI-INF.2 | Art. 15(3) | Performance Consistency Monitoring | -| ✓ |
+| AI-INF.3 | Art. 12(1) | Volume & Usage Logging | -| ✓ |
 | AI-MDL.1 | Art. 9(4a) | Model Risk Identification | ✓ | ✓ |
-| AI-MDL.2 | Art. 12(2b) | Version & Lineage Tracking | — | ✓ |
-| AI-MDL.3 | Art. 72(1) | Post-Market Drift Monitoring | — | ✓ |
-| AI-MDL.4 | Art. 15(4) | Feedback Loop Isolation | — | ✓ |
+| AI-MDL.2 | Art. 12(2b) | Version & Lineage Tracking | -| ✓ |
+| AI-MDL.3 | Art. 72(1) | Post-Market Drift Monitoring | -| ✓ |
+| AI-MDL.4 | Art. 15(4) | Feedback Loop Isolation | -| ✓ |
 | AI-GRD.1 | Art. 9(2a) | Risk Mitigation Measures | ✓ | ✓ |
-| AI-GRD.2 | Art. 9(4b) | Content Safety Filtering | — | ✓ |
-| AI-GRD.3 | Art. 10(2f) | PII & Data Protection | — | ✓ |
-| AI-EXPL.1 | Art. 13(1) | Transparency & Explainability | — | ✓ |
-| AI-EXPL.2 | Art. 13(3b) | Confidence Calibration | — | ✓ |
+| AI-GRD.2 | Art. 9(4b) | Content Safety Filtering | -| ✓ |
+| AI-GRD.3 | Art. 10(2f) | PII & Data Protection | -| ✓ |
+| AI-EXPL.1 | Art. 13(1) | Transparency & Explainability | -| ✓ |
+| AI-EXPL.2 | Art. 13(3b) | Confidence Calibration | -| ✓ |
 
-The demo demonstrates 3 procedures using simulated data. All 12 are available in production with real inference data. [See live conformity →](https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public)
+The demo demonstrates 5 procedures using simulated data. All 43 are available in production with real inference data. 38 cross-language test vectors ensure fingerprint parity across Python, TypeScript, Rust, C#, and Ruby. [See live conformity →](https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public)
 
 ## How Verdicts Work
 
@@ -441,7 +790,7 @@ const witness = new Witness({
 | `maxRetries` | 3 | Retries before dead-letter |
 | `guardrailNames` | [] | Active guardrail names |
 | `agentId` | - | Agent identity (survives all clearing levels) |
-| `signingKey` | - | HMAC-SHA256 key for payload signing |
+| `signingKey` | - | HMAC-SHA256 key for payload signing (register server-side for validation) |
 | `cycleId` | - | Multi-agent chain link (survives all clearing levels) |
 | `policyVersion` | - | Policy config identifier (hashed in payloads) |
 | `strict` | false | Gatekeeper mode: block inference if guardrails insufficient |
@@ -524,6 +873,39 @@ This SDK produces identical fingerprints to the Python SDK (`swt3-ai`). A unifie
 ## Privacy
 
 Your prompts and responses **never leave your infrastructure**. The SDK computes SHA-256 hashes locally and transmits only irreversible hashes and numeric factors. At Clearing Level 3, even the model name is hashed. The witness endpoint is a blind registrar: it stores cryptographic proofs, not your data.
+
+---
+
+## Upgrading to v0.5.2
+
+**Policy-as-Code (new):** `swt3 init`, `swt3 doctor`, `extends:` composition, profile templates, YAML schema validator. No breaking changes.
+
+**Merkle Accumulator (new):** `MerkleAccumulator` class for session-level integrity proofs. `merkle:` config section. No breaking changes.
+
+**Trust Mesh (v0.5.0):** `presentCredential()` and `verifyTrust()`. No breaking changes for existing code.
+
+**Credential signing (behavioral change):** If your Witness has a `signingKey`, credentials are now HMAC-signed automatically. Counterpart agents must register your key via `trustRegistry.registerSigningKey()` to verify the signature. Without key registration, signed credentials are denied with `signature_unverifiable`.
+
+**TPM attestation (v0.5.2):** `witnessTPMAttestation()` for AI-HW.3. Reads PCR registers via tpm2-tools. Graceful degradation without TPM. No breaking changes.
+
+**Environmental attestation (v0.5.0):** `witnessEnvironment()` and `witnessEnergyDraw()` for AI-ENV.1/AI-ENV.2. No breaking changes.
+
+**MCP server:** 16 procedure keyword suggestions (was 8). MCP policy section in swt3.yaml. No breaking changes.
+
+---
+
+## Documentation
+
+- [SDK Reference](https://sovereign.tenova.io/docs/) -- full API, all providers, clearing levels, configuration
+- [10-Minute Quickstart](https://sovereign.tenova.io/guides/ai-witness-quickstart.html) -- from install to first anchor
+- [SWT3 Protocol Spec](https://sovereign.tenova.io/guides/swt3-protocol.html) -- formal specification with ABNF grammar
+- [Design Rationale](https://sovereign.tenova.io/guides/swt3-design-rationale.html) -- why every protocol decision was made
+- [UCT Registry](https://sovereign.tenova.io/registry) -- 162 procedures, full factor definitions
+- [Anchor Verifier](https://sovereign.tenova.io/verify) -- verify any anchor, zero server calls
+- [EU AI Act Regulatory Architecture](https://sovereign.tenova.io/guides/futurium-submission.html) -- VI+CJT+ALF+LAVR framework mapping for conformity assessment bodies
+- [Five Eyes Agentic AI Overlay](https://sovereign.tenova.io/guides/five-eyes-overlay.html) -- CISA/NSA guidance mapped to SWT3 procedures
+- [CMMC Compliance Overlay](https://sovereign.tenova.io/guides/cmmc-overlay.html) -- clearing levels mapped to CMMC and NIST 800-171
+- [SR 11-7 Model Risk Overlay](https://sovereign.tenova.io/guides/sr-11-7-overlay.html) -- clearing levels mapped to SR 11-7 requirements
 
 ---
 

@@ -11,6 +11,7 @@
  */
 
 import type { WitnessConfig, WitnessPayload, WitnessReceipt, BatchResponse } from "./types.js";
+import type { WriteAheadLog } from "./wal.js";
 
 const DEFAULT_MAX_RETRY_BUFFER = 5000;
 
@@ -24,20 +25,44 @@ export class WitnessBuffer {
   private stopped = false;
   private consecutiveFailures = 0;
   private ctaShown = false;
+  private tokenAccumulator = 0;
   private onFlush?: (payloads: WitnessPayload[], receipts: WitnessReceipt[]) => void;
+  private wal: WriteAheadLog | null = null;
+  private walSeqMap: Map<WitnessPayload, number> = new Map();
 
-  constructor(config: WitnessConfig, maxRetryBuffer = DEFAULT_MAX_RETRY_BUFFER) {
+  constructor(config: WitnessConfig, maxRetryBuffer = DEFAULT_MAX_RETRY_BUFFER, wal?: WriteAheadLog) {
     this.config = config;
     this.maxRetryBuffer = maxRetryBuffer;
     this.onFlush = config.onFlush;
+    this.wal = wal ?? null;
     this.startTimer();
+  }
+
+  /** Cumulative tokens accumulated since last flush (for token_budget monitoring). */
+  get tokensSinceFlush(): number {
+    return this.tokenAccumulator;
   }
 
   /** Add a single payload to the buffer. */
   enqueue(payload: WitnessPayload): void {
     if (this.stopped) return;
+
+    // WAL: replay protection (reject duplicates) + persist to disk
+    if (this.wal) {
+      const seq = this.wal.append(payload);
+      if (seq === -1) {
+        // Duplicate fingerprint -- silently skip
+        return;
+      }
+      this.walSeqMap.set(payload, seq);
+    }
+
+    // Track token accumulation for tokenBudget flush trigger
+    const tokens = (payload.ai_input_tokens ?? 0) + (payload.ai_output_tokens ?? 0);
+    if (tokens > 0) this.tokenAccumulator += tokens;
     this.queue.push(payload);
-    if (this.queue.length >= this.config.bufferSize) {
+    const tokenBudgetHit = this.config.tokenBudget != null && this.tokenAccumulator >= this.config.tokenBudget;
+    if (this.queue.length >= this.config.bufferSize || tokenBudgetHit) {
       this.flushInternal();
     }
   }
@@ -101,6 +126,7 @@ export class WitnessBuffer {
     const payloads = [...this.deadLetter, ...this.queue];
     this.deadLetter = [];
     this.queue = [];
+    this.tokenAccumulator = 0;
 
     if (payloads.length === 0) return [];
 
@@ -136,7 +162,9 @@ export class WitnessBuffer {
         if (resp.status >= 400 && resp.status < 500) {
           // Client error — don't retry, don't dead-letter
           const text = await resp.text();
-          console.error(`[swt3-ai] Batch flush failed (${resp.status}): ${text.slice(0, 200)}`);
+          // Scrub any key material that might appear in error response body
+          const safe = text.replace(/(?:Bearer|Authorization|api[_-]?key|signing[_-]?key)\s*[^\s,;"]{4,}/gi, "[REDACTED]");
+          console.error(`[swt3-ai] Batch flush failed (${resp.status}): ${safe.slice(0, 200)}`);
           return [];
         }
 
@@ -145,6 +173,17 @@ export class WitnessBuffer {
         const receipts: WitnessReceipt[] = result.receipts ?? [];
         this.allReceipts.push(...receipts);
         this.consecutiveFailures = 0;
+
+        // WAL: mark flushed entries
+        if (this.wal) {
+          let maxSeq = 0;
+          for (const p of payloads) {
+            const s = this.walSeqMap.get(p);
+            if (s !== undefined && s > maxSeq) maxSeq = s;
+            this.walSeqMap.delete(p);
+          }
+          if (maxSeq > 0) this.wal.markFlushed(maxSeq);
+        }
 
         if (result.rejected > 0) {
           console.warn(
@@ -157,7 +196,7 @@ export class WitnessBuffer {
           console.info(
             `\n  [SWT3] ${result.accepted} anchors delivered to ${this.config.endpoint}` +
             `\n  [SWT3] Dashboard & audit reports \u2192 https://sovereign.tenova.io/signup?ref=sdk` +
-            `\n  [SWT3] EU AI Act deadline: Aug 2, 2026. Is your AI ready?\n`
+            `\n  [SWT3] EU AI Act high-risk deadline: Dec 2, 2027. GPAI obligations enforceable now.\n`
           );
         }
 

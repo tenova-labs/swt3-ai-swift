@@ -10,9 +10,9 @@
 
 ## The Problem
 
-AI agents are making production decisions: approving loans, triaging patients, managing infrastructure, writing code. When something goes wrong, there is no tamper-proof audit trail. Logs are mutable. Metrics are averaged. Nobody can prove what the agent actually did.
+AI agents are making production decisions: approving loans, triaging patients, managing infrastructure, writing code. In 2026, 65% of firms reported AI agent security incidents. Only 14.4% of agents go live with full security approval. When something goes wrong, there is no tamper-proof audit trail. Logs are mutable. Metrics are averaged. Nobody can prove what the agent actually did.
 
-The EU AI Act (enforcement: August 2, 2026) requires provable evidence that high-risk AI systems operate within approved parameters. NIST AI RMF, SR 11-7, and CMMC impose similar obligations. Most teams have nothing but dashboards and hope.
+GPAI transparency obligations are enforceable now. EU AI Act high-risk enforcement begins December 2, 2027. NIST AI RMF, SR 11-7, and CMMC impose similar obligations. 72% of enterprises believe they have AI governance but lack actual control. Most teams have nothing but dashboards and hope.
 
 ## The Protocol
 
@@ -54,11 +54,11 @@ response = client.chat.completions.create(
 )
 ```
 
-Works with OpenAI, Anthropic, Vercel AI SDK, and any OpenAI-compatible endpoint (vLLM, Ollama, Azure OpenAI).
+Works with OpenAI, Anthropic, AWS Bedrock, Vercel AI SDK, LangChain, LiteLLM (100+ providers), and any OpenAI-compatible endpoint (vLLM, Ollama, Azure OpenAI).
 
 ## What Gets Witnessed
 
-Each inference produces anchors for these procedures:
+Each inference produces anchors across 40 AI procedures spanning 20 domains:
 
 | Procedure | Domain | What It Proves | Regulatory Mapping |
 |-----------|--------|---------------|-------------------|
@@ -66,10 +66,34 @@ Each inference produces anchors for these procedures:
 | AI-INF.2 | Inference | Latency within threshold (detects model swaps) | NIST AI RMF MEASURE 2.6 |
 | AI-MDL.1 | Model | Deployed model matches approved hash (integrity) | EU AI Act Art. 9 |
 | AI-MDL.2 | Model | Model version identifier recorded (tracking) | EU AI Act Art. 72 |
-| AI-GRD.1 | Guardrail | Required safety filters were active (enforcement) | NIST AI RMF MANAGE 4.1 |
+| AI-MDL.5 | Model | Weight file SHA-256 verified (tamper detection) | EU AI Act Art. 15(4) |
+| AI-MDL.6 | Model | LoRA/PEFT adapter stack attested | EU AI Act Art. 12(2)(b) |
+| AI-MDL.7 | Model | Quantization method recorded | EU AI Act Art. 15(3) |
+| AI-GRD.1 | Guardrail | Required safety filters were active (enforcement) | NIST AI RMF GOVERN 1.5 |
 | AI-GRD.2 | Safety | No content filter or refusal triggered | EU AI Act Art. 14 |
+| AI-GRD.3 | Gatekeeper | Pre-call guardrail gate enforced | EU AI Act Art. 9(2) |
+| AI-RAG.1 | Retrieval | RAG context chunks and corpus attested | EU AI Act Art. 12(2)(a) |
+| AI-RAG.2 | Retrieval | Retrieval relevance scoring verified | EU AI Act Art. 10(2) |
 | AI-TOOL.1 | Tool Use | Agent tool/function call recorded (latency, success) | NIST AI RMF MANAGE 4.1 |
 | AI-ID.1 | Identity | Witness instance identity attested (agent accountability) | EU AI Act Art. 13 |
+| AI-ACC.1 | Access | Resource access granted or denied with scope | EU AI Act Art. 9(4)(c) |
+| AI-REV.1 | Revocation | Previously-issued anchor revoked with reason | EU AI Act Art. 12(3) |
+| AI-SEC.1 | Security | Adversarial threat detection performed | EU AI Act Art. 15(4) |
+| AI-SEC.2 | Security | Input validated and sanitized before inference | EU AI Act Art. 15(3) |
+| AI-SKILL.1 | Skills | Loaded skill/tool/plugin manifest attested | EU AI Act Art. 12(2)(b) |
+| AI-SKILL.2 | Memory | Active memory sources bound to decision | EU AI Act Art. 12(2)(a) |
+| AI-SKILL.3 | Alignment | RLHF/DPO reward model binding recorded | EU AI Act Art. 9(4)(a) |
+| AI-CHAIN.1 | Chain | Multi-agent handoff witnessed with cycle tracking | EU AI Act Art. 12(2)(a) |
+| AI-VIO.1 | Violation | Policy violation detected during inference | EU AI Act Art. 9(4)(a) |
+| AI-CHR.1 | Charter | Agent charter/system prompt hash attested | EU AI Act Art. 13 |
+| AI-MDL.8 | Model | Model verified against approved registry | EU AI Act Art. 51 |
+| AI-HITL.3 | Oversight | Reviewer identity bound to human review | EU AI Act Art. 12(3)(d) |
+| AI-SAFE.1 | Safety | Stop mechanism tested, safe state confirmed | EU AI Act Art. 14(4)(e) |
+| AI-HW.1 | Hardware | GPU/accelerator inventory attested at startup | EU AI Act Art. 15(4) |
+| AI-TRUST.1 | Trust | Mutual compliance trust verified between agents | EU AI Act Art. 9(4)(c) |
+| AI-TRUST.2 | Trust | Trust handshake details recorded | EU AI Act Art. 12(2)(a) |
+
+Plus 9 additional procedures covering fairness, explainability, training data, and bias measurement. See the [full procedure registry](packages/libswt3/SWT3-SPEC-v1.0.md).
 
 ## View an Anchor
 
@@ -117,8 +141,12 @@ At Level 1+, raw prompts and responses **never leave your infrastructure**.
 |----------|---------|---------|
 | Python | [`swt3-ai`](https://pypi.org/project/swt3-ai/) | `pip install swt3-ai` |
 | TypeScript | [`@tenova/swt3-ai`](https://www.npmjs.com/package/@tenova/swt3-ai) | `npm install @tenova/swt3-ai` |
+| Rust | [`swt3-ai`](https://crates.io/crates/swt3-ai) | `cargo add swt3-ai` |
+| C# | [`swt3-ai`](https://www.nuget.org/packages/swt3-ai) | `dotnet add package swt3-ai` |
+| Ruby | [`swt3-ai`](https://rubygems.org/gems/swt3-ai) | `gem install swt3-ai` |
+| MCP Server | [`@tenova/swt3-mcp`](https://www.npmjs.com/package/@tenova/swt3-mcp) | `npx @tenova/swt3-mcp` |
 
-Both SDKs produce identical SWT3 fingerprints. 10 cross-language test vectors validated at build time.
+Both SDKs produce identical SWT3 fingerprints. 21 cross-language test vectors validated at build time.
 
 ## Get Started
 
@@ -130,7 +158,7 @@ Both SDKs produce identical SWT3 fingerprints. 10 cross-language test vectors va
 
 | Framework | Coverage |
 |-----------|----------|
-| EU AI Act | Articles 9, 10, 12, 13, 14, 53, 72 |
+| EU AI Act | Articles 9, 10, 12, 13, 14, 15, 50, 51, 53, 72 |
 | NIST AI RMF | GOVERN, MAP, MEASURE, MANAGE (10 subcategories) |
 | NIST 800-53 | SI-7, AU-2, AU-3, AC controls |
 | CMMC v2.0 | Level 2 practice mappings |
@@ -142,6 +170,10 @@ Both SDKs produce identical SWT3 fingerprints. 10 cross-language test vectors va
 ```
 packages/swt3-ai/       Python SDK (PyPI: swt3-ai)
 packages/swt3-ai-ts/    TypeScript SDK (npm: @tenova/swt3-ai)
+packages/swt3-ai-rust/  Rust SDK (crates.io: swt3-ai)
+packages/swt3-ai-dotnet/ C# SDK (NuGet: swt3-ai)
+packages/swt3-ai-ruby/  Ruby SDK (RubyGems: swt3-ai)
+packages/swt3-mcp/      MCP Server (npm: @tenova/swt3-mcp)
 packages/libswt3/       Protocol reference implementation
 config/                 Control definitions and framework crosswalks
 ```

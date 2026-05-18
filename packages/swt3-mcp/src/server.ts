@@ -8,20 +8,238 @@
 
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { McpConfig } from "./config.js";
+import type { McpConfig, McpConfigBundle, McpToolPolicy } from "./config.js";
 import { AxiomClient } from "./client.js";
+import { createSessionState } from "./state.js";
 import { handleWitness } from "./tools/witness.js";
 import { handleVerify } from "./tools/verify.js";
 import { handleProcedures } from "./tools/procedures.js";
 import { handlePosture } from "./tools/posture.js";
 import { handleSignup } from "./tools/signup.js";
+import { handleAuthorize } from "./tools/authorize.js";
+import { handleStartAudit, handleEndAudit, trackProcedure } from "./tools/audit.js";
+import { handleSuggest } from "./tools/suggest.js";
+import { handleStartChain, handleChainHandoff } from "./tools/chain.js";
+import { handleReportViolation } from "./tools/violation.js";
+import { handleWitnessModelIntegrity, handleWitnessAdapterStack } from "./tools/model.js";
+import { handleAttestSkillManifest, handleAttestMemoryContext } from "./tools/skill.js";
+import { handleVerifyAgentTrust, handlePresentCredential } from "./tools/trust.js";
 import { readRegistry } from "./resources/registry.js";
 import { readHealth } from "./resources/health.js";
 import { REGISTRY_RESOURCE } from "./resources/registry.js";
 import { HEALTH_RESOURCE } from "./resources/health.js";
+import { verifyAnchorChain } from "./chain-verifier.js";
+import { loadDensityPolicy } from "./density-policy.js";
+import { startRedisReader, stopRedisReader, getReaderState } from "./redis-reader.js";
+import { mintFingerprint, timestampMs, signPayload } from "./fingerprint.js";
 
-export function createServer(config: McpConfig): McpServer {
+/**
+ * Match a tool name against a glob pattern list.
+ * Supports * (any chars) and ? (single char).
+ */
+function matchesToolPattern(toolName: string, patterns: string[]): boolean {
+  for (const pattern of patterns) {
+    const regex = new RegExp(
+      "^" + pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&")
+        .replace(/\*/g, ".*")
+        .replace(/\?/g, ".") + "$",
+    );
+    if (regex.test(toolName)) return true;
+  }
+  return false;
+}
+
+// ── Lightweight Chain Density State (local to MCP server) ─────────────
+
+interface ChainDensityState {
+  velocityWindow: number[];
+  velocityLimit: number;
+  velocityWindowMs: number;
+  chainDepth: number;
+  maxChainDepth: number;
+  lastToolName: string | null;
+  blockPatterns: RegExp[];
+  allowPatterns: RegExp[] | null;
+  failSecure: boolean;
+}
+
+function initChainDensity(policy: McpToolPolicy): ChainDensityState | null {
+  if (!policy.maxVelocity && policy.maxChainDepth === undefined &&
+      !policy.toolAllowlist?.length && !policy.toolBlocklist?.length) {
+    return null;
+  }
+  let velocityLimit = 0, velocityWindowMs = 0;
+  if (policy.maxVelocity) {
+    const parts = policy.maxVelocity.split("/");
+    velocityLimit = parseInt(parts[0], 10);
+    velocityWindowMs = parseInt(parts[1].replace("s", ""), 10) * 1000;
+  }
+  const toRegex = (p: string) => new RegExp(
+    "^" + p.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".") + "$",
+  );
+  return {
+    velocityWindow: [],
+    velocityLimit,
+    velocityWindowMs,
+    chainDepth: 0,
+    maxChainDepth: policy.maxChainDepth ?? Infinity,
+    lastToolName: null,
+    blockPatterns: (policy.toolBlocklist ?? []).map(toRegex),
+    allowPatterns: policy.toolAllowlist?.length ? policy.toolAllowlist.map(toRegex) : null,
+    failSecure: policy.failSecure ?? true,
+  };
+}
+
+function checkChainDensity(state: ChainDensityState, toolName: string): string | null {
+  const now = Date.now();
+  // Blocklist
+  for (const p of state.blockPatterns) {
+    if (p.test(toolName)) return `Tool "${toolName}" is on the blocklist`;
+  }
+  // Allowlist
+  if (state.allowPatterns && !state.allowPatterns.some((p) => p.test(toolName))) {
+    return `Tool "${toolName}" is not on the allowlist`;
+  }
+  // Velocity
+  if (state.velocityLimit > 0) {
+    const cutoff = now - state.velocityWindowMs;
+    while (state.velocityWindow.length > 0 && state.velocityWindow[0] <= cutoff) {
+      state.velocityWindow.shift();
+    }
+    if (state.velocityWindow.length >= state.velocityLimit) {
+      if (state.failSecure) return `Rate limit exceeded: ${state.velocityLimit} calls per ${state.velocityWindowMs / 1000}s`;
+    }
+    state.velocityWindow.push(now);
+  }
+  // Depth
+  if (state.maxChainDepth < Infinity) {
+    if (toolName !== state.lastToolName && state.lastToolName !== null) state.chainDepth = 0;
+    state.chainDepth++;
+    state.lastToolName = toolName;
+    if (state.chainDepth > state.maxChainDepth) {
+      if (state.failSecure) return `Chain depth ${state.chainDepth} exceeds max ${state.maxChainDepth}`;
+    }
+  }
+  return null;
+}
+
+export function createServer(config: McpConfig, bundle?: McpConfigBundle): McpServer {
   const client = new AxiomClient(config);
+  const sessionState = createSessionState(
+    bundle?.trustMesh?.trustedTenants,
+    bundle?.trustMesh?.deniedAgents,
+  );
+  const densityPolicy = bundle?.densityPolicy ?? loadDensityPolicy();
+  const mcpPolicy = bundle?.mcpPolicy ?? null;
+  const chainDensity = mcpPolicy ? initChainDensity(mcpPolicy) : null;
+
+  // Start Redis reader if chain verification is enabled
+  if (config.chainVerify) {
+    startRedisReader({ redisUrl: config.redisUrl, streamName: config.redisStream })
+      .then((ok) => {
+        sessionState.redisReader = getReaderState();
+        if (!ok) {
+          // Redis unavailable -- will fall back to ledger queries
+        }
+      })
+      .catch(() => { /* graceful: ledger fallback */ });
+  }
+
+  /**
+   * Chain verification gate. Returns null if chain is valid (or gate disabled).
+   * Returns denial message string if chain verification fails.
+   */
+  async function chainGate(args: Record<string, unknown>): Promise<string | null> {
+    if (!config.chainVerify || config.demo) return null;
+
+    const agentId = (args.agent_id as string) || config.agentId;
+    const cycleId = (args.cycle_id as string) || sessionState.activeChain?.cycleId;
+
+    // No identity context -- cannot verify, deny
+    if (!agentId && !cycleId) {
+      return "Chain verification failed: no agent_id or cycle_id provided. " +
+        "Set SWT3_AGENT_ID or pass agent_id/cycle_id to enable chain verification.";
+    }
+
+    const result = await verifyAnchorChain(
+      agentId, cycleId, config, client, densityPolicy,
+      args.input_tokens as number | undefined,
+    );
+
+    if (result.valid) return null;
+
+    // Mint AI-TRUST.1 FAIL anchor for the denial
+    const [ts, epoch] = timestampMs();
+    const fp = mintFingerprint(config.tenantId, "AI-TRUST.1", 1, 0, 0, ts);
+    if (!config.demo) {
+      client.postWitness({
+        procedure_id: "AI-TRUST.1",
+        factor_a: 1, factor_b: 0, factor_c: 0,
+        clearing_level: config.clearingLevel,
+        anchor_fingerprint: fp,
+        anchor_epoch: epoch,
+        fingerprint_timestamp_ms: ts,
+        ai_model_id: "chain-gate",
+        witness_source: "mcp",
+        ...(agentId ? { agent_id: agentId } : {}),
+        ...(cycleId ? { cycle_id: cycleId } : {}),
+        ...(config.signingKey ? { payload_signature: signPayload(config.signingKey, fp, agentId) } : {}),
+      }).catch(() => { /* fire-and-forget */ });
+    }
+
+    const violations = result.policyViolations.map((v) => `  - ${v.message}`).join("\n");
+    return [
+      `Chain Verification DENIED`,
+      `Reason: ${result.reason || "unknown"}`,
+      `Anchors found: ${result.anchorCount} (source: ${result.source})`,
+      ...(result.gaps.length > 0 ? [`Gaps: ${result.gaps.length} (max gap: ${Math.max(...result.gaps.map((g) => g.gapSeconds))}s)`] : []),
+      ...(result.revoked.length > 0 ? [`Revoked anchors: ${result.revoked.join(", ")}`] : []),
+      ...(violations ? [`Policy violations:\n${violations}`] : []),
+      ``,
+      `To pass chain verification, ensure your agent has recent SWT3 anchors`,
+      `linked by agent_id or cycle_id with no gaps exceeding ${config.maxChainGapSeconds}s.`,
+    ].join("\n");
+  }
+
+  /**
+   * MCP tool policy gate. Checks if a tool name requires witnessing per the
+   * mcp_policy section of the YAML config. Returns:
+   * - "witness": tool must be witnessed (auto_witness or matched pattern)
+   * - "exempt": tool is explicitly exempt
+   * - "block": tool blocked due to trust level or failure policy
+   * - null: no mcp_policy configured, pass through
+   */
+  function toolPolicyGate(toolName: string): "witness" | "exempt" | "block" | null {
+    if (!mcpPolicy) return null;
+
+    // Exempt tools always pass through unwatched
+    if (mcpPolicy.exemptTools.length > 0 && matchesToolPattern(toolName, mcpPolicy.exemptTools)) {
+      return "exempt";
+    }
+
+    // Check if tool matches witnessed patterns
+    const isWitnessed = mcpPolicy.witnessedTools.length === 0
+      || matchesToolPattern(toolName, mcpPolicy.witnessedTools);
+
+    if (!isWitnessed) return "exempt";
+
+    // Trust level gate: use real verified trust level, fall back to heuristic
+    if (mcpPolicy.requireTrustLevel > 0) {
+      const sessionTrust = sessionState.verifiedTrustLevel
+        ?? (sessionState.activeAuditSession ? 2 : (config.signingKey ? 1 : 0));
+      if (sessionTrust < mcpPolicy.requireTrustLevel) {
+        return "block";
+      }
+    }
+
+    // Chain density enforcement
+    if (chainDensity) {
+      const violation = checkChainDensity(chainDensity, toolName);
+      if (violation) return "block";
+    }
+
+    return mcpPolicy.autoWitness ? "witness" : "exempt";
+  }
 
   const server = new McpServer({
     name: "swt3-mcp",
@@ -59,6 +277,7 @@ export function createServer(config: McpConfig): McpServer {
   }, async (args) => {
     try {
       const text = await handleWitness(args, config, client);
+      trackProcedure(sessionState, (args as Record<string, unknown>).procedure as string || "AI-INF.1");
       return { content: [{ type: "text" as const, text }] };
     } catch (err) {
       return {
@@ -155,6 +374,394 @@ export function createServer(config: McpConfig): McpServer {
     }
   });
 
+  server.registerTool("witness_authorization", {
+    description:
+      "Witness an authorization decision as an AI-ACC.1 anchor. " +
+      "Records whether a resource access was granted or denied. " +
+      "FAIL anchors trigger alerts but never block execution." +
+      (config.demo ? " Currently in DEMO mode — anchors are minted locally. Use the signup tool to persist them." : ""),
+    inputSchema: {
+      resource: z.string().describe("Resource being accessed (e.g., 'prod-database', 'user-pii-store')"),
+      scope: z.string().optional().describe("Authorization scope (e.g., 'read-only', 'write', 'admin')"),
+      granted: z.boolean().describe("Whether access was granted (true) or denied (false)"),
+      agent_id: z.string().optional().describe("Agent identity requesting access (AI-ID.1)"),
+      cycle_id: z.string().optional().describe("Multi-agent chain link identifier"),
+      clearing_level: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional()
+        .describe("Data clearing level (0=analytics, 1=standard, 2=sensitive, 3=classified)"),
+    },
+    annotations: { readOnlyHint: false },
+  }, async (args) => {
+    try {
+      const denial = await chainGate(args as Record<string, unknown>);
+      if (denial) return { content: [{ type: "text" as const, text: denial }], isError: true };
+      const text = await handleAuthorize(args as { resource: string; scope?: string; granted: boolean; agent_id?: string; cycle_id?: string; clearing_level?: 0 | 1 | 2 | 3 }, config, client);
+      trackProcedure(sessionState, "AI-ACC.1");
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  // --- Compliance Discovery Tools ---
+
+  server.registerTool("start_audit_session", {
+    description:
+      "Begin passive compliance tracking for this conversation. " +
+      "Records which procedures are witnessed. Call end_audit_session for a gap report. " +
+      "Purely observational -- never blocks execution.",
+    annotations: { readOnlyHint: true },
+  }, async () => {
+    try {
+      const text = handleStartAudit(sessionState);
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  server.registerTool("end_audit_session", {
+    description:
+      "End the audit session and produce a compliance gap report. " +
+      "Shows which AI procedures were witnessed and which were missed.",
+    inputSchema: {
+      session_id: z.string().optional().describe("Session ID (uses active session if omitted)"),
+    },
+    annotations: { readOnlyHint: true },
+  }, async (args) => {
+    try {
+      const text = await handleEndAudit(args, sessionState, client);
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  server.registerTool("suggest_procedures", {
+    description:
+      "Get advisory suggestions for which SWT3 procedures to witness based on context. " +
+      "Returns a ranked list of applicable procedures. Advisory only -- never enforced. " +
+      "No network call required.",
+    inputSchema: {
+      context: z.string().describe("What the agent is doing (e.g., 'calling GPT-4o to summarize a contract')"),
+      model_id: z.string().optional().describe("AI model being used"),
+      data_classification: z.string().optional().describe("Data sensitivity (public, internal, sensitive, classified)"),
+      tools_used: z.array(z.string()).optional().describe("Tools or functions being called"),
+    },
+    annotations: { readOnlyHint: true },
+  }, async (args) => {
+    try {
+      const text = handleSuggest(args as { context: string; model_id?: string; data_classification?: string; tools_used?: string[] });
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  // --- Multi-Agent Chain Tools ---
+
+  server.registerTool("start_chain", {
+    description:
+      "Generate a cycle_id for a multi-agent chain. " +
+      "Pass the returned cycle_id to subsequent witness calls to link all anchors in the chain. " +
+      "Metadata only -- never blocks execution.",
+    inputSchema: {
+      description: z.string().optional().describe("Chain description (e.g., 'contract review pipeline')"),
+    },
+    annotations: { readOnlyHint: true },
+  }, async (args) => {
+    try {
+      const text = handleStartChain(args as { description?: string }, sessionState);
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  server.registerTool("chain_handoff", {
+    description:
+      "Witness a handoff between agents in a multi-agent chain. " +
+      "Mints an AI-CHAIN.1 anchor recording custody transfer. " +
+      "Evidence only -- never blocks execution." +
+      (config.demo ? " Currently in DEMO mode -- anchors are minted locally." : ""),
+    inputSchema: {
+      cycle_id: z.string().describe("Chain cycle_id from start_chain"),
+      from_agent: z.string().describe("Agent handing off (e.g., 'summarizer-agent')"),
+      to_agent: z.string().describe("Agent receiving handoff (e.g., 'reviewer-agent')"),
+      context: z.string().optional().describe("What is being handed off"),
+      clearing_level: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional()
+        .describe("Data clearing level (0=analytics, 1=standard, 2=sensitive, 3=classified)"),
+    },
+    annotations: { readOnlyHint: false },
+  }, async (args) => {
+    try {
+      const text = await handleChainHandoff(
+        args as { cycle_id: string; from_agent: string; to_agent: string; context?: string; clearing_level?: 0 | 1 | 2 | 3 },
+        config, client,
+      );
+      trackProcedure(sessionState, "AI-CHAIN.1");
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  // --- Self-Attestation Tools ---
+
+  server.registerTool("report_violation", {
+    description:
+      "Voluntarily self-report a policy violation. " +
+      "Mints a FAIL anchor as evidence. Never blocks execution. " +
+      "FAIL anchors trigger downstream alerts via the existing pipeline." +
+      (config.demo ? " Currently in DEMO mode -- anchors are minted locally." : ""),
+    inputSchema: {
+      violation_type: z.string().describe("Type of violation (e.g., 'unauthorized_model', 'data_leak', 'jurisdiction_mismatch')"),
+      description: z.string().describe("Description of what happened"),
+      severity: z.string().optional().describe("Severity level (low, medium, high, critical). Default: medium"),
+      agent_id: z.string().optional().describe("Agent identity reporting the violation"),
+      cycle_id: z.string().optional().describe("Multi-agent chain link identifier"),
+      clearing_level: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional()
+        .describe("Data clearing level (0=analytics, 1=standard, 2=sensitive, 3=classified)"),
+    },
+    annotations: { readOnlyHint: false },
+  }, async (args) => {
+    try {
+      const text = await handleReportViolation(
+        args as { violation_type: string; description: string; severity?: string; agent_id?: string; cycle_id?: string; clearing_level?: 0 | 1 | 2 | 3 },
+        config, client,
+      );
+      trackProcedure(sessionState, "AI-VIO.1");
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  // --- Model Weight & Adapter Tools ---
+
+  server.registerTool("witness_model_integrity", {
+    description:
+      "Witness model weight file integrity (AI-MDL.5). " +
+      "Verifies the SHA-256 hash of model weights against an expected value. " +
+      "Evidence only -- never blocks execution." +
+      (config.demo ? " Currently in DEMO mode -- anchors are minted locally." : ""),
+    inputSchema: {
+      model_id: z.string().describe("Model identifier (e.g., 'llama-3.1-70b-instruct')"),
+      weight_hash: z.string().describe("SHA-256 hash of the model weight file"),
+      expected_hash: z.string().optional().describe("Expected hash for verification. Omit to attest without verification."),
+      format: z.string().optional().describe("Weight file format (safetensors, gguf, bin, pt)"),
+      file_size_bytes: z.number().optional().describe("Weight file size in bytes"),
+      agent_id: z.string().optional().describe("Agent identity"),
+      cycle_id: z.string().optional().describe("Multi-agent chain link identifier"),
+      clearing_level: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional()
+        .describe("Data clearing level (0=analytics, 1=standard, 2=sensitive, 3=classified)"),
+    },
+    annotations: { readOnlyHint: false },
+  }, async (args) => {
+    try {
+      const denial = await chainGate(args as Record<string, unknown>);
+      if (denial) return { content: [{ type: "text" as const, text: denial }], isError: true };
+      const text = await handleWitnessModelIntegrity(
+        args as any, config, client,
+      );
+      trackProcedure(sessionState, "AI-MDL.5");
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  server.registerTool("witness_adapter_stack", {
+    description:
+      "Witness active LoRA/QLoRA/PEFT adapter stack (AI-MDL.6). " +
+      "Records which adapters are loaded on top of a base model. " +
+      "Evidence only -- never blocks execution." +
+      (config.demo ? " Currently in DEMO mode -- anchors are minted locally." : ""),
+    inputSchema: {
+      base_model: z.string().describe("Base model identifier (e.g., 'llama-3.1-70b')"),
+      adapters: z.array(z.object({
+        name: z.string().describe("Adapter name"),
+        hash: z.string().describe("SHA-256 hash of adapter weights"),
+        base_model: z.string().optional().describe("Base model this adapter was trained on"),
+      })).describe("List of active adapters"),
+      agent_id: z.string().optional().describe("Agent identity"),
+      cycle_id: z.string().optional().describe("Multi-agent chain link identifier"),
+      clearing_level: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional()
+        .describe("Data clearing level"),
+    },
+    annotations: { readOnlyHint: false },
+  }, async (args) => {
+    try {
+      const denial = await chainGate(args as Record<string, unknown>);
+      if (denial) return { content: [{ type: "text" as const, text: denial }], isError: true };
+      const text = await handleWitnessAdapterStack(
+        args as any, config, client,
+      );
+      trackProcedure(sessionState, "AI-MDL.6");
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  // --- Skill & Memory Attestation Tools ---
+
+  server.registerTool("attest_skill_manifest", {
+    description:
+      "Attest the active skill/tool/plugin manifest (AI-SKILL.1). " +
+      "Records which capabilities are loaded. " +
+      "Evidence only -- never blocks execution." +
+      (config.demo ? " Currently in DEMO mode -- anchors are minted locally." : ""),
+    inputSchema: {
+      skills: z.array(z.object({
+        name: z.string().describe("Skill name"),
+        version: z.string().optional().describe("Skill version"),
+        hash: z.string().optional().describe("SHA-256 hash of skill definition"),
+      })).describe("List of active skills/tools/plugins"),
+      expected_manifest_hash: z.string().optional().describe("Expected manifest hash for verification"),
+      agent_id: z.string().optional().describe("Agent identity"),
+      cycle_id: z.string().optional().describe("Multi-agent chain link identifier"),
+      clearing_level: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional()
+        .describe("Data clearing level"),
+    },
+    annotations: { readOnlyHint: false },
+  }, async (args) => {
+    try {
+      const denial = await chainGate(args as Record<string, unknown>);
+      if (denial) return { content: [{ type: "text" as const, text: denial }], isError: true };
+      const text = await handleAttestSkillManifest(
+        args as any, config, client,
+      );
+      trackProcedure(sessionState, "AI-SKILL.1");
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  server.registerTool("attest_memory_context", {
+    description:
+      "Attest persistent memory sources influencing decisions (AI-SKILL.2). " +
+      "Records which memory stores (vector DBs, conversation history, etc.) are active. " +
+      "Evidence only -- never blocks execution." +
+      (config.demo ? " Currently in DEMO mode -- anchors are minted locally." : ""),
+    inputSchema: {
+      memory_sources: z.array(z.object({
+        type: z.string().describe("Memory source type (vector_store, conversation, scratchpad, knowledge_base)"),
+        id: z.string().optional().describe("Source identifier"),
+        hash: z.string().optional().describe("SHA-256 hash of memory contents"),
+      })).describe("List of active memory sources"),
+      agent_id: z.string().optional().describe("Agent identity"),
+      cycle_id: z.string().optional().describe("Multi-agent chain link identifier"),
+      clearing_level: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional()
+        .describe("Data clearing level"),
+    },
+    annotations: { readOnlyHint: false },
+  }, async (args) => {
+    try {
+      const denial = await chainGate(args as Record<string, unknown>);
+      if (denial) return { content: [{ type: "text" as const, text: denial }], isError: true };
+      const text = await handleAttestMemoryContext(
+        args as any, config, client,
+      );
+      trackProcedure(sessionState, "AI-SKILL.2");
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  server.registerTool("verify_agent_trust", {
+    description:
+      "Verify a counterpart agent's compliance posture before exchanging data or calling their tools (AI-TRUST.1). " +
+      "Checks: deny list, tenant trust, anchor freshness, signing status. " +
+      "Returns trust level (denied/basic/verified/attested/sovereign). " +
+      "Both PASS and FAIL produce cryptographic evidence anchors." +
+      (config.demo ? " Currently in DEMO mode -- anchors are minted locally." : ""),
+    inputSchema: {
+      counterpart_agent_id: z.string().describe("Agent ID of the counterpart to verify"),
+      counterpart_tenant_id: z.string().describe("Tenant ID of the counterpart agent"),
+      anchor_fingerprint: z.string().describe("Counterpart's latest SWT3 anchor fingerprint (12 hex chars)"),
+      anchor_timestamp_ms: z.number().optional().describe("When the counterpart's anchor was minted (ms since epoch)"),
+      is_signed: z.boolean().optional().describe("Whether the counterpart's anchor carries a payload signature"),
+      procedures: z.array(z.string()).optional().describe("UCT procedures the counterpart has witnessed"),
+      clearing_level: z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3)]).optional()
+        .describe("Counterpart's clearing level"),
+      has_hardware_attestation: z.boolean().optional().describe("Counterpart has AI-HW.1 hardware attestation"),
+      has_guardrails: z.boolean().optional().describe("Counterpart has active guardrails"),
+      agent_id: z.string().optional().describe("This agent's identity"),
+      cycle_id: z.string().optional().describe("Multi-agent chain link identifier"),
+    },
+    annotations: { readOnlyHint: false },
+  }, async (args) => {
+    try {
+      const text = await handleVerifyAgentTrust(
+        args as any, config, client, sessionState,
+      );
+      trackProcedure(sessionState, "AI-TRUST.1");
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  server.registerTool("present_trust_credential", {
+    description:
+      "Get this agent's trust credential for presentation to another agent. " +
+      "Returns agent_id, tenant_id, anchor fingerprint, and trust metadata. " +
+      "Pass these fields to another agent's verify_agent_trust tool " +
+      "to establish mutual compliance trust before exchanging data.",
+    inputSchema: {
+      agent_id: z.string().optional().describe("Override agent identity for this credential"),
+    },
+    annotations: { readOnlyHint: true },
+  }, async (args) => {
+    try {
+      const text = handlePresentCredential(args as any, config);
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
   // --- Resources ---
 
   server.registerResource(
@@ -186,6 +793,10 @@ export function createServer(config: McpConfig): McpServer {
       ],
     }),
   );
+
+  // Graceful shutdown hook for Redis reader
+  process.on("SIGTERM", () => { stopRedisReader(); });
+  process.on("SIGINT", () => { stopRedisReader(); });
 
   return server;
 }
