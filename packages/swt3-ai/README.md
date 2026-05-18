@@ -30,16 +30,36 @@ Every tool call your agent makes is witnessed, Merkle-accumulated, and trust-eva
 
 ## Secure Agent-to-Agent Communication
 
-The SWT3 Trust Mesh enables mutual cryptographic verification between AI agents before they exchange data, invoke tools, or share context.
+The SWT3 Trust Mesh enables mutual cryptographic verification between AI agents before they exchange data, invoke tools, or share context. When you adopt SWT3, every partner, vendor, and downstream agent that wants to interact with yours must adopt it too. Compliance becomes the connection protocol. Every agent in the mesh strengthens the network.
+
+**You run Agent A. Your partner runs Agent B. Both install swt3-ai:**
 
 ```python
-# Agent A presents its compliance credential
-credential = witness_a.present_credential()
+# === Your side (Agent A) ===
+witness_a = Witness(
+    endpoint="...", api_key="axm_...", tenant_id="YOUR_TENANT",
+    agent_id="agent-alpha", signing_key="swt3_sk_your_key",
+)
+witness_a.trust_registry.trust_tenant("PARTNER_B_TENANT")
+witness_a.trust_registry.register_signing_key("agent-beta", os.environ["PARTNER_B_KEY"])
 
-# Agent B verifies Agent A's trust level, signing, and procedures
-result = witness_b.verify_trust(credential)
-if not result.granted:
-    print(f"Denied: {result.denial_reason}")
+# === Partner's side (Agent B) ===
+witness_b = Witness(
+    endpoint="...", api_key="axm_...", tenant_id="PARTNER_B_TENANT",
+    agent_id="agent-beta", signing_key="swt3_sk_partner_key",
+)
+witness_b.trust_registry.trust_tenant("YOUR_TENANT")
+witness_b.trust_registry.register_signing_key("agent-alpha", os.environ["YOUR_KEY"])
+
+# === Handshake (both directions) ===
+cred_a = witness_a.present_credential()
+result = witness_b.verify_trust(cred_a)       # B verifies A
+if result.granted:
+    cred_b = witness_b.present_credential()
+    result = witness_a.verify_trust(cred_b)    # A verifies B
+    if result.granted:
+        # Bidirectional trust established. Exchange data.
+        pass
 ```
 
 Configure trust boundaries declaratively in `.swt3.yaml`:
@@ -50,11 +70,11 @@ trust_mesh:
   min_trust_level: 2
   require_signature: true
   freshness_window: 3600
-  trusted_tenants: ["PARTNER_A", "PARTNER_B"]
+  trusted_tenants: ["PARTNER_B_TENANT"]
   deny_agents: ["revoked-agent-id"]
 ```
 
-All verification is local. Zero cloud overhead. No data exchanged until both agents clear the trust gate. Partners that want to interact with your agents through MCP must initialize the SWT3 witness layer on their side -- compliance becomes the connection protocol.
+All verification is local. Zero cloud overhead. No data exchanged until both agents clear the trust gate. Unsigned agents are capped at TRUST_BASIC (level 1). Add signing keys for verified trust. Add hardware attestation for sovereign trust.
 
 ## See It Work (No Account Needed)
 

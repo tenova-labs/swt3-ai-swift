@@ -48,12 +48,23 @@
 **/build/
 **/.venv/
 **/venv/
+**/obj/
+**/target/
+**/bin/Debug/
+**/bin/Release/
 
-# -- Package archives (published via npm/PyPI, not git) --
+# -- Compiled binaries and package archives --
 **/*.tgz
+**/*.dll
+**/*.pdb
+**/*.nupkg
+**/*.gem
+**/*.whl
+**/*.tar.gz
 
 # -- Lock files --
 **/package-lock.json
+**/Cargo.lock
 
 # -- Environment and secrets --
 **/.env*
