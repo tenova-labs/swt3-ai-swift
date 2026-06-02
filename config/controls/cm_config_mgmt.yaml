@@ -5,7 +5,7 @@ controls:
     parent_control: "CM-2"
     name: "Baseline Configuration - Installed Packages Count"
     command: "dpkg -l 2>/dev/null | grep -c '^ii' || rpm -qa 2>/dev/null | wc -l"
-    factor_a: 900
+    factor_a: 1100
     factor_a_label: "max_installed_packages"
     factor_b_source: "stdout_int"
     factor_b_label: "installed_packages"

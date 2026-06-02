@@ -14,7 +14,7 @@
  *   duplicate witness anchors from being submitted. The set is populated
  *   from the WAL on startup and updated on each enqueue.
  *
- * Patent pending. All rights reserved.
+ * Copyright (c) 2026 Tenable Nova LLC. Apache 2.0. Patent pending.
  */
 
 import { mkdirSync, appendFileSync, readFileSync, writeFileSync, existsSync, renameSync, unlinkSync, statSync } from "node:fs";

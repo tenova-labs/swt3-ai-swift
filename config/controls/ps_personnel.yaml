@@ -7,9 +7,9 @@ controls:
     name: "Personnel Security Policy"
     description: "Organization has a documented personnel security policy"
     check_type: "policy_file"
-    policy_path: "/opt/axiom/policies/ps-personnel-security.md"
+    policy_path: "${AXIOM_HOME}/policies/ps-personnel-security.md"
     policy_template: "ps-personnel-security"
-    command: "FILE=/opt/axiom/policies/ps-personnel-security.md; test -f \"$FILE\" && echo $(( ($(date +%s) - $(stat -c %Y \"$FILE\")) / 86400 )) || echo 9999"
+    command: "FILE=${AXIOM_HOME}/policies/ps-personnel-security.md; test -f \"$FILE\" && echo $(( ($(date +%s) - $(stat -c %Y \"$FILE\")) / 86400 )) || echo 9999"
     factor_a: 365
     factor_a_label: "max_policy_age_days"
     factor_b_source: "stdout_int"

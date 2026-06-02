@@ -375,6 +375,30 @@
       "fingerprint_timestamp_ms": 1774800037000,
       "clearing_level": 0,
       "expected_fingerprint": "0b31660c296f"
+    },
+    {
+      "id": 32,
+      "description": "AI-MARK.1 Content Provenance - 3 text items with C2PA metadata",
+      "tenant_id": "ENCLAVE_PROD",
+      "procedure_id": "AI-MARK.1",
+      "factor_a": 3,
+      "factor_b": 1,
+      "factor_c": 0,
+      "fingerprint_timestamp_ms": 1774800031000,
+      "clearing_level": 1,
+      "expected_fingerprint": "8ec75a21838f"
+    },
+    {
+      "id": 33,
+      "description": "AI-BASE.1 Agent Behavioral Baseline - 12 dimensions, monitoring, within envelope",
+      "tenant_id": "ENCLAVE_PROD",
+      "procedure_id": "AI-BASE.1",
+      "factor_a": 12,
+      "factor_b": 1,
+      "factor_c": 1,
+      "fingerprint_timestamp_ms": 1774800032000,
+      "clearing_level": 1,
+      "expected_fingerprint": "e66df4bbdedb"
     }
   ],
   "signing_vectors": [
@@ -416,6 +440,30 @@
       "input": "You are a helpful fraud detection assistant. Flag any transaction over $10,000.",
       "expected_16": "479eaa1ee804f844",
       "description": "System prompt hash for instruction drift detection"
+    }
+  ],
+  "mldsa_vectors": [
+    {
+      "id": 1,
+      "description": "ML-DSA-65 signing with agent_id binding (non-deterministic: verify round-trip, not exact match)",
+      "algorithm": "ml-dsa-65",
+      "seed_hex": "60ef3bf0e31e764953cf67c6806d0c6512ce54a6e83a9328b7042b3896cf8f40",
+      "public_key_hex_length": 3904,
+      "anchor_fingerprint": "019eaf85fcba",
+      "agent_id": "agent-007",
+      "message": "019eaf85fcba:agent-007",
+      "note": "Signatures are randomized per FIPS 204. Parity test: sign with SDK A, verify with SDK B using the shared seed-derived public key."
+    },
+    {
+      "id": 2,
+      "description": "ML-DSA-65 signing without agent_id (non-deterministic: verify round-trip, not exact match)",
+      "algorithm": "ml-dsa-65",
+      "seed_hex": "60ef3bf0e31e764953cf67c6806d0c6512ce54a6e83a9328b7042b3896cf8f40",
+      "public_key_hex_length": 3904,
+      "anchor_fingerprint": "019eaf85fcba",
+      "agent_id": null,
+      "message": "019eaf85fcba",
+      "note": "Same seed as vector 1. Verify that keygen from seed produces identical public keys across all implementations."
     }
   ]
 }

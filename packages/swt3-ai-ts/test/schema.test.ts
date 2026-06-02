@@ -62,4 +62,43 @@ describe("Schema Validator", () => {
     expect(result.valid).toBe(false);
     expect(result.errors.length).toBeGreaterThanOrEqual(4);
   });
+
+  // ── digest_algorithm ────────────────────────────────────────
+
+  it("accepts digest_algorithm: sha256", () => {
+    const result = validateSchema({ api_key: "axm_test", digest_algorithm: "sha256" });
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects unsupported digest_algorithm", () => {
+    const result = validateSchema({ api_key: "axm_test", digest_algorithm: "sha3-256" });
+    expect(result.valid).toBe(false);
+    expect(result.errors[0].path).toBe("digest_algorithm");
+    expect(result.errors[0].message).toContain("sha256");
+  });
+
+  it("rejects non-string digest_algorithm", () => {
+    const result = validateSchema({ api_key: "axm_test", digest_algorithm: 256 });
+    expect(result.valid).toBe(false);
+    expect(result.errors[0].path).toBe("digest_algorithm");
+  });
+
+  // ── skill_card ──────────────────────────────────────────────
+
+  it("accepts valid skill_card section", () => {
+    const result = validateSchema({
+      api_key: "axm_test",
+      skill_card: { skills: ["web_search"], expected_manifest_hash: "abc" },
+    });
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects unknown skill_card key", () => {
+    const result = validateSchema({
+      api_key: "axm_test",
+      skill_card: { skills: [], bogus_key: true },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.path === "skill_card.bogus_key")).toBe(true);
+  });
 });

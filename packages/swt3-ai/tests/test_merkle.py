@@ -124,3 +124,72 @@ class TestMerkleAccumulator:
 
         acc.clear()
         assert len(acc.roots) == 0
+
+
+class TestCrossSessionComposition:
+    def test_empty_accumulator_returns_empty(self):
+        acc = MerkleAccumulator()
+        result = acc.compose_session_roots()
+        assert result["aggregate_root"] == ""
+        assert result["session_count"] == 0
+        assert result["prove_session"]("anything") is None
+
+    def test_single_session_root(self):
+        acc = MerkleAccumulator()
+        acc.add_many(["fp_a", "fp_b"])
+        acc.flush()
+
+        result = acc.compose_session_roots()
+        assert len(result["aggregate_root"]) == 64
+        assert result["session_count"] == 1
+
+    def test_multiple_sessions_deterministic(self):
+        acc = MerkleAccumulator()
+        acc.add_many(["fp_a", "fp_b"])
+        acc.flush()
+        acc.add_many(["fp_c", "fp_d"])
+        acc.flush()
+        acc.add_many(["fp_e"])
+        acc.flush()
+
+        result = acc.compose_session_roots()
+        assert len(result["aggregate_root"]) == 64
+        assert result["session_count"] == 3
+
+        result2 = acc.compose_session_roots()
+        assert result2["aggregate_root"] == result["aggregate_root"]
+
+    def test_proves_session_inclusion(self):
+        acc = MerkleAccumulator()
+        acc.add_many(["fp_a", "fp_b"])
+        s1 = acc.flush()
+        acc.add_many(["fp_c", "fp_d"])
+        s2 = acc.flush()
+
+        result = acc.compose_session_roots()
+        proof1 = result["prove_session"](s1.root)
+        assert proof1 is not None
+        assert verify_merkle_proof(s1.root, proof1) is True
+
+        proof2 = result["prove_session"](s2.root)
+        assert proof2 is not None
+        assert verify_merkle_proof(s2.root, proof2) is True
+
+    def test_nonexistent_session_returns_none(self):
+        acc = MerkleAccumulator()
+        acc.add_many(["fp_a"])
+        acc.flush()
+
+        result = acc.compose_session_roots()
+        assert result["prove_session"]("nonexistent_root") is None
+
+    def test_explicit_session_root_array(self):
+        acc = MerkleAccumulator()
+        explicit = ["root_aaa", "root_bbb", "root_ccc"]
+        result = acc.compose_session_roots(explicit)
+        assert len(result["aggregate_root"]) == 64
+        assert result["session_count"] == 3
+
+        proof = result["prove_session"]("root_bbb")
+        assert proof is not None
+        assert verify_merkle_proof("root_bbb", proof) is True

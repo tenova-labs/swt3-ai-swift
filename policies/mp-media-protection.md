@@ -1,97 +1,147 @@
-# Media Protection Policy
+                         MEDIA PROTECTION POLICY
 
-**Policy Identifier:** MP-1.1
-**NIST 800-53 Control:** MP-1 -- Media Protection Policy and Procedures
-**CMMC v2.0 Practice:** MP.L2-3.8.1
-**Effective Date:** 2026-03-17
-**Review Cycle:** Annual (or upon significant organizational change)
-**Classification:** CUI / FOUO
+Policy Identifier:   MP-1.1
+NIST 800-53 Control: MP-1 - Media Protection Policy and Procedures
+CMMC v2.0 Practice:  MP.L2-3.8.1
+Effective Date:      2026-03-17
+Review Cycle:        Annual (or upon significant organizational change)
+Classification:      CUI / FOUO
 
----
+________________________________________________________________________________
 
-## 1. Purpose
+1. PURPOSE
 
-This policy establishes requirements for the protection of digital and non-digital media containing Controlled Unclassified Information (CUI) within the TeNova Axiom authorization boundary. It ensures that media is properly controlled, marked, stored, transported, sanitized, and disposed of in accordance with NIST SP 800-53 Rev 5, MP family controls (MP-1 through MP-8).
+This policy establishes requirements for the protection of digital and
+non-digital media containing Controlled Unclassified Information (CUI) within
+the TeNova Axiom authorization boundary. It ensures that media is properly
+controlled, marked, stored, transported, sanitized, and disposed of in
+accordance with NIST SP 800-53 Rev 5, MP family controls (MP-1 through MP-8).
 
-## 2. Scope
+________________________________________________________________________________
 
-This policy applies to all digital media (hard drives, SSDs, USB devices, optical media, backup tapes) and non-digital media (paper, microfilm) that contain, store, or transport CUI within the TeNova Axiom authorization boundary.
+2. SCOPE
 
-## 3. Roles and Responsibilities
+This policy applies to all digital media (hard drives, SSDs, USB devices,
+optical media, backup tapes) and non-digital media (paper, microfilm) that
+contain, store, or transport CUI within the TeNova Axiom authorization
+boundary.
 
-| Role | Responsibility |
-|------|---------------|
-| **Authorizing Official (AO)** | Approves media protection policy |
-| **Information System Security Officer (ISSO)** | Monitors compliance with media protection procedures |
-| **System Administrators** | Implement technical media controls; manage encryption and sanitization |
-| **Users** | Handle CUI media in accordance with marking and storage requirements |
-| **Chief Information Security Officer (CISO)** | Designated policy owner; ensures audit readiness |
+________________________________________________________________________________
 
-## 4. Policy Statements
+3. ROLES AND RESPONSIBILITIES
 
-### 4.1 Media Access (MP-2)
+   Authorizing Official (AO)
+      Approves media protection policy.
 
-- Access to digital media containing CUI shall be restricted to authorized personnel.
-- USB block storage devices shall be blocked by default on all production systems.
-- The `usb_storage` kernel module shall be disabled on systems processing CUI.
-- Exceptions require documented authorization from the ISSO.
+   Information System Security Officer (ISSO)
+      Monitors compliance with media protection procedures.
 
-### 4.2 Media Marking (MP-3)
+   System Administrators
+      Implement technical media controls; manage encryption and sanitization.
 
-- All media containing CUI shall be marked with applicable CUI markings and distribution limitations.
-- Markings shall conform to 32 CFR Part 2002 and NIST SP 800-171 requirements.
-- Unmarked media shall be treated as CUI until proper classification is determined.
+   Users
+      Handle CUI media in accordance with marking and storage requirements.
 
-### 4.3 Media Storage (MP-4)
+   Chief Information Security Officer (CISO)
+      Designated policy owner; ensures audit readiness.
 
-- CUI media shall be stored in controlled areas with physical access limited to authorized personnel.
-- Digital media at rest shall be protected by encryption (see SC-28).
-- Storage locations shall be documented in the system security plan.
+________________________________________________________________________________
 
-### 4.4 Media Transport (MP-5)
+4. POLICY STATEMENTS
 
-- CUI on digital media shall be cryptographically protected during transport outside controlled areas.
-- Transport encryption shall use FIPS 140-2 validated cryptographic modules.
-- Media transport events shall be logged and tracked.
+   4.1 Media Access (MP-2)
 
-### 4.5 Media Sanitization (MP-6)
+   - Access to digital media containing CUI shall be restricted to authorized
+     personnel.
+   - USB block storage devices shall be blocked by default on all production
+     systems.
+   - The usb_storage kernel module shall be disabled on systems processing CUI.
+   - Exceptions require documented authorization from the ISSO.
 
-- Media containing CUI shall be sanitized before disposal or release using NIST SP 800-88 compliant methods.
-- Sanitization tools (shred, scrub, wipe, or equivalent) shall be available on all systems processing CUI.
-- Sanitization records shall be maintained for a minimum of 3 years.
-- Methods by media type:
-  - **SSDs/NVMe:** Cryptographic erase (ATA Secure Erase) or physical destruction
-  - **HDDs:** Overwrite (minimum 3 passes) or degaussing or physical destruction
-  - **Optical media:** Physical destruction (shredding)
-  - **Paper:** Cross-cut shredding (minimum DIN 66399 Level P-4)
 
-### 4.6 Removable Media Usage (MP-7)
+   4.2 Media Marking (MP-3)
 
-- Use of removable media on organizational systems shall be restricted.
-- The `usb_storage` kernel module shall be blocked on production systems.
-- Approved removable media shall be encrypted and scanned for malware before use.
-- A whitelist of approved removable media devices may be maintained by the ISSO.
+   - All media containing CUI shall be marked with applicable CUI markings and
+     distribution limitations.
+   - Markings shall conform to 32 CFR Part 2002 and NIST SP 800-171
+     requirements.
+   - Unmarked media shall be treated as CUI until proper classification is
+     determined.
 
-### 4.7 Media Disposal (MP-8)
 
-- All media containing CUI shall be sanitized or destroyed before disposal or release for reuse.
-- Disposal records shall document: media type, serial number, sanitization method, date, and responsible personnel.
-- Third-party disposal services shall provide certificates of destruction.
+   4.3 Media Storage (MP-4)
 
-## 5. Compliance Monitoring
+   - CUI media shall be stored in controlled areas with physical access limited
+     to authorized personnel.
+   - Digital media at rest shall be protected by encryption (see SC-28).
+   - Storage locations shall be documented in the system security plan.
 
-- The Axiom Collector automatically verifies:
-  - Existence and currency of this policy document (MP-1.1)
-  - USB block device presence (MP-2.1)
-  - Availability of sanitization tools (MP-6.1)
-  - USB storage kernel module status (MP-7.1)
-- Non-compliance triggers an automated FAIL verdict in the Sovereign Witness Ledger.
 
-## 6. Policy Review
+   4.4 Media Transport (MP-5)
 
-This policy shall be reviewed annually or upon significant changes to the information system environment, media handling procedures, or regulatory requirements. Reviews shall be documented and approved by the AO.
+   - CUI on digital media shall be cryptographically protected during transport
+     outside controlled areas.
+   - Transport encryption shall use FIPS 140-2 validated cryptographic modules.
+   - Media transport events shall be logged and tracked.
 
----
 
-*Document generated by TeNova Axiom Policy Template Engine.*
-*SHA-256 integrity verification enabled via SWT3 Witness Anchor protocol.*
+   4.5 Media Sanitization (MP-6)
+
+   - Media containing CUI shall be sanitized before disposal or release using
+     NIST SP 800-88 compliant methods.
+   - Sanitization tools (shred, scrub, wipe, or equivalent) shall be available
+     on all systems processing CUI.
+   - Sanitization records shall be maintained for a minimum of 3 years.
+   - Methods by media type:
+     - SSDs/NVMe: Cryptographic erase (ATA Secure Erase) or physical
+       destruction
+     - HDDs: Overwrite (minimum 3 passes) or degaussing or physical destruction
+     - Optical media: Physical destruction (shredding)
+     - Paper: Cross-cut shredding (minimum DIN 66399 Level P-4)
+
+
+   4.6 Removable Media Usage (MP-7)
+
+   - Use of removable media on organizational systems shall be restricted.
+   - The usb_storage kernel module shall be blocked on production systems.
+   - Approved removable media shall be encrypted and scanned for malware before
+     use.
+   - A whitelist of approved removable media devices may be maintained by the
+     ISSO.
+
+
+   4.7 Media Disposal (MP-8)
+
+   - All media containing CUI shall be sanitized or destroyed before disposal
+     or release for reuse.
+   - Disposal records shall document: media type, serial number, sanitization
+     method, date, and responsible personnel.
+   - Third-party disposal services shall provide certificates of destruction.
+
+________________________________________________________________________________
+
+5. COMPLIANCE MONITORING
+
+The Axiom Collector automatically verifies:
+
+   - Existence and currency of this policy document (MP-1.1)
+   - USB block device presence (MP-2.1)
+   - Availability of sanitization tools (MP-6.1)
+   - USB storage kernel module status (MP-7.1)
+
+Non-compliance triggers an automated FAIL verdict in the Sovereign Witness
+Ledger.
+
+________________________________________________________________________________
+
+6. REVIEW AND MAINTENANCE
+
+This policy shall be reviewed annually or upon significant changes to the
+information system environment, media handling procedures, or regulatory
+requirements. Reviews shall be documented and approved by the AO.
+
+________________________________________________________________________________
+
+Approved By:  ________________________________________
+Title:        Authorizing Official
+Date:         ________________________________________

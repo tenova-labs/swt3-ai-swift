@@ -6,9 +6,9 @@ controls:
     name: "Access Control Policy Document"
     description: "Organization maintains a current access control policy"
     check_type: "policy_file"
-    policy_path: "/opt/axiom/policies/ac-access-control.md"
+    policy_path: "${AXIOM_HOME}/policies/ac-access-control.md"
     policy_template: "ac-access-control"
-    command: "FILE=/opt/axiom/policies/ac-access-control.md; test -f \"$FILE\" && echo $(( ($(date +%s) - $(stat -c %Y \"$FILE\")) / 86400 )) || echo 9999"
+    command: "FILE=${AXIOM_HOME}/policies/ac-access-control.md; test -f \"$FILE\" && echo $(( ($(date +%s) - $(stat -c %Y \"$FILE\")) / 86400 )) || echo 9999"
     factor_a: 365
     factor_a_label: "max_policy_age_days"
     factor_b_source: "stdout_int"

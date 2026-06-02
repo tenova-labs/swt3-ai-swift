@@ -33,7 +33,7 @@ Configuration:
 
 If unconfigured, all hooks are transparent no-ops.
 
-Patent pending. All rights reserved.
+Copyright (c) 2026 Tenable Nova LLC. Apache 2.0. Patent pending.
 """
 
 from __future__ import annotations

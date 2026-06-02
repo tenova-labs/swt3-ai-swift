@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import { runDoctorChecks } from "../src/doctor.js";
+import { runDoctorChecks, printDoctorResults } from "../src/doctor.js";
 
 const TMP = join(process.cwd(), ".test-doctor-tmp");
 const YAML_PATH = join(TMP, "swt3.yaml");
@@ -89,6 +89,40 @@ trust_mesh:
   it("returns correct total check count", () => {
     writeYaml(`api_key: axm_test\ntenant_id: TEST\n`);
     const checks = runDoctorChecks(YAML_PATH);
-    expect(checks).toHaveLength(8);
+    expect(checks).toHaveLength(9);
+  });
+
+  it("CI mode outputs plain text without ANSI codes", () => {
+    writeYaml(`api_key: axm_test\ntenant_id: TEST\n`);
+    const checks = runDoctorChecks(YAML_PATH);
+    const lines: string[] = [];
+    const origLog = console.log;
+    console.log = (...args: unknown[]) => lines.push(args.join(" "));
+    try {
+      printDoctorResults(checks, false, true);
+    } finally {
+      console.log = origLog;
+    }
+    const output = lines.join("\n");
+    expect(output).not.toContain("\x1b[");
+    expect(output).toContain("swt3-doctor:");
+    expect(output).toContain("checks,");
+  });
+
+  it("CI mode reports warn count in summary", () => {
+    writeYaml(`api_key_env: SWT3_MISSING_CI_TEST\ntenant_id: TEST\n`);
+    delete process.env.SWT3_MISSING_CI_TEST;
+    const checks = runDoctorChecks(YAML_PATH);
+    const lines: string[] = [];
+    const origLog = console.log;
+    console.log = (...args: unknown[]) => lines.push(args.join(" "));
+    try {
+      printDoctorResults(checks, false, true);
+    } finally {
+      console.log = origLog;
+    }
+    const summary = lines.find((l) => l.startsWith("swt3-doctor:"));
+    expect(summary).toBeDefined();
+    expect(summary).toMatch(/\d+ warn/);
   });
 });

@@ -299,3 +299,37 @@ class MerkleAccumulator:
         """Clear all state including history (for testing)."""
         self._fingerprints = []
         self._session_roots = []
+
+    def compose_session_roots(
+        self,
+        session_root_hashes: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Compose multiple session roots into a higher-level Merkle root.
+
+        Enables aggregate attestation over an entire audit period (daily,
+        weekly, organizational) without re-processing individual anchors.
+        Any individual session can be proven as included via prove_session().
+
+        Args:
+            session_root_hashes: Session root hashes to compose.
+                If None, uses all session roots from this accumulator's history.
+
+        Returns:
+            Dict with aggregate_root, session_count, and prove_session callable.
+        """
+        roots = session_root_hashes if session_root_hashes is not None else [
+            s.root for s in self._session_roots
+        ]
+        if not roots:
+            return {"aggregate_root": "", "session_count": 0, "prove_session": lambda _: None}
+
+        aggregate_root = get_merkle_root(roots)
+
+        def prove_session(session_root_hash: str) -> Optional[MerkleProof]:
+            return get_merkle_proof(roots, session_root_hash)
+
+        return {
+            "aggregate_root": aggregate_root,
+            "session_count": len(roots),
+            "prove_session": prove_session,
+        }

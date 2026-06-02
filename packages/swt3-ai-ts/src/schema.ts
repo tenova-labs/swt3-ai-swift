@@ -21,12 +21,12 @@ const KNOWN_TOP_LEVEL = new Set([
   "api_key", "api_key_env", "tenant_id", "clearing_level", "endpoint",
   "buffer_size", "flush_interval", "max_retries", "latency_threshold_ms",
   "guardrails_required", "guardrail_names", "factor_handoff", "factor_handoff_path",
-  "agent_id", "signing_key", "signing_key_env", "signing_key_id", "signing_key_version",
+  "agent_id", "signing_key", "signing_key_env", "signing_key_id", "signing_key_version", "signing_algorithm",
   "cycle_id", "policy_version", "jurisdiction", "legal_basis", "purpose_class",
   "on_flush", "gateway_mode", "wal_path", "replay_window",
   "token_budget", "procedures", "strict",
   "policy", "trust_mesh", "hardware", "density_policy", "mcp_policy",
-  "merkle", "profile", "extends",
+  "merkle", "skill_card", "digest_algorithm", "profile", "extends",
 ]);
 
 const VALID_POLICY_KEYS = new Set([
@@ -41,11 +41,16 @@ const VALID_TRUST_MESH_KEYS = new Set([
 ]);
 
 const VALID_HARDWARE_KEYS = new Set([
-  "require_attestation", "attestation_freshness", "allowed_methods",
+  "require_attestation", "attestation_freshness", "allowed_methods", "runtime_profile",
+]);
+
+const VALID_RUNTIME_PROFILE_KEYS = new Set([
+  "expected_topology", "min_gpu_count", "min_memory_mb",
+  "expected_accelerator", "max_temperature_celsius", "max_power_watts",
 ]);
 
 const VALID_ATTESTATION_METHODS = new Set([
-  "tpm_2.0", "secure_enclave", "sgx", "sev", "trustzone", "nitro",
+  "tpm_2.0", "secure_enclave", "sgx", "sev", "trustzone", "nitro", "cerebras_wse3",
 ]);
 
 const VALID_DENSITY_POLICY_KEYS = new Set([
@@ -62,6 +67,8 @@ const VALID_MCP_POLICY_KEYS = new Set([
 
 const VALID_MERKLE_KEYS = new Set(["enabled", "accumulator_interval"]);
 
+const VALID_SKILL_CARD_KEYS = new Set(["skills", "expected_manifest_hash"]);
+
 const SECTION_SCHEMAS: Record<string, Set<string>> = {
   policy: VALID_POLICY_KEYS,
   trust_mesh: VALID_TRUST_MESH_KEYS,
@@ -69,6 +76,7 @@ const SECTION_SCHEMAS: Record<string, Set<string>> = {
   density_policy: VALID_DENSITY_POLICY_KEYS,
   mcp_policy: VALID_MCP_POLICY_KEYS,
   merkle: VALID_MERKLE_KEYS,
+  skill_card: VALID_SKILL_CARD_KEYS,
 };
 
 function checkType(value: unknown, expected: string, path: string, errors: ValidationError[]): boolean {
@@ -139,6 +147,26 @@ export function validateSchema(raw: Record<string, unknown>): ValidationResult {
     }
   }
 
+  // signing_algorithm: hmac-sha256 or ml-dsa-65
+  if ("signing_algorithm" in raw) {
+    const sa = raw.signing_algorithm;
+    if (typeof sa !== "string") {
+      errors.push({ path: "signing_algorithm", message: "expected string", severity: "error" });
+    } else if (sa !== "hmac-sha256" && sa !== "ml-dsa-65") {
+      errors.push({ path: "signing_algorithm", message: 'must be "hmac-sha256" or "ml-dsa-65"', severity: "error" });
+    }
+  }
+
+  // digest_algorithm: only sha256 in this version
+  if ("digest_algorithm" in raw) {
+    const da = raw.digest_algorithm;
+    if (typeof da !== "string") {
+      errors.push({ path: "digest_algorithm", message: "expected string", severity: "error" });
+    } else if (da !== "sha256") {
+      errors.push({ path: "digest_algorithm", message: `only "sha256" is supported in this version`, severity: "error" });
+    }
+  }
+
   // trust_mesh.mode enum
   const tm = raw.trust_mesh as Record<string, unknown> | undefined;
   if (tm && typeof tm === "object") {
@@ -165,6 +193,29 @@ export function validateSchema(raw: Record<string, unknown>): ValidationResult {
             severity: "error",
           });
         }
+      }
+    }
+    // hardware.runtime_profile nested validation
+    if ("runtime_profile" in hw) {
+      const rp = hw.runtime_profile as Record<string, unknown> | undefined;
+      if (rp && typeof rp === "object" && !Array.isArray(rp)) {
+        for (const key of Object.keys(rp)) {
+          if (!VALID_RUNTIME_PROFILE_KEYS.has(key)) {
+            const suggestion = suggestKey(key, VALID_RUNTIME_PROFILE_KEYS);
+            const msg = suggestion
+              ? `unknown key (did you mean "${suggestion}"?)`
+              : "unknown key";
+            errors.push({ path: `hardware.runtime_profile.${key}`, message: msg, severity: "error" });
+          }
+        }
+        if ("min_gpu_count" in rp) checkType(rp.min_gpu_count, "number", "hardware.runtime_profile.min_gpu_count", errors);
+        if ("min_memory_mb" in rp) checkType(rp.min_memory_mb, "number", "hardware.runtime_profile.min_memory_mb", errors);
+        if ("max_temperature_celsius" in rp) checkType(rp.max_temperature_celsius, "number", "hardware.runtime_profile.max_temperature_celsius", errors);
+        if ("max_power_watts" in rp) checkType(rp.max_power_watts, "number", "hardware.runtime_profile.max_power_watts", errors);
+        if ("expected_topology" in rp) checkType(rp.expected_topology, "string", "hardware.runtime_profile.expected_topology", errors);
+        if ("expected_accelerator" in rp) checkType(rp.expected_accelerator, "string", "hardware.runtime_profile.expected_accelerator", errors);
+      } else if (rp !== undefined) {
+        errors.push({ path: "hardware.runtime_profile", message: "must be a YAML mapping", severity: "error" });
       }
     }
   }

@@ -68,4 +68,26 @@ trust_mesh:
     def test_correct_total_check_count(self, tmp_path: Path) -> None:
         path = _write_yaml(tmp_path, "api_key: axm_test\ntenant_id: TEST\n")
         checks = run_doctor_checks(path)
-        assert len(checks) == 8
+        assert len(checks) == 9
+
+    def test_ci_mode_plain_text_no_ansi(self, tmp_path: Path, capsys) -> None:
+        from swt3_ai.doctor import print_doctor_results
+        path = _write_yaml(tmp_path, "api_key: axm_test\ntenant_id: TEST\n")
+        checks = run_doctor_checks(path)
+        print_doctor_results(checks, ci_mode=True)
+        output = capsys.readouterr().out
+        assert "\033[" not in output
+        assert "swt3-doctor:" in output
+        assert "checks," in output
+
+    def test_ci_mode_reports_warn_count(self, tmp_path: Path, capsys, monkeypatch) -> None:
+        from swt3_ai.doctor import print_doctor_results
+        monkeypatch.delenv("SWT3_MISSING_CI_TEST", raising=False)
+        path = _write_yaml(tmp_path, "api_key_env: SWT3_MISSING_CI_TEST\ntenant_id: TEST\n")
+        checks = run_doctor_checks(path)
+        print_doctor_results(checks, ci_mode=True)
+        output = capsys.readouterr().out
+        lines = output.strip().split("\n")
+        summary = [l for l in lines if l.startswith("swt3-doctor:")]
+        assert len(summary) == 1
+        assert "warn" in summary[0]

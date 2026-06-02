@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { writeFileSync, existsSync, unlinkSync, mkdirSync, rmSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { generateInitYaml } from "../src/cli.js";
+import { generateInitYaml, generateExpandedYaml } from "../src/cli.js";
 import { loadFullConfig } from "../src/config.js";
 
 const TMP = join(process.cwd(), ".test-cli-tmp");
@@ -48,6 +48,39 @@ describe("swt3 init", () => {
       expect(loaded.witnessOptions.tenantId).toBe("TEST_TENANT");
       expect(loaded.witnessOptions.agentId).toBe("test-agent");
       expect(loaded.configHash).toHaveLength(64);
+    } finally {
+      delete process.env.SWT3_API_KEY;
+    }
+  });
+
+  it("--expand generates full profile template", () => {
+    const content = generateExpandedYaml("eu-ai-act-high-risk", "ACME_EU", "claims-agent");
+    expect(content).toContain("profile: eu-ai-act-high-risk");
+    expect(content).toContain("tenant_id: ACME_EU");
+    expect(content).toContain("--expand");
+    expect(content).toContain("policy:");
+    expect(content).toContain("trust_mesh:");
+    expect(content).toContain("density_policy:");
+  });
+
+  it("--expand includes mcp_policy for cost-conscious", () => {
+    const content = generateExpandedYaml("cost-conscious", "BUDGET_CO", "budget-bot");
+    expect(content).toContain("mcp_policy:");
+    expect(content).toContain("max_tokens_per_session:");
+  });
+
+  it("--expand throws for nonexistent profile", () => {
+    expect(() => generateExpandedYaml("does-not-exist", "T", "A")).toThrow("Template not found");
+  });
+
+  it("--expand output is parseable by loadFullConfig", () => {
+    process.env.SWT3_API_KEY = "axm_test_expand";
+    try {
+      const content = generateExpandedYaml("nist-ai-rmf", "GOV_EXPAND", "audit-bot");
+      writeFileSync(YAML_PATH, content, "utf-8");
+      const loaded = loadFullConfig(YAML_PATH);
+      expect(loaded.witnessOptions.tenantId).toBe("GOV_EXPAND");
+      expect(loaded.witnessOptions.agentId).toBe("audit-bot");
     } finally {
       delete process.env.SWT3_API_KEY;
     }

@@ -5,9 +5,9 @@ controls:
     parent_control: "MP-1"
     name: "Media Protection Policy Document"
     check_type: "policy_file"
-    policy_path: "/opt/axiom/policies/mp-media-protection.md"
+    policy_path: "${AXIOM_HOME}/policies/mp-media-protection.md"
     policy_template: "mp-media-protection"
-    command: "FILE=/opt/axiom/policies/mp-media-protection.md; test -f \"$FILE\" && echo $(( ($(date +%s) - $(stat -c %Y \"$FILE\")) / 86400 )) || echo 9999"
+    command: "FILE=${AXIOM_HOME}/policies/mp-media-protection.md; test -f \"$FILE\" && echo $(( ($(date +%s) - $(stat -c %Y \"$FILE\")) / 86400 )) || echo 9999"
     factor_a: 365
     factor_a_label: "max_policy_age_days"
     factor_b_source: "stdout_int"

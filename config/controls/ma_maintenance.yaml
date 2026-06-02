@@ -5,9 +5,9 @@ controls:
     parent_control: "MA-1"
     name: "Maintenance Policy Document"
     check_type: "policy_file"
-    policy_path: "/opt/axiom/policies/ma-maintenance.md"
+    policy_path: "${AXIOM_HOME}/policies/ma-maintenance.md"
     policy_template: "ma-maintenance"
-    command: "FILE=/opt/axiom/policies/ma-maintenance.md; test -f \"$FILE\" && echo $(( ($(date +%s) - $(stat -c %Y \"$FILE\")) / 86400 )) || echo 9999"
+    command: "FILE=${AXIOM_HOME}/policies/ma-maintenance.md; test -f \"$FILE\" && echo $(( ($(date +%s) - $(stat -c %Y \"$FILE\")) / 86400 )) || echo 9999"
     factor_a: 365
     factor_a_label: "max_policy_age_days"
     factor_b_source: "stdout_int"

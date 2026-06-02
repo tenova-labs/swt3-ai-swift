@@ -11,4 +11,5 @@ Adapters:
     langchain   - LangChain callback handler (any LLM)
     dynamo      - NVIDIA Dynamo async generator decorator (Layer 1, zero deps)
     triton      - NVIDIA Triton Inference Server plugin (Python backend, BSD)
+    cerebras    - Cerebras WSE-3 SdkRuntime host-side witness (wafer-scale)
 """

@@ -21,18 +21,21 @@ class WitnessConfig:
     factor_handoff: Optional[str] = None  # "file" to enable local file export
     factor_handoff_path: Optional[str] = None  # directory for factor handoff files
     agent_id: Optional[str] = None  # SDK instance identity (survives all clearing levels)
-    signing_key: Optional[str] = None  # HMAC-SHA256 shared secret for payload signing
+    signing_key: Optional[str] = None  # HMAC-SHA256 shared secret (or ML-DSA-65 hex private key)
     signing_key_id: Optional[str] = None  # Key identifier for O(1) server-side validation
     signing_key_version: Optional[int] = None  # Monotonic version counter for key rotation
+    signing_algorithm: Optional[str] = None  # "hmac-sha256" (default) or "ml-dsa-65"
     cycle_id: Optional[str] = None  # Multi-agent chain link (survives all clearing levels)
     policy_version: Optional[str] = None  # Policy config identifier for version binding
     jurisdiction: Optional[str] = None  # ISO 3166-1 jurisdiction code (e.g., "DE", "US-VA")
     legal_basis: Optional[str] = None  # GDPR legal basis (e.g., "consent", "legitimate_interest")
     purpose_class: Optional[str] = None  # CJT purpose classification (e.g., "clinical_decision_support")
     token_budget: Optional[int] = None  # Mint anchor every N tokens (None = disabled, use buffer_size)
+    chain_min_trust_level: Optional[int] = None  # Minimum effective trust level for chain handoffs (0-4)
     flush_target: Optional[str] = None  # "http" (default) or "redis" for high-throughput decoupled intake
     redis_url: Optional[str] = None  # Redis URL when flush_target="redis" (e.g., redis://localhost:6379)
     redis_stream: Optional[str] = None  # Redis stream name (default: "swt3:anchors")
+    digest_algorithm: Optional[str] = None  # Only "sha256" in v0.5.4 (crypto-agility signal)
 
     def __post_init__(self) -> None:
         if not self.endpoint:
@@ -71,9 +74,10 @@ class WitnessPayload:
     ai_context: Optional[Dict[str, Any]] = None
     agent_id: Optional[str] = None  # operational metadata, survives all clearing levels
     cycle_id: Optional[str] = None  # multi-agent chain link, survives all clearing levels
-    payload_signature: Optional[str] = None  # HMAC-SHA256 hex string
-    signing_key_id: Optional[str] = None  # Key identifier (routing metadata, not part of HMAC)
-    signing_key_version: Optional[int] = None  # Key version (routing metadata, not part of HMAC)
+    payload_signature: Optional[str] = None  # Hex-encoded signature (HMAC-SHA256 or ML-DSA-65)
+    signing_algorithm: Optional[str] = None  # "hmac-sha256" or "ml-dsa-65" (tells verifiers which to use)
+    signing_key_id: Optional[str] = None  # Key identifier (routing metadata, not part of signature)
+    signing_key_version: Optional[int] = None  # Key version (routing metadata, not part of signature)
     policy_version_hash: Optional[str] = None  # SHA-256[:12] of policy_version (survives all clearing levels)
     jurisdiction: Optional[str] = None  # ISO 3166-1 code (survives all clearing levels)
     legal_basis: Optional[str] = None  # GDPR legal basis (survives all clearing levels)
@@ -117,6 +121,8 @@ class WitnessPayload:
             d["cycle_id"] = self.cycle_id
         if self.payload_signature is not None:
             d["payload_signature"] = self.payload_signature
+        if self.signing_algorithm is not None:
+            d["signing_algorithm"] = self.signing_algorithm
         if self.signing_key_id is not None:
             d["signing_key_id"] = self.signing_key_id
         if self.signing_key_version is not None:
@@ -304,12 +310,25 @@ class TrustMeshConfig:
 
 
 @dataclass
+class RuntimeProfileConfig:
+    """Hardware runtime profile for config-time topology binding."""
+
+    expected_topology: Optional[str] = None
+    min_gpu_count: Optional[int] = None
+    min_memory_mb: Optional[int] = None
+    expected_accelerator: Optional[str] = None  # substring match against GPU names
+    max_temperature_celsius: Optional[int] = None
+    max_power_watts: Optional[int] = None
+
+
+@dataclass
 class HardwareConfig:
     """Hardware attestation configuration from .swt3.yaml hardware section."""
 
     require_attestation: bool = False
     attestation_freshness: int = 3600  # seconds
     allowed_methods: List[str] = field(default_factory=list)
+    runtime_profile: Optional[RuntimeProfileConfig] = None
 
 
 @dataclass
@@ -372,12 +391,21 @@ class MerkleConfig:
 
 
 @dataclass
+class SkillCardConfig:
+    """Skill card configuration from .swt3.yaml skill_card section."""
+
+    skills: List[Any] = field(default_factory=list)  # list of str or SkillInfo
+    expected_manifest_hash: Optional[str] = None
+
+
+@dataclass
 class LoadedConfig:
     """Full parsed config returned by load_full_config()."""
 
     witness_kwargs: Dict[str, Any] = field(default_factory=dict)
     trust_mesh: Optional[TrustMeshConfig] = None
     hardware: Optional[HardwareConfig] = None
+    skill_card: Optional[SkillCardConfig] = None
     density_policy: Optional[DensityPolicyConfig] = None
     mcp_policy: Optional[McpPolicyConfig] = None
     merkle: Optional[MerkleConfig] = None

@@ -293,4 +293,35 @@ export class MerkleAccumulator {
     this.fingerprints = [];
     this.sessionRoots = [];
   }
+
+  /**
+   * Compose multiple session roots into a higher-level Merkle root.
+   *
+   * Enables aggregate attestation over an entire audit period (daily,
+   * weekly, organizational) without re-processing individual anchors.
+   * Any individual session can be proven as included via proveSession().
+   *
+   * @param sessionRootHashes - Session root hashes to compose.
+   *   If omitted, uses all session roots from this accumulator's history.
+   */
+  composeSessionRoots(sessionRootHashes?: string[]): {
+    aggregateRoot: string;
+    sessionCount: number;
+    proveSession(sessionRootHash: string): MerkleProof | null;
+  } {
+    const roots = sessionRootHashes ?? this.sessionRoots.map((s) => s.root);
+    if (roots.length === 0) {
+      return { aggregateRoot: "", sessionCount: 0, proveSession: () => null };
+    }
+
+    const aggregateRoot = getMerkleRoot(roots);
+
+    return {
+      aggregateRoot,
+      sessionCount: roots.length,
+      proveSession(sessionRootHash: string): MerkleProof | null {
+        return getMerkleProof(roots, sessionRootHash);
+      },
+    };
+  }
 }

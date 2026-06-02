@@ -50,6 +50,26 @@ AI_PROCEDURES = [
     "AI-SKILL.1",  # Skill Manifest Attestation
     "AI-SKILL.2",  # Memory Context Binding
     "AI-SKILL.3",  # Reward Model Binding
+    "AI-MARK.1",   # Content Provenance Marking
+    "AI-BASE.1",   # Agent Behavioral Baseline
+    "AI-LIC.1",    # License Provenance
+    "AI-SBOM.1",      # AI Bill of Materials
+    "AI-REDTEAM.1",   # Adversarial Test Campaign
+    "AI-CONSENT.1",   # Data Subject Consent
+    "AI-MULTI.1",     # Multi-Agent Delegation
+    "AI-DRIFT.1",     # Model Drift Detection
+    "AI-AUDIT.1",     # Audit Log Integrity
+    "AI-INCIDENT.1",  # Incident Reporting
+    "AI-PERF.1",      # Performance Metrics
+    "AI-ROBUST.1",    # Robustness Testing
+    "AI-CYBER.1",     # Cybersecurity Attestation
+    "AI-TRANS.1",     # Transparency Disclosure
+    "AI-WATERMARK.1", # Watermark Verification
+    "AI-DPIA.1",      # Data Protection Impact Assessment
+    "AI-AUTO.1",      # Automated Decision Notification
+    "AI-DUALUSE.1",   # Dual-Use Model Classification
+    "AI-SUPPLY.1",    # Supply Chain Risk
+    "AI-PMM.1",       # Post-Market Monitoring
 ]
 
 # Revocation reason code mapping
@@ -84,6 +104,7 @@ def extract_payloads(
     signing_key: Optional[str] = None,
     signing_key_id: Optional[str] = None,
     signing_key_version: Optional[int] = None,
+    signing_algorithm: Optional[str] = None,
     cycle_id: Optional[str] = None,
     policy_version_hash: Optional[str] = None,
     jurisdiction: Optional[str] = None,
@@ -147,7 +168,7 @@ def extract_payloads(
             _apply_operational_metadata(
                 payload, agent_id=agent_id, cycle_id=cycle_id,
                 signing_key=signing_key, signing_key_id=signing_key_id,
-                signing_key_version=signing_key_version,
+                signing_key_version=signing_key_version, signing_algorithm=signing_algorithm,
                 policy_version_hash=policy_version_hash,
                 jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
                 authorization_id=authorization_id,
@@ -204,7 +225,7 @@ def extract_payloads(
             _apply_operational_metadata(
                 payload, agent_id=agent_id, cycle_id=cycle_id,
                 signing_key=signing_key, signing_key_id=signing_key_id,
-                signing_key_version=signing_key_version,
+                signing_key_version=signing_key_version, signing_algorithm=signing_algorithm,
                 policy_version_hash=policy_version_hash,
                 jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
                 authorization_id=authorization_id,
@@ -310,7 +331,7 @@ def extract_payloads(
         _apply_operational_metadata(
             payload, agent_id=agent_id, cycle_id=cycle_id,
             signing_key=signing_key, signing_key_id=signing_key_id,
-            signing_key_version=signing_key_version,
+            signing_key_version=signing_key_version, signing_algorithm=signing_algorithm,
             policy_version_hash=policy_version_hash,
             jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
             authorization_id=authorization_id,
@@ -329,6 +350,7 @@ def _apply_operational_metadata(
     signing_key: Optional[str] = None,
     signing_key_id: Optional[str] = None,
     signing_key_version: Optional[int] = None,
+    signing_algorithm: Optional[str] = None,
     policy_version_hash: Optional[str] = None,
     jurisdiction: Optional[str] = None,
     legal_basis: Optional[str] = None,
@@ -351,8 +373,12 @@ def _apply_operational_metadata(
     if authorization_id:
         payload.authorization_id = authorization_id
     if signing_key:
-        from .signing import sign_payload
-        payload.payload_signature = sign_payload(signing_key, payload.anchor_fingerprint, agent_id)
+        from .signing import sign_payload, DEFAULT_SIGNING_ALGORITHM
+        algo = signing_algorithm or DEFAULT_SIGNING_ALGORITHM
+        payload.payload_signature = sign_payload(
+            signing_key, payload.anchor_fingerprint, agent_id, algorithm=algo,
+        )
+        payload.signing_algorithm = algo
         if signing_key_id:
             payload.signing_key_id = signing_key_id
         if signing_key_version is not None:
@@ -419,6 +445,7 @@ def extract_gatekeeper_payload(
     signing_key: Optional[str] = None,
     signing_key_id: Optional[str] = None,
     signing_key_version: Optional[int] = None,
+    signing_algorithm: Optional[str] = None,
     cycle_id: Optional[str] = None,
     policy_version_hash: Optional[str] = None,
     jurisdiction: Optional[str] = None,
@@ -452,7 +479,7 @@ def extract_gatekeeper_payload(
     _apply_operational_metadata(
         payload, agent_id=agent_id, cycle_id=cycle_id,
         signing_key=signing_key, signing_key_id=signing_key_id,
-        signing_key_version=signing_key_version,
+        signing_key_version=signing_key_version, signing_algorithm=signing_algorithm,
         policy_version_hash=policy_version_hash,
         jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
     )
@@ -469,6 +496,7 @@ def extract_revocation_payload(
     signing_key: Optional[str] = None,
     signing_key_id: Optional[str] = None,
     signing_key_version: Optional[int] = None,
+    signing_algorithm: Optional[str] = None,
     cycle_id: Optional[str] = None,
     policy_version_hash: Optional[str] = None,
     jurisdiction: Optional[str] = None,
@@ -508,9 +536,59 @@ def extract_revocation_payload(
     _apply_operational_metadata(
         payload, agent_id=agent_id, cycle_id=cycle_id,
         signing_key=signing_key, signing_key_id=signing_key_id,
-        signing_key_version=signing_key_version,
+        signing_key_version=signing_key_version, signing_algorithm=signing_algorithm,
         policy_version_hash=policy_version_hash,
         jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
+    )
+
+    return payload
+
+
+def extract_chain_trust_degradation_payload(
+    tenant_id: str,
+    previous_trust_level: int,
+    new_trust_level: int,
+    clearing_level: int,
+    agent_id: Optional[str] = None,
+    signing_key: Optional[str] = None,
+    signing_key_id: Optional[str] = None,
+    signing_key_version: Optional[int] = None,
+    signing_algorithm: Optional[str] = None,
+    cycle_id: Optional[str] = None,
+    policy_version_hash: Optional[str] = None,
+) -> WitnessPayload:
+    """Mint an AI-CHAIN.2 (Trust Degradation) payload.
+
+    Minted automatically when the effective trust level drops during
+    a multi-agent chain handoff. Provides auditors with a specific,
+    searchable anchor for trust boundary crossings.
+
+    factor_a = previous effective trust level
+    factor_b = new effective trust level
+    factor_c = delta (negative = degradation)
+    """
+    ts, epoch = timestamp_ms()
+    fa = float(previous_trust_level)
+    fb = float(new_trust_level)
+    fc = float(new_trust_level - previous_trust_level)
+    fp = mint_fingerprint(tenant_id, "AI-CHAIN.2", fa, fb, fc, ts)
+
+    payload = WitnessPayload(
+        procedure_id="AI-CHAIN.2",
+        factor_a=fa,
+        factor_b=fb,
+        factor_c=fc,
+        clearing_level=clearing_level,
+        anchor_fingerprint=fp,
+        anchor_epoch=epoch,
+        fingerprint_timestamp_ms=ts,
+    )
+
+    _apply_operational_metadata(
+        payload, agent_id=agent_id, cycle_id=cycle_id,
+        signing_key=signing_key, signing_key_id=signing_key_id,
+        signing_key_version=signing_key_version, signing_algorithm=signing_algorithm,
+        policy_version_hash=policy_version_hash,
     )
 
     return payload

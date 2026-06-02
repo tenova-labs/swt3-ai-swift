@@ -8,8 +8,9 @@
 
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { McpConfig, McpConfigBundle, McpToolPolicy } from "./config.js";
+import type { McpConfig, McpConfigBundle } from "./config.js";
 import { AxiomClient } from "./client.js";
+import { initChainDensity, evaluateToolPolicy } from "./tool-policy.js";
 import { createSessionState } from "./state.js";
 import { handleWitness } from "./tools/witness.js";
 import { handleVerify } from "./tools/verify.js";
@@ -33,95 +34,7 @@ import { loadDensityPolicy } from "./density-policy.js";
 import { startRedisReader, stopRedisReader, getReaderState } from "./redis-reader.js";
 import { mintFingerprint, timestampMs, signPayload } from "./fingerprint.js";
 
-/**
- * Match a tool name against a glob pattern list.
- * Supports * (any chars) and ? (single char).
- */
-function matchesToolPattern(toolName: string, patterns: string[]): boolean {
-  for (const pattern of patterns) {
-    const regex = new RegExp(
-      "^" + pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&")
-        .replace(/\*/g, ".*")
-        .replace(/\?/g, ".") + "$",
-    );
-    if (regex.test(toolName)) return true;
-  }
-  return false;
-}
-
-// ── Lightweight Chain Density State (local to MCP server) ─────────────
-
-interface ChainDensityState {
-  velocityWindow: number[];
-  velocityLimit: number;
-  velocityWindowMs: number;
-  chainDepth: number;
-  maxChainDepth: number;
-  lastToolName: string | null;
-  blockPatterns: RegExp[];
-  allowPatterns: RegExp[] | null;
-  failSecure: boolean;
-}
-
-function initChainDensity(policy: McpToolPolicy): ChainDensityState | null {
-  if (!policy.maxVelocity && policy.maxChainDepth === undefined &&
-      !policy.toolAllowlist?.length && !policy.toolBlocklist?.length) {
-    return null;
-  }
-  let velocityLimit = 0, velocityWindowMs = 0;
-  if (policy.maxVelocity) {
-    const parts = policy.maxVelocity.split("/");
-    velocityLimit = parseInt(parts[0], 10);
-    velocityWindowMs = parseInt(parts[1].replace("s", ""), 10) * 1000;
-  }
-  const toRegex = (p: string) => new RegExp(
-    "^" + p.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".") + "$",
-  );
-  return {
-    velocityWindow: [],
-    velocityLimit,
-    velocityWindowMs,
-    chainDepth: 0,
-    maxChainDepth: policy.maxChainDepth ?? Infinity,
-    lastToolName: null,
-    blockPatterns: (policy.toolBlocklist ?? []).map(toRegex),
-    allowPatterns: policy.toolAllowlist?.length ? policy.toolAllowlist.map(toRegex) : null,
-    failSecure: policy.failSecure ?? true,
-  };
-}
-
-function checkChainDensity(state: ChainDensityState, toolName: string): string | null {
-  const now = Date.now();
-  // Blocklist
-  for (const p of state.blockPatterns) {
-    if (p.test(toolName)) return `Tool "${toolName}" is on the blocklist`;
-  }
-  // Allowlist
-  if (state.allowPatterns && !state.allowPatterns.some((p) => p.test(toolName))) {
-    return `Tool "${toolName}" is not on the allowlist`;
-  }
-  // Velocity
-  if (state.velocityLimit > 0) {
-    const cutoff = now - state.velocityWindowMs;
-    while (state.velocityWindow.length > 0 && state.velocityWindow[0] <= cutoff) {
-      state.velocityWindow.shift();
-    }
-    if (state.velocityWindow.length >= state.velocityLimit) {
-      if (state.failSecure) return `Rate limit exceeded: ${state.velocityLimit} calls per ${state.velocityWindowMs / 1000}s`;
-    }
-    state.velocityWindow.push(now);
-  }
-  // Depth
-  if (state.maxChainDepth < Infinity) {
-    if (toolName !== state.lastToolName && state.lastToolName !== null) state.chainDepth = 0;
-    state.chainDepth++;
-    state.lastToolName = toolName;
-    if (state.chainDepth > state.maxChainDepth) {
-      if (state.failSecure) return `Chain depth ${state.chainDepth} exceeds max ${state.maxChainDepth}`;
-    }
-  }
-  return null;
-}
+// Chain density + tool policy functions imported from ./tool-policy.js
 
 export function createServer(config: McpConfig, bundle?: McpConfigBundle): McpServer {
   const client = new AxiomClient(config);
@@ -201,44 +114,80 @@ export function createServer(config: McpConfig, bundle?: McpConfigBundle): McpSe
     ].join("\n");
   }
 
-  /**
-   * MCP tool policy gate. Checks if a tool name requires witnessing per the
-   * mcp_policy section of the YAML config. Returns:
-   * - "witness": tool must be witnessed (auto_witness or matched pattern)
-   * - "exempt": tool is explicitly exempt
-   * - "block": tool blocked due to trust level or failure policy
-   * - null: no mcp_policy configured, pass through
-   */
   function toolPolicyGate(toolName: string): "witness" | "exempt" | "block" | null {
-    if (!mcpPolicy) return null;
+    const sessionTrust = sessionState.verifiedTrustLevel
+      ?? (sessionState.activeAuditSession ? 2 : (config.signingKey ? 1 : 0));
+    return evaluateToolPolicy(toolName, mcpPolicy, chainDensity, sessionTrust);
+  }
 
-    // Exempt tools always pass through unwatched
-    if (mcpPolicy.exemptTools.length > 0 && matchesToolPattern(toolName, mcpPolicy.exemptTools)) {
-      return "exempt";
+  type McpToolResult = { content: Array<{ type: "text"; text: string }>; isError?: boolean };
+  type McpToolHandler = (args: Record<string, unknown>) => Promise<McpToolResult>;
+
+  /**
+   * Auto-mint an AI-TOOL.1 anchor for a tool call.
+   * Called after successful execution when toolPolicyGate returns "witness".
+   */
+  async function autoWitnessTool(toolName: string, args: Record<string, unknown>, startMs: number): Promise<void> {
+    const elapsedMs = Date.now() - startMs;
+    const [ts, epoch] = timestampMs();
+    const inputHash = mintFingerprint(config.tenantId, toolName, 1, 0, 0, ts).slice(0, 8);
+    const fp = mintFingerprint(config.tenantId, "AI-TOOL.1", 1, elapsedMs, 1, ts);
+
+    const payload = {
+      procedure_id: "AI-TOOL.1",
+      factor_a: 1,
+      factor_b: elapsedMs,
+      factor_c: 1,
+      clearing_level: config.clearingLevel,
+      anchor_fingerprint: fp,
+      anchor_epoch: epoch,
+      fingerprint_timestamp_ms: ts,
+      ai_model_id: toolName,
+      ai_context: { tool_name: toolName, latency_ms: elapsedMs, provider: "mcp" },
+    };
+
+    if (!config.demo) {
+      try {
+        await client.postWitness(payload);
+      } catch { /* best-effort */ }
     }
+    trackProcedure(sessionState, "AI-TOOL.1");
+  }
 
-    // Check if tool matches witnessed patterns
-    const isWitnessed = mcpPolicy.witnessedTools.length === 0
-      || matchesToolPattern(toolName, mcpPolicy.witnessedTools);
+  /**
+   * Wrap an MCP tool handler with policy enforcement.
+   *
+   * Before execution: checks toolPolicyGate.
+   *   - "block" => returns denial without executing
+   *   - "exempt" / null => executes without auto-witnessing
+   *   - "witness" => executes, then auto-mints AI-TOOL.1 anchor
+   */
+  function withPolicyEnforcement(toolName: string, handler: McpToolHandler): McpToolHandler {
+    return async (args: Record<string, unknown>): Promise<McpToolResult> => {
+      const gate = toolPolicyGate(toolName);
 
-    if (!isWitnessed) return "exempt";
-
-    // Trust level gate: use real verified trust level, fall back to heuristic
-    if (mcpPolicy.requireTrustLevel > 0) {
-      const sessionTrust = sessionState.verifiedTrustLevel
-        ?? (sessionState.activeAuditSession ? 2 : (config.signingKey ? 1 : 0));
-      if (sessionTrust < mcpPolicy.requireTrustLevel) {
-        return "block";
+      if (gate === "block") {
+        const reason = mcpPolicy?.blockOnFailure !== false
+          ? `Tool "${toolName}" blocked by MCP tool policy.`
+          : `Tool "${toolName}" would be blocked by policy (log-only mode).`;
+        if (mcpPolicy?.blockOnFailure !== false) {
+          return {
+            content: [{ type: "text" as const, text: reason }],
+            isError: true,
+          };
+        }
+        // Log-only: fall through to execute
       }
-    }
 
-    // Chain density enforcement
-    if (chainDensity) {
-      const violation = checkChainDensity(chainDensity, toolName);
-      if (violation) return "block";
-    }
+      const startMs = Date.now();
+      const result = await handler(args);
 
-    return mcpPolicy.autoWitness ? "witness" : "exempt";
+      if (gate === "witness" && !result.isError) {
+        await autoWitnessTool(toolName, args, startMs);
+      }
+
+      return result;
+    };
   }
 
   const server = new McpServer({

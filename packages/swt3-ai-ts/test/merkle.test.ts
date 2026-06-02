@@ -137,3 +137,79 @@ describe("MerkleAccumulator", () => {
     expect(acc.roots).toHaveLength(0);
   });
 });
+
+describe("Cross-Session Merkle Composition", () => {
+  it("returns empty for accumulator with no sessions", () => {
+    const acc = new MerkleAccumulator();
+    const result = acc.composeSessionRoots();
+    expect(result.aggregateRoot).toBe("");
+    expect(result.sessionCount).toBe(0);
+    expect(result.proveSession("anything")).toBeNull();
+  });
+
+  it("composes single session root", () => {
+    const acc = new MerkleAccumulator();
+    acc.addMany(["fp_a", "fp_b"]);
+    acc.flush();
+
+    const result = acc.composeSessionRoots();
+    expect(result.aggregateRoot).toHaveLength(64);
+    expect(result.sessionCount).toBe(1);
+  });
+
+  it("composes multiple session roots with valid aggregate", () => {
+    const acc = new MerkleAccumulator();
+    acc.addMany(["fp_a", "fp_b"]);
+    const s1 = acc.flush()!;
+    acc.addMany(["fp_c", "fp_d"]);
+    const s2 = acc.flush()!;
+    acc.addMany(["fp_e"]);
+    const s3 = acc.flush()!;
+
+    const result = acc.composeSessionRoots();
+    expect(result.aggregateRoot).toHaveLength(64);
+    expect(result.sessionCount).toBe(3);
+
+    // Aggregate root is deterministic
+    const result2 = acc.composeSessionRoots();
+    expect(result2.aggregateRoot).toBe(result.aggregateRoot);
+  });
+
+  it("proves session inclusion in aggregate", () => {
+    const acc = new MerkleAccumulator();
+    acc.addMany(["fp_a", "fp_b"]);
+    const s1 = acc.flush()!;
+    acc.addMany(["fp_c", "fp_d"]);
+    const s2 = acc.flush()!;
+
+    const result = acc.composeSessionRoots();
+    const proof = result.proveSession(s1.root);
+    expect(proof).not.toBeNull();
+    expect(verifyMerkleProof(s1.root, proof!)).toBe(true);
+
+    const proof2 = result.proveSession(s2.root);
+    expect(proof2).not.toBeNull();
+    expect(verifyMerkleProof(s2.root, proof2!)).toBe(true);
+  });
+
+  it("returns null for non-existent session", () => {
+    const acc = new MerkleAccumulator();
+    acc.addMany(["fp_a"]);
+    acc.flush();
+
+    const result = acc.composeSessionRoots();
+    expect(result.proveSession("nonexistent_root")).toBeNull();
+  });
+
+  it("accepts explicit session root array", () => {
+    const acc = new MerkleAccumulator();
+    const explicit = ["root_aaa", "root_bbb", "root_ccc"];
+    const result = acc.composeSessionRoots(explicit);
+    expect(result.aggregateRoot).toHaveLength(64);
+    expect(result.sessionCount).toBe(3);
+
+    const proof = result.proveSession("root_bbb");
+    expect(proof).not.toBeNull();
+    expect(verifyMerkleProof("root_bbb", proof!)).toBe(true);
+  });
+});

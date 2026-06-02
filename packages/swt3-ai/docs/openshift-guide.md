@@ -288,7 +288,7 @@ data:
     clearing_level: 1
     procedures:
       - AI-INF.1
-      - AI-DFT.1
+      - AI-DRIFT.1
       - AI-GRD.1
     jurisdiction: US
     purpose_class: contract_analysis

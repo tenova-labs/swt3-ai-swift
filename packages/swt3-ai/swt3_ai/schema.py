@@ -35,17 +35,24 @@ _KNOWN_TOP_LEVEL: Set[str] = {
     "api_key", "api_key_env", "tenant_id", "clearing_level", "endpoint",
     "buffer_size", "flush_interval", "max_retries", "latency_threshold_ms",
     "guardrails_required", "guardrail_names", "factor_handoff", "factor_handoff_path",
-    "agent_id", "signing_key", "signing_key_env", "signing_key_id", "signing_key_version",
+    "agent_id", "signing_key", "signing_key_env", "signing_key_id", "signing_key_version", "signing_algorithm",
     "cycle_id", "policy_version", "jurisdiction", "legal_basis", "purpose_class",
     "on_flush", "gateway_mode", "wal_path", "replay_window",
     "token_budget", "procedures", "strict",
     "policy", "trust_mesh", "hardware", "density_policy", "mcp_policy",
-    "merkle", "profile", "extends",
+    "merkle", "skill_card", "digest_algorithm", "profile", "extends",
 }
 
 _VALID_ATTESTATION_METHODS: Set[str] = {
-    "tpm_2.0", "secure_enclave", "sgx", "sev", "trustzone", "nitro",
+    "tpm_2.0", "secure_enclave", "sgx", "sev", "trustzone", "nitro", "cerebras_wse3",
 }
+
+_VALID_RUNTIME_PROFILE_KEYS: Set[str] = {
+    "expected_topology", "min_gpu_count", "min_memory_mb",
+    "expected_accelerator", "max_temperature_celsius", "max_power_watts",
+}
+
+_VALID_SKILL_CARD_KEYS: Set[str] = {"skills", "expected_manifest_hash"}
 
 _SECTION_SCHEMAS: Dict[str, Set[str]] = {
     "policy": {
@@ -58,7 +65,7 @@ _SECTION_SCHEMAS: Dict[str, Set[str]] = {
         "required_procedures", "signing_keys",
     },
     "hardware": {
-        "require_attestation", "attestation_freshness", "allowed_methods",
+        "require_attestation", "attestation_freshness", "allowed_methods", "runtime_profile",
     },
     "density_policy": {
         "min_anchors_per_1000_tokens", "required_providers",
@@ -71,6 +78,7 @@ _SECTION_SCHEMAS: Dict[str, Set[str]] = {
         "fail_secure", "rules", "max_tokens_per_session",
     },
     "merkle": {"enabled", "accumulator_interval"},
+    "skill_card": _VALID_SKILL_CARD_KEYS,
 }
 
 
@@ -138,6 +146,22 @@ def validate_schema(raw: Dict[str, Any]) -> ValidationResult:
         if not isinstance(cl, int) or cl not in (0, 1, 2, 3):
             errors.append(ValidationError("clearing_level", "must be 0, 1, 2, or 3", "error"))
 
+    # signing_algorithm: hmac-sha256 or ml-dsa-65
+    if "signing_algorithm" in raw:
+        sa = raw["signing_algorithm"]
+        if not isinstance(sa, str):
+            errors.append(ValidationError("signing_algorithm", "expected string", "error"))
+        elif sa not in ("hmac-sha256", "ml-dsa-65"):
+            errors.append(ValidationError("signing_algorithm", 'must be "hmac-sha256" or "ml-dsa-65"', "error"))
+
+    # digest_algorithm: only sha256 in this version
+    if "digest_algorithm" in raw:
+        da = raw["digest_algorithm"]
+        if not isinstance(da, str):
+            errors.append(ValidationError("digest_algorithm", "expected string", "error"))
+        elif da != "sha256":
+            errors.append(ValidationError("digest_algorithm", 'only "sha256" is supported in this version', "error"))
+
     # trust_mesh.mode enum
     tm = raw.get("trust_mesh")
     if isinstance(tm, dict):
@@ -165,6 +189,30 @@ def validate_schema(raw: Dict[str, Any]) -> ValidationResult:
                     f'unknown attestation method "{method}". Valid: {valid}',
                     "error",
                 ))
+    # hardware.runtime_profile nested validation
+    if isinstance(hw, dict) and "runtime_profile" in hw:
+        rp = hw["runtime_profile"]
+        if isinstance(rp, dict):
+            for key in rp:
+                if key not in _VALID_RUNTIME_PROFILE_KEYS:
+                    suggestion = _suggest_key(key, _VALID_RUNTIME_PROFILE_KEYS)
+                    msg = (f'unknown key (did you mean "{suggestion}"?)'
+                           if suggestion else "unknown key")
+                    errors.append(ValidationError(f"hardware.runtime_profile.{key}", msg, "error"))
+            if "min_gpu_count" in rp:
+                _check_type(rp["min_gpu_count"], "number", "hardware.runtime_profile.min_gpu_count", errors)
+            if "min_memory_mb" in rp:
+                _check_type(rp["min_memory_mb"], "number", "hardware.runtime_profile.min_memory_mb", errors)
+            if "max_temperature_celsius" in rp:
+                _check_type(rp["max_temperature_celsius"], "number", "hardware.runtime_profile.max_temperature_celsius", errors)
+            if "max_power_watts" in rp:
+                _check_type(rp["max_power_watts"], "number", "hardware.runtime_profile.max_power_watts", errors)
+            if "expected_topology" in rp:
+                _check_type(rp["expected_topology"], "string", "hardware.runtime_profile.expected_topology", errors)
+            if "expected_accelerator" in rp:
+                _check_type(rp["expected_accelerator"], "string", "hardware.runtime_profile.expected_accelerator", errors)
+        elif rp is not None:
+            errors.append(ValidationError("hardware.runtime_profile", "must be a YAML mapping", "error"))
 
     # Section key validation
     for section, valid_keys in _SECTION_SCHEMAS.items():

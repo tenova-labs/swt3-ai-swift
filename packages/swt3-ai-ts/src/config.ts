@@ -42,6 +42,7 @@ const KEY_MAP: Record<string, string> = {
   signing_key: "signingKey",
   signing_key_id: "signingKeyId",
   signing_key_version: "signingKeyVersion",
+  signing_algorithm: "signingAlgorithm",
   cycle_id: "cycleId",
   policy_version: "policyVersion",
   legal_basis: "legalBasis",
@@ -51,6 +52,7 @@ const KEY_MAP: Record<string, string> = {
   wal_path: "walPath",
   replay_window: "replayWindow",
   token_budget: "tokenBudget",
+  digest_algorithm: "digestAlgorithm",
 };
 
 /** Env-suffix fields that resolve from process.env. */
@@ -60,7 +62,7 @@ const ENV_FIELDS: Record<string, string> = {
 };
 
 /** Top-level sections extracted before key mapping. */
-const SECTION_KEYS = new Set(["policy", "trust_mesh", "hardware", "density_policy", "mcp_policy", "merkle", "profile"]);
+const SECTION_KEYS = new Set(["policy", "trust_mesh", "hardware", "density_policy", "mcp_policy", "merkle", "skill_card", "profile"]);
 
 // ── Typo Protection Sets ──────────────────────────────────────────────
 
@@ -80,7 +82,7 @@ const VALID_TRUST_MESH_KEYS = new Set([
 ]);
 
 const VALID_HARDWARE_KEYS = new Set([
-  "require_attestation", "attestation_freshness", "allowed_methods",
+  "require_attestation", "attestation_freshness", "allowed_methods", "runtime_profile",
 ]);
 
 const VALID_DENSITY_POLICY_KEYS = new Set([
@@ -100,11 +102,19 @@ const VALID_MERKLE_KEYS = new Set([
 ]);
 
 const VALID_PROFILES = new Set([
+  "cost-conscious",
   "eu-ai-act-high-risk",
   "granite-sovereign",
   "mythos-defense",
   "nist-ai-rmf",
   "owasp-agentic-top10",
+  "telecom-compliance",
+  "healthcare-clinical",
+  "fintech-model-risk",
+  "defense-govcon",
+  "autonomous-systems",
+  "insurance-underwriting",
+  "content-platform",
   "minimal",
 ]);
 
@@ -303,12 +313,29 @@ function extractHardware(raw: Record<string, unknown>): HardwareConfig | null {
     throw new Error("'hardware' must be a YAML mapping");
   }
 
+  // Extract runtime_profile before validateKeys (it's a nested object, not a flat key)
+  const rp = section.runtime_profile as Record<string, unknown> | undefined;
+  delete section.runtime_profile;
+
   validateKeys(section, VALID_HARDWARE_KEYS, "hardware");
+
+  let runtimeProfile: import("./types.js").RuntimeProfileConfig | undefined;
+  if (rp && typeof rp === "object" && !Array.isArray(rp)) {
+    runtimeProfile = {
+      expectedTopology: rp.expected_topology as string | undefined,
+      minGpuCount: rp.min_gpu_count as number | undefined,
+      minMemoryMb: rp.min_memory_mb as number | undefined,
+      expectedAccelerator: rp.expected_accelerator as string | undefined,
+      maxTemperatureCelsius: rp.max_temperature_celsius as number | undefined,
+      maxPowerWatts: rp.max_power_watts as number | undefined,
+    };
+  }
 
   return {
     requireAttestation: (section.require_attestation as boolean) ?? false,
     attestationFreshness: (section.attestation_freshness as number) ?? 3600,
     allowedMethods: (section.allowed_methods as string[]) ?? [],
+    runtimeProfile,
   };
 }
 
@@ -381,6 +408,43 @@ function extractMerkle(raw: Record<string, unknown>): MerkleConfig | null {
   return {
     enabled: (section.enabled as boolean) ?? true,
     accumulatorInterval: (section.accumulator_interval as number) ?? 0,
+  };
+}
+
+const VALID_SKILL_CARD_KEYS = new Set(["skills", "expected_manifest_hash"]);
+
+function extractSkillCard(raw: Record<string, unknown>): import("./types.js").SkillCardConfig | null {
+  const section = raw.skill_card as Record<string, unknown> | undefined;
+  if (!section) return null;
+  delete raw.skill_card;
+
+  if (typeof section !== "object" || Array.isArray(section)) {
+    throw new Error("'skill_card' must be a YAML mapping");
+  }
+
+  validateKeys(section, VALID_SKILL_CARD_KEYS, "skill_card");
+
+  const rawSkills = section.skills as unknown[] | undefined;
+  if (!rawSkills || !Array.isArray(rawSkills) || rawSkills.length === 0) {
+    return null;
+  }
+
+  const skills = rawSkills.map((s) => {
+    if (typeof s === "string") return s;
+    if (typeof s === "object" && s !== null) {
+      const obj = s as Record<string, unknown>;
+      return {
+        name: obj.name as string,
+        version: obj.version as string | undefined,
+        skillHash: (obj.skill_hash ?? obj.skillHash) as string | undefined,
+      };
+    }
+    return String(s);
+  });
+
+  return {
+    skills,
+    expectedManifestHash: section.expected_manifest_hash as string | undefined,
   };
 }
 
@@ -548,6 +612,7 @@ export function loadFullConfig(path?: string): LoadedConfig {
   const policy = extractPolicy(raw);
   const trustMesh = extractTrustMesh(raw);
   const hardware = extractHardware(raw);
+  const skillCard = extractSkillCard(raw);
   const densityPolicy = extractDensityPolicy(raw);
   const mcpPolicy = extractMcpPolicy(raw);
   const merkle = extractMerkle(raw);
@@ -596,6 +661,7 @@ export function loadFullConfig(path?: string): LoadedConfig {
     witnessOptions: result,
     trustMesh,
     hardware,
+    skillCard,
     densityPolicy,
     mcpPolicy,
     merkle,

@@ -22,8 +22,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .types import (
-    TrustMeshConfig, HardwareConfig, DensityPolicyConfig, McpPolicyConfig, MerkleConfig, LoadedConfig,
-    ChainRule,
+    TrustMeshConfig, HardwareConfig, DensityPolicyConfig, McpPolicyConfig, MerkleConfig, SkillCardConfig, LoadedConfig,
+    ChainRule, RuntimeProfileConfig, SkillInfo,
 )
 
 # ── Typo Protection Sets ──────────────────────────────────────────────
@@ -44,7 +44,7 @@ _VALID_TRUST_MESH_KEYS = frozenset({
 })
 
 _VALID_HARDWARE_KEYS = frozenset({
-    "require_attestation", "attestation_freshness", "allowed_methods",
+    "require_attestation", "attestation_freshness", "allowed_methods", "runtime_profile",
 })
 
 _VALID_DENSITY_POLICY_KEYS = frozenset({
@@ -60,11 +60,19 @@ _VALID_MCP_POLICY_KEYS = frozenset({
 })
 
 _VALID_PROFILES = frozenset({
+    "cost-conscious",
     "eu-ai-act-high-risk",
     "granite-sovereign",
     "mythos-defense",
     "nist-ai-rmf",
     "owasp-agentic-top10",
+    "telecom-compliance",
+    "healthcare-clinical",
+    "fintech-model-risk",
+    "defense-govcon",
+    "autonomous-systems",
+    "insurance-underwriting",
+    "content-platform",
     "minimal",
 })
 
@@ -73,7 +81,7 @@ _VALID_MERKLE_KEYS = frozenset({
 })
 
 _SECTION_KEYS = frozenset({
-    "policy", "trust_mesh", "hardware", "density_policy", "mcp_policy", "merkle", "profile",
+    "policy", "trust_mesh", "hardware", "density_policy", "mcp_policy", "merkle", "skill_card", "profile",
 })
 
 
@@ -279,12 +287,28 @@ def _extract_hardware(config: Dict[str, Any]) -> Optional[HardwareConfig]:
         return None
     if not isinstance(section, dict):
         raise ValueError("'hardware' must be a YAML mapping")
+
+    # Extract runtime_profile before validateKeys (nested object, not flat key)
+    rp = section.pop("runtime_profile", None)
+
     _validate_keys(section, _VALID_HARDWARE_KEYS, "hardware")
+
+    runtime_profile: Optional[RuntimeProfileConfig] = None
+    if isinstance(rp, dict):
+        runtime_profile = RuntimeProfileConfig(
+            expected_topology=rp.get("expected_topology"),
+            min_gpu_count=rp.get("min_gpu_count"),
+            min_memory_mb=rp.get("min_memory_mb"),
+            expected_accelerator=rp.get("expected_accelerator"),
+            max_temperature_celsius=rp.get("max_temperature_celsius"),
+            max_power_watts=rp.get("max_power_watts"),
+        )
 
     return HardwareConfig(
         require_attestation=section.get("require_attestation", False),
         attestation_freshness=section.get("attestation_freshness", 3600),
         allowed_methods=section.get("allowed_methods", []),
+        runtime_profile=runtime_profile,
     )
 
 
@@ -355,6 +379,41 @@ def _extract_merkle(config: Dict[str, Any]) -> Optional[MerkleConfig]:
     return MerkleConfig(
         enabled=section.get("enabled", True),
         accumulator_interval=section.get("accumulator_interval", 0),
+    )
+
+
+_VALID_SKILL_CARD_KEYS = frozenset({"skills", "expected_manifest_hash"})
+
+
+def _extract_skill_card(config: Dict[str, Any]) -> Optional[SkillCardConfig]:
+    """Extract and remove the skill_card section from config."""
+    section = config.pop("skill_card", None)
+    if section is None:
+        return None
+    if not isinstance(section, dict):
+        raise ValueError("'skill_card' must be a YAML mapping")
+    _validate_keys(section, _VALID_SKILL_CARD_KEYS, "skill_card")
+
+    raw_skills = section.get("skills", [])
+    if not isinstance(raw_skills, list) or len(raw_skills) == 0:
+        return None
+
+    skills: list = []
+    for s in raw_skills:
+        if isinstance(s, str):
+            skills.append(s)
+        elif isinstance(s, dict):
+            skills.append(SkillInfo(
+                name=s.get("name", ""),
+                version=s.get("version"),
+                skill_hash=s.get("skill_hash"),
+            ))
+        else:
+            skills.append(str(s))
+
+    return SkillCardConfig(
+        skills=skills,
+        expected_manifest_hash=section.get("expected_manifest_hash"),
     )
 
 
@@ -530,6 +589,7 @@ def load_full_config(path: Optional[str] = None) -> LoadedConfig:
     policy = _extract_policy(raw)
     trust_mesh = _extract_trust_mesh(raw)
     hardware = _extract_hardware(raw)
+    skill_card = _extract_skill_card(raw)
     density_policy = _extract_density_policy(raw)
     mcp_policy = _extract_mcp_policy(raw)
     merkle = _extract_merkle(raw)
@@ -549,6 +609,7 @@ def load_full_config(path: Optional[str] = None) -> LoadedConfig:
         witness_kwargs=config,
         trust_mesh=trust_mesh,
         hardware=hardware,
+        skill_card=skill_card,
         density_policy=density_policy,
         mcp_policy=mcp_policy,
         merkle=merkle,

@@ -58,7 +58,7 @@ Works with OpenAI, Anthropic, AWS Bedrock, Vercel AI SDK, LangChain, LiteLLM (10
 
 ## What Gets Witnessed
 
-Each inference produces anchors across 40 AI procedures spanning 20 domains:
+Each inference produces anchors across 47 AI procedures spanning 23 domains:
 
 | Procedure | Domain | What It Proves | Regulatory Mapping |
 |-----------|--------|---------------|-------------------|
@@ -92,8 +92,15 @@ Each inference produces anchors across 40 AI procedures spanning 20 domains:
 | AI-HW.1 | Hardware | GPU/accelerator inventory attested at startup | EU AI Act Art. 15(4) |
 | AI-TRUST.1 | Trust | Mutual compliance trust verified between agents | EU AI Act Art. 9(4)(c) |
 | AI-TRUST.2 | Trust | Trust handshake details recorded | EU AI Act Art. 12(2)(a) |
+| AI-MARK.1 | Content | Content provenance marking attested | EU AI Act Art. 50(2) |
+| AI-BASE.1 | Baseline | Agent behavioral baseline monitored | NIST AI RMF MEASURE 2.6 |
+| AI-ENV.1 | Environment | Runtime environment fingerprint recorded | EU AI Act Art. 15(4) |
+| AI-ENV.2 | Environment | Dependency manifest attested | EU AI Act Art. 15(3) |
+| AI-DATA.3 | Data | Training data lineage attested | EU AI Act Art. 10(2) |
+| AI-DATA.4 | Data | Data quality metrics recorded | EU AI Act Art. 10(3) |
+| AI-CHAIN.2 | Chain | Chain-of-trust credential verified | EU AI Act Art. 9(4)(c) |
 
-Plus 9 additional procedures covering fairness, explainability, training data, and bias measurement. See the [full procedure registry](packages/libswt3/SWT3-SPEC-v1.0.md).
+Plus 10 additional procedures covering fairness, explainability, inference volume, model drift, and human oversight. See the [full procedure registry](packages/libswt3/SWT3-SPEC-v1.0.md).
 
 ## View an Anchor
 
@@ -146,7 +153,7 @@ At Level 1+, raw prompts and responses **never leave your infrastructure**.
 | Ruby | [`swt3-ai`](https://rubygems.org/gems/swt3-ai) | `gem install swt3-ai` |
 | MCP Server | [`@tenova/swt3-mcp`](https://www.npmjs.com/package/@tenova/swt3-mcp) | `npx @tenova/swt3-mcp` |
 
-Both SDKs produce identical SWT3 fingerprints. 21 cross-language test vectors validated at build time.
+All SWT3 SDKs produce identical fingerprints. 40 cross-language test vectors validated at build time.
 
 ## Get Started
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from swt3_ai.cli import generate_init_yaml
+from swt3_ai.cli import generate_init_yaml, generate_expanded_yaml
 from swt3_ai.config import load_full_config
 
 
@@ -42,3 +42,32 @@ class TestInitGenerate:
         assert loaded.witness_kwargs["tenant_id"] == "TEST_TENANT"
         assert loaded.witness_kwargs["agent_id"] == "test-agent"
         assert len(loaded.config_hash) == 64
+
+
+class TestExpandedInit:
+    def test_expand_generates_full_profile(self) -> None:
+        content = generate_expanded_yaml("eu-ai-act-high-risk", "ACME_EU", "claims-agent")
+        assert "profile: eu-ai-act-high-risk" in content
+        assert "tenant_id: ACME_EU" in content
+        assert "--expand" in content
+        assert "policy:" in content
+        assert "trust_mesh:" in content
+        assert "density_policy:" in content
+
+    def test_expand_cost_conscious_has_mcp_policy(self) -> None:
+        content = generate_expanded_yaml("cost-conscious", "BUDGET_CO", "budget-bot")
+        assert "mcp_policy:" in content
+        assert "max_tokens_per_session:" in content
+
+    def test_expand_throws_for_nonexistent(self) -> None:
+        with pytest.raises(FileNotFoundError, match="Template not found"):
+            generate_expanded_yaml("does-not-exist", "T", "A")
+
+    def test_expand_parseable_by_load_full_config(self, tmp_path: Path, monkeypatch) -> None:
+        monkeypatch.setenv("SWT3_API_KEY", "axm_test_expand")
+        content = generate_expanded_yaml("nist-ai-rmf", "GOV_EXPAND", "audit-bot")
+        p = tmp_path / "swt3.yaml"
+        p.write_text(content, encoding="utf-8")
+        loaded = load_full_config(str(p))
+        assert loaded.witness_kwargs["tenant_id"] == "GOV_EXPAND"
+        assert loaded.witness_kwargs["agent_id"] == "audit-bot"

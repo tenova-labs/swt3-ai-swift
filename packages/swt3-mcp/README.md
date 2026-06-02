@@ -8,9 +8,9 @@ SWT3 (Sovereign Witness Traceability) works by hashing your AI's inputs and outp
 
 ## Why This Exists
 
-In 2026, attackers exploited MCP configuration injection in Flowise to achieve arbitrary code execution across thousands of AI workflow instances. A compromised third-party AI tool (Context.ai) pivoted into Vercel's internal systems. Microsoft disclosed RCE vulnerabilities in Semantic Kernel where a single prompt could execute commands on the host. 65% of firms reported AI agent security incidents. Only 14.4% of agents go live with full security approval.
+In 2026, MCP configuration injection in Flowise led to arbitrary code execution across thousands of AI workflow instances. A compromised third-party AI tool (Context.ai) pivoted into Vercel's internal systems. Microsoft disclosed RCE vulnerabilities in Semantic Kernel. 65% of firms reported AI agent incidents. Only 14.4% of agents go live with full compliance approval.
 
-Every tool call your agent makes is an attack surface. This server witnesses those calls, enforces tool-level policy gates, and produces a cryptographic evidence chain that proves what happened. If an agent is compromised, the audit trail is immutable. If a tool call violates policy, the gate blocks it before execution.
+Every tool call your agent makes should be witnessed. This server records those calls, evaluates them against declared policy, and produces a cryptographic evidence chain that proves what happened. The audit trail is immutable. If a tool call doesn't match policy, the witness records the violation -- creating proof of what was attempted and what rule applied.
 
 ## Trust Mesh -- Secure Agent-to-Agent Communication
 
@@ -236,7 +236,7 @@ Every anchor maps to specific regulatory obligations:
 `witness_authorization` -- witness pre-inference authorization decisions.
 
 **Discovery:**
-`list_procedures` -- browse the UCT procedure registry (151+ controls).
+`list_procedures` -- browse the UCT procedure registry (204+ controls).
 `suggest_procedures` -- get recommended procedures based on your use case.
 `check_posture` -- check current tenant compliance posture.
 `signup` -- create a free account without leaving your editor.

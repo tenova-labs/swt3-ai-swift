@@ -3,8 +3,8 @@
 ## Sovereign Witness Traceability Protocol
 
 **Status:** Proposed Standard
-**Version:** 1.4.0
-**Date:** 2026-05-03
+**Version:** 1.5.0
+**Date:** 2026-05-23
 **Authors:** Tenable Nova LLC (DBA TeNova)
 **License:** Apache 2.0
 
@@ -737,6 +737,30 @@ AI procedures use the `AI` UCT code and follow the naming convention
 | `AI-HW.3` | TPM Platform Attestation | Witness TPM 2.0 PCR register state proving host firmware integrity and hardware root of trust | NIST 800-53 SC-12, EU AI Act Art. 15(4) |
 | `AI-TRUST.1` | Trust Verification | Witness mutual compliance trust verification between AI agents before interaction | EU AI Act Art. 9(4)(c), NIST AI RMF GOVERN 1.2 |
 | `AI-TRUST.2` | Trust Handshake | Witness the detailed handshake result (checks performed, checks passed) of a trust verification | EU AI Act Art. 12(2)(a), NIST AI RMF MANAGE 4.1 |
+| `AI-FAIR.3` | Bias Audit | Witness periodic bias audit results against protected categories | EU AI Act Art. 10(2)(f), NIST AI RMF MEASURE 2.11 |
+| `AI-CHAIN.2` | Chain Trust Credential | Witness chain-of-trust credential verification between agents in a pipeline | EU AI Act Art. 9(4)(c), NIST AI RMF MANAGE 4.1 |
+| `AI-ENV.1` | Runtime Environment | Witness the runtime environment fingerprint (OS, language version, package hashes) at startup | EU AI Act Art. 15(4), NIST AI RMF MANAGE 1.3 |
+| `AI-ENV.2` | Dependency Manifest | Witness the dependency tree and lock file hash for supply chain integrity | EU AI Act Art. 15(3), NIST AI RMF MANAGE 1.3 |
+| `AI-MARK.1` | Content Provenance | Witness AI-generated content marking with method and content type | EU AI Act Art. 50(2), NIST AI RMF GOVERN 1.7 |
+| `AI-BASE.1` | Agent Behavioral Baseline | Witness agent behavioral baseline establishment, monitoring, or drift detection | NIST AI RMF MEASURE 2.6, EU AI Act Art. 9(4)(a) |
+| `AI-LIC.1` | License Provenance | Witness license composition of models, adapters, and data with SPDX identification | EU AI Act Art. 53(1)(d), NIST AI RMF GOVERN 1.7 |
+| `AI-SBOM.1` | AI Bill of Materials | Witness AI system component inventory with G7 cluster coverage and format | G7/CISA SBOM-AI, EU AI Act Art. 11, EO 14028 |
+| `AI-REDTEAM.1` | Adversarial Test Campaign | Witness red team campaign results with coverage category and pass rate | EO 14110, EU AI Act Art. 9(7), NIST AI 100-2 |
+| `AI-CONSENT.1` | Data Subject Consent | Witness data subject consent documentation with legal basis and withdrawal status | GDPR Art. 6/7, EU AI Act Art. 10 |
+| `AI-MULTI.1` | Multi-Agent Delegation | Witness inter-agent permission delegation with depth, scope, and time bounds | EU AI Act Art. 9, NIST AI RMF GOVERN 1.3 |
+| `AI-DRIFT.1` | Model Drift Detection | Witness statistical model drift including data, concept, and prediction drift | EU AI Act Art. 9(2)(b), NIST AI RMF MEASURE 2.6 |
+| `AI-AUDIT.1` | Audit Log Integrity | Witness verification of audit trail integrity and traceability | EU AI Act Art. 12, GDPR Art. 30 |
+| `AI-INCIDENT.1` | Incident Reporting | Witness serious incident reporting to authorities | EU AI Act Art. 62, NIST AI RMF MANAGE 3.2 |
+| `AI-PERF.1` | Performance Metrics | Witness model performance benchmark results with accuracy levels | EU AI Act Art. 15(1), NIST AI RMF MEASURE 2.5 |
+| `AI-ROBUST.1` | Robustness Testing | Witness resilience against errors, faults, and inconsistencies | EU AI Act Art. 15(3), NIST AI RMF MEASURE 2.6 |
+| `AI-CYBER.1` | Cybersecurity Attestation | Witness cybersecurity assessment results against framework controls | EU AI Act Art. 15(4), NIST CSF |
+| `AI-TRANS.1` | Transparency Disclosure | Witness AI usage disclosures to deployers, users, and data subjects | EU AI Act Art. 13, GDPR Art. 13/14 |
+| `AI-WATERMARK.1` | Watermark Verification | Witness verification that AI content marking survived downstream processing | EU AI Act Art. 50(2), GPAI Code of Practice |
+| `AI-DPIA.1` | Data Protection Impact Assessment | Witness DPIA completion for high-risk AI processing | GDPR Art. 35, EU AI Act Art. 27 |
+| `AI-AUTO.1` | Automated Decision Notification | Witness notification of automated decisions with legal effects | GDPR Art. 22, EU AI Act Art. 14 |
+| `AI-DUALUSE.1` | Dual-Use Model Classification | Witness classification and reporting of dual-use foundation models | EO 14110 Sec 4(a), NIST AI RMF GOVERN 1.1 |
+| `AI-SUPPLY.1` | Supply Chain Risk | Witness third-party AI supply chain risk assessment | NIST AI RMF MEASURE 3.1, G7/CISA SBOM-AI, EO 14028 |
+| `AI-PMM.1` | Post-Market Monitoring | Witness execution of post-market monitoring plans | EU AI Act Art. 72, NIST AI RMF MANAGE 4.1 |
 
 ### 9.2 Factor Matrix Semantics for AI
 
@@ -789,6 +813,30 @@ factor semantics. Implementations MUST use these semantics for interoperability.
 | `AI-HW.3` | PCR registers read (count) | 1 if all non-zero (healthy), 0 if uninitialized/tampered | 0 (reserved) |
 | `AI-TRUST.1` | 1 (trust verification performed) | 1 if trust granted, 0 if denied | Trust level (0=denied, 1=basic, 2=verified, 3=attested, 4=sovereign) |
 | `AI-TRUST.2` | Checks performed (count) | Checks passed (count) | 1 if trust granted, 0 if denied |
+| `AI-FAIR.3` | Audit frequency required (days) | Days since last audit | Categories audited count |
+| `AI-CHAIN.2` | 1 (credential verification required) | 1 if credential valid, 0 if invalid/expired | Trust level of presenting agent (0-4) |
+| `AI-ENV.1` | Expected environment hash (first 10 digits) | Actual environment hash (first 10 digits) | Match flag (1 = match, 0 = drift) |
+| `AI-ENV.2` | Expected dependency count | Actual dependency count | Lock file hash match (1 = match, 0 = mismatch) |
+| `AI-MARK.1` | Content type code (0=text, 1=image, 2=audio, 3=video, 4=code, 5=multimodal, 6=synthetic_data) | Marking method (0=metadata, 1=watermark, 2=c2pa, 3=header, 4=visible) | Content hash (first 10 digits as integer) |
+| `AI-BASE.1` | Mode (0=establishing, 1=monitoring, 2=drift_detected, 3=baseline_reset) | Metric count (number of tracked metrics) | Drift score (x1000, e.g., 150 = 0.150) |
+| `AI-LIC.1` | Components checked (count) | All compliant (1=yes, 0=violation) | License type code (0=permissive, 1=copyleft, 2=proprietary, 3=dual, 4=openmdw, 5=unknown) |
+| `AI-SBOM.1` | Total components (count) | G7 clusters documented (0-7) | Format code (0=cyclonedx, 1=spdx, 2=custom, 3=unknown) |
+| `AI-REDTEAM.1` | Tests executed (count) | Tests passed (count) | Coverage category code (0-10) |
+| `AI-CONSENT.1` | Subjects covered (count) | Legal basis code (0-5) | Withdrawal available (1=yes, 0=no) |
+| `AI-MULTI.1` | Delegation depth (hops) | Permissions granted (count) | Time bound minutes (0=unbounded) |
+| `AI-DRIFT.1` | Metrics evaluated (count) | Drifted count | Drift type code (0-5) |
+| `AI-AUDIT.1` | Entries checked (count) | Integrity verified (1=yes, 0=no) | Log format code (0-3) |
+| `AI-INCIDENT.1` | Severity code (1-4) | Authority notified (1=yes, 0=no) | Incident type code (0-5) |
+| `AI-PERF.1` | Metrics evaluated (count) | Metrics passing (count) | Benchmark type code (0-5) |
+| `AI-ROBUST.1` | Perturbations tested (count) | Perturbations survived (count) | Perturbation type code (0-5) |
+| `AI-CYBER.1` | Controls assessed (count) | Controls compliant (count) | Framework code (0-4) |
+| `AI-TRANS.1` | Disclosures made (count) | Disclosure type code (0-4) | Recipient type code (0-3) |
+| `AI-WATERMARK.1` | Items checked (count) | Watermarks detected (count) | Detection method code (0-4) |
+| `AI-DPIA.1` | Risks identified (count) | Risks mitigated (count) | Processing type code (0-4) |
+| `AI-AUTO.1` | Decisions made (count) | Human reviewed (count) | Decision type code (0-5) |
+| `AI-DUALUSE.1` | Classification code (0-2) | Reporting status code (0-3) | Days since classification |
+| `AI-SUPPLY.1` | Suppliers assessed (count) | Suppliers compliant (count) | Risk level code (0-3) |
+| `AI-PMM.1` | Monitoring checks run (count) | Anomalies detected (count) | Monitoring type code (0-4) |
 
 ### 9.3 Clearing Protocol for AI Systems
 
@@ -1026,6 +1074,10 @@ SWT3 and Sovereign Witness Traceability are trademarks of Tenable Nova LLC. Pate
 | 1.2.0 | 2026-03-29 | AI Witnessing Profile (Section 9). UCT Extended codes. Protocol Lock (Phase 2). |
 | 1.3.0 | 2026-04-17 | RFC 2119 notation. ABNF grammar. Section numbering fixes. Proposed Standard status. |
 | 1.4.0 | 2026-05-03 | AI-DATA.3 (Training Data Statistics), AI-DATA.4 (Training Data PII Lifecycle). 42 total AI procedures. |
+| 1.5.0 | 2026-05-23 | AI-FAIR.3 (Bias Audit), AI-CHAIN.2 (Chain Trust Credential), AI-ENV.1 (Runtime Environment), AI-ENV.2 (Dependency Manifest), AI-MARK.1 (Content Provenance), AI-BASE.1 (Agent Behavioral Baseline). 47 total AI procedures, 23 namespaces. |
+| 1.6.0 | 2026-05-28 | AI-LIC.1 (License Provenance). 48 total AI procedures, 24 namespaces. |
+| 1.7.0 | 2026-05-29 | AI-SBOM.1 (AI Bill of Materials), AI-REDTEAM.1 (Adversarial Test Campaign), AI-CONSENT.1 (Data Subject Consent), AI-MULTI.1 (Multi-Agent Delegation). 52 total AI procedures, 28 namespaces. |
+| 1.8.0 | 2026-05-29 | AI-DRIFT.1, AI-AUDIT.1, AI-INCIDENT.1, AI-PERF.1, AI-ROBUST.1, AI-CYBER.1, AI-TRANS.1, AI-WATERMARK.1, AI-DPIA.1, AI-AUTO.1, AI-DUALUSE.1, AI-SUPPLY.1, AI-PMM.1. Full EU AI Act Art. 15 coverage (accuracy, robustness, cybersecurity), GDPR Art. 22/35, EO 14110, NIST MEASURE 3.1. 65 total AI procedures, 41 namespaces. |
 
 ## Appendix B: Intellectual Property
 

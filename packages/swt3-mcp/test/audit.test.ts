@@ -13,7 +13,7 @@ function mockClient(registry: Record<string, unknown> = {}): AxiomClient {
 const mockRegistry = {
   procedures: [
     { procedure_id: "AI-INF.1" },
-    { procedure_id: "AI-DFT.1" },
+    { procedure_id: "AI-DRIFT.1" },
     { procedure_id: "AI-GRD.1" },
     { procedure_id: "AI-ID.1" },
     { procedure_id: "AI-ACC.1" },
@@ -60,7 +60,7 @@ describe("end_audit_session", () => {
     expect(result).toContain("Audit Session Complete");
     expect(result).toContain("[x] AI-ACC.1");
     expect(result).toContain("[x] AI-INF.1");
-    expect(result).toContain("[ ] AI-DFT.1");
+    expect(result).toContain("[ ] AI-DRIFT.1");
     expect(result).toContain("AI Procedure Coverage:");
     expect(state.activeAuditSession).toBeNull(); // cleared
   });

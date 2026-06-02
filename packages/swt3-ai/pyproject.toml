@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "swt3-ai"
-version = "0.5.2"
-description = "SWT3 AI Witness SDK: cryptographic attestation for AI inference"
+version = "0.5.4"
+description = "SWT3 AI Witness SDK: cryptographic attestation for AI inference. 65 procedures, 41 namespaces, 5 languages, 14 profiles. EU AI Act, NIST AI RMF, CMMC, SR 11-7."
 readme = "README.md"
 license = {text = "Apache-2.0"}
 requires-python = ">=3.9"
@@ -51,6 +51,7 @@ otel = ["opentelemetry-api>=1.0"]
 dynamo = ["ai-dynamo>=0.8.0"]
 gpu = ["pynvml>=11.0"]
 yaml = ["pyyaml>=6.0"]
+pqc = ["cryptography>=43.0"]
 all = ["openai>=1.0", "anthropic>=0.20", "opentelemetry-api>=1.0", "pyyaml>=6.0"]
 dev = ["pytest", "pytest-cov", "pytest-asyncio", "mypy", "ruff", "pyyaml>=6.0"]
 
@@ -62,6 +63,9 @@ Homepage = "https://tenova.io"
 Documentation = "https://sovereign.tenova.io/docs/"
 Repository = "https://github.com/tenova-labs/swt3-ai"
 Issues = "https://github.com/tenova-labs/swt3-ai/issues"
+"NSA MCP Security Mapping" = "https://sovereign.tenova.io/guides/nsa-mcp-security-mapping.html"
+"Live Demo" = "https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public"
+"Free Signup" = "https://sovereign.tenova.io/signup"
 
 [tool.hatch.build]
 # Do not respect parent repo's allowlist .gitignore — it blocks the package source

@@ -13,7 +13,7 @@ Replay protection:
     prevents duplicate witness anchors from being submitted. The dict is
     populated from the WAL on startup and updated on each enqueue.
 
-Patent pending. All rights reserved.
+Copyright (c) 2026 Tenable Nova LLC. Apache 2.0. Patent pending.
 """
 
 from __future__ import annotations

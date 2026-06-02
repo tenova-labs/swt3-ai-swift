@@ -58,3 +58,37 @@ class TestSchemaValidator:
         })
         assert result.valid is False
         assert len(result.errors) >= 4
+
+    # ── digest_algorithm ────────────────────────────────────
+
+    def test_accepts_sha256(self) -> None:
+        result = validate_schema({"api_key": "axm_test", "digest_algorithm": "sha256"})
+        assert result.valid is True
+
+    def test_rejects_unsupported_digest_algorithm(self) -> None:
+        result = validate_schema({"api_key": "axm_test", "digest_algorithm": "sha3-256"})
+        assert result.valid is False
+        assert result.errors[0].path == "digest_algorithm"
+        assert "sha256" in result.errors[0].message
+
+    def test_rejects_non_string_digest_algorithm(self) -> None:
+        result = validate_schema({"api_key": "axm_test", "digest_algorithm": 256})
+        assert result.valid is False
+        assert result.errors[0].path == "digest_algorithm"
+
+    # ── skill_card ──────────────────────────────────────────
+
+    def test_accepts_valid_skill_card(self) -> None:
+        result = validate_schema({
+            "api_key": "axm_test",
+            "skill_card": {"skills": ["web_search"], "expected_manifest_hash": "abc"},
+        })
+        assert result.valid is True
+
+    def test_rejects_unknown_skill_card_key(self) -> None:
+        result = validate_schema({
+            "api_key": "axm_test",
+            "skill_card": {"skills": [], "bogus_key": True},
+        })
+        assert result.valid is False
+        assert any(e.path == "skill_card.bogus_key" for e in result.errors)
