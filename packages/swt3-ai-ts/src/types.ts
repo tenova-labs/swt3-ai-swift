@@ -160,6 +160,8 @@ export const AI_PROCEDURES = new Set([
   "AI-WATERMARK.1",
   "AI-DPIA.1",
   "AI-AUTO.1",
+  "AI-AUTO.2",
+  "AI-AUDIT.2",
   "AI-DUALUSE.1",
   "AI-SUPPLY.1",
   "AI-PMM.1",
@@ -366,6 +368,11 @@ export interface TrustMeshConfig {
   minTrustLevel: number;
   requireSignature: boolean;
   freshnessWindow: number;
+  requireIntraTenantSigning: boolean;
+  verifyBooleanClaims: boolean;
+  rateLimitMaxFailures: number;
+  rateLimitWindowSeconds: number;
+  perLevelFreshness: Record<string, number> | null;
   trustedTenants: string[];
   trustedAgents: { tenant: string; agent: string }[];
   denyAgents: string[];

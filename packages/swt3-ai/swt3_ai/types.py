@@ -301,6 +301,11 @@ class TrustMeshConfig:
     min_trust_level: int = 1
     require_signature: bool = False
     freshness_window: int = 86400  # seconds (24h default)
+    require_intra_tenant_signing: bool = False
+    verify_boolean_claims: bool = False
+    rate_limit_max_failures: int = 0  # 0 = disabled
+    rate_limit_window_seconds: int = 60
+    per_level_freshness: Optional[Dict[str, int]] = None
     trusted_tenants: List[str] = field(default_factory=list)
     trusted_agents: List[Dict[str, str]] = field(default_factory=list)
     deny_agents: List[str] = field(default_factory=list)
