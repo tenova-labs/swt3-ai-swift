@@ -11,19 +11,17 @@ Witness your AI. Prove it followed the rules. Cryptographic accountability for e
 
 GPAI transparency obligations are enforceable now. EU AI Act high-risk enforcement begins **December 2, 2027**. This SDK gives you the evidence chain.
 
-## What's New in v0.5.4
+## What's New in v0.5.5
 
-- **ML-DSA-65 (FIPS 204) post-quantum signing** -- Optional alongside HMAC-SHA256. Configure via `signing_algorithm: "ml-dsa-65"` in .swt3.yaml or constructor. Cross-language parity (same seed produces same keys in Python, TypeScript). `pip install swt3-ai[pqc]`
-- **Self-hosted deployment** -- [SWT3 Gateway](#self-hosted-deployment) (Go reverse proxy, zero-latency, Helm chart) and full platform container (UBI 9, Iron Bank compatible, air-gap export). Deploy everything inside your VPC.
-- **Chain Enforcer** -- 5-layer policy witnessing: tool blocklist/allowlist, velocity limiting, chain depth, token budgets. Every policy violation minted as an anchor. [Details](#agent-cost-governance)
-- **Agent Cost Governance** -- per-session token budgets with `max_tokens_per_session`. Halt and record on exceeded. `cost-conscious` profile ships built-in. [Details](#agent-cost-governance)
-- **Sentinel Client** -- IPC integration with the independent evidence custody daemon. Protected WAL, cross-process budgets, key isolation. Evidence the agent cannot tamper with.
-- **AI-MARK.1** -- Content provenance witnessing (text, image, audio with C2PA/watermark/metadata tagging)
-- **AI-BASE.1** -- Agent behavioral baseline (deviation scoring against established patterns)
-- **AI-LIC.1** -- License provenance witnessing (model, adapter, and data license composition with SPDX)
-- **14 Built-in Profiles** -- 7 framework profiles + 7 industry verticals (fintech, healthcare, insurance, telecom, defense/govcon, content platform, autonomous systems)
-- **NSA MCP Security Mapping** -- [7 of 9 NSA AISC recommendations](https://sovereign.tenova.io/guides/nsa-mcp-security-mapping.html) addressed at the SDK layer (CSI U/OO/6030316-26, May 2026)
-- **65 procedures**, 41 namespaces, 207 cross-language test vectors
+- **Trust Mesh Hardened** -- 7 security layers: intra-tenant zero-trust, per-agent rate limiting, per-level freshness windows (SOVEREIGN requires 5-min anchors), verifiable boolean claims, deny list propagation with sentinel hooks. All opt-in, frictionless defaults unchanged.
+- **Key Attestation (AI-TRUST.3)** -- Bind signing keys to witness anchors. `generate_key_attestation()` / `verify_key_attestation()`. Keys valid only while bound anchor is fresh. No certificate authority required.
+- **Challenge-Response Liveness** -- Prove live key possession via nonce-based challenges. `generate_challenge()` / `respond_to_challenge()` / `verify_liveness_response()`. Defeats credential replay at ATTESTED/SOVEREIGN levels.
+- **4 New Adapters** -- Google ADK, CrewAI, A2A (Google Agent-to-Agent), Microsoft Foundry. 12 total integrations.
+- **Verify CLI** -- `swt3 verify --anchor <token>` recomputes fingerprint offline. Zero network calls.
+- **Bidirectional Framework Crosswalks** -- 222 mappings across 16 frameworks in machine-readable JSON.
+- **RFC 3161 Timestamps** -- Merkle rollups include RFC 3161 timestamp authority proof for legal non-repudiation.
+- **Microsoft Foundry Profile** -- Industry profile for Azure AI Foundry + AGT deployments.
+- **15 profiles**, 65 procedures, 41 namespaces, 12 integrations, 1,379 cross-language tests
 
 ## MCP Server -- Official Registry
 
