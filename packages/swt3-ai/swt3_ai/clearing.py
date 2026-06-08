@@ -67,6 +67,8 @@ AI_PROCEDURES = [
     "AI-WATERMARK.1", # Watermark Verification
     "AI-DPIA.1",      # Data Protection Impact Assessment
     "AI-AUTO.1",      # Automated Decision Notification
+    "AI-AUTO.2",      # Autonomous Generation Depth
+    "AI-AUDIT.2",     # External Timestamp Attestation
     "AI-DUALUSE.1",   # Dual-Use Model Classification
     "AI-SUPPLY.1",    # Supply Chain Risk
     "AI-PMM.1",       # Post-Market Monitoring

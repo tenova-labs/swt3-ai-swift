@@ -46,6 +46,10 @@ export { WriteAheadLog } from "./wal.js";
 export type { WalOptions } from "./wal.js";
 export { wrapOllama, isOllamaClient } from "./adapters/ollama.js";
 export { wrapVllm } from "./adapters/vllm.js";
+export { wrapGoogleADK } from "./adapters/google-adk.js";
+export { wrapCrewAI } from "./adapters/crewai.js";
+export { wrapA2A } from "./adapters/a2a.js";
+export { wrapFoundry } from "./adapters/foundry.js";
 export { queryHardware, detectTopology, topologyCode, TOPOLOGY_CODES, queryTPM, parseTPMPcrOutput, ZERO_PCR_HASH } from "./hardware.js";
 export type { GpuInfo, HardwareSnapshot, TPMSnapshot, PcrRegister } from "./hardware.js";
 export {

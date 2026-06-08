@@ -38,6 +38,9 @@
 **/CLAUDE.md
 **/CHANGELOG.md
 
+# -- Internal policies (contain infrastructure references) --
+policies/
+
 # -- Build artifacts and caches --
 **/node_modules/
 **/__pycache__/
@@ -79,6 +82,10 @@
 **/*.tar.gz
 **/*.pdf
 
+# -- Proprietary packages --
+packages/swt3-sentinel/
+packages/swt3-gateway/
+
 # -- Internal SDK files --
 **/smoke_test.py
 **/.npmrc
@@ -106,3 +113,5 @@ config/controls/*
 # config/modules: only YAML
 config/modules/*
 !config/modules/*.yaml
+mcp-registry-key.pem
+key.pem

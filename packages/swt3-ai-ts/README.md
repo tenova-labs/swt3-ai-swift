@@ -93,6 +93,24 @@ trust_mesh:
 
 All verification is local. Zero cloud overhead. No data exchanged until both agents clear the trust gate. Unsigned agents are capped at TRUST_BASIC (level 1). Add signing keys for verified trust. Add hardware attestation for sovereign trust.
 
+## Offline Verification
+
+Verify any witness anchor without network calls. The fingerprint formula is deterministic and identical across all 6 SDK languages -- recompute it anywhere in microseconds.
+
+```typescript
+import { verifyAnchor } from "@tenova/swt3-ai";
+
+const result = verifyAnchor(anchor, {
+  tenantId: "MY_TENANT",
+  procedureId: "AI-INF.1",
+  factorA: 1, factorB: 1, factorC: 0,
+  timestampMs: 1773316622000,
+});
+// result.status: "CERTIFIED TRUTH" | "TAMPERED"
+```
+
+Zero vendor dependency. Zero network calls. Works air-gapped. The same formula runs in Python, TypeScript, Rust, C#, and Ruby with identical output for identical inputs.
+
 ## See It Work (No Account Needed)
 
 ```bash
@@ -1029,9 +1047,12 @@ Your prompts and responses **never leave your infrastructure**. The SDK computes
 - [Design Rationale](https://sovereign.tenova.io/guides/swt3-design-rationale.html) -- why every protocol decision was made
 - [UCT Registry](https://sovereign.tenova.io/registry) -- full procedure catalog with factor definitions
 - [Anchor Verifier](https://sovereign.tenova.io/verify) -- verify any anchor, zero server calls
-- [Five Eyes Agentic AI Overlay](https://sovereign.tenova.io/guides/five-eyes-overlay.html) -- CISA/NSA guidance mapped to SWT3 procedures
-- [CMMC Compliance Overlay](https://sovereign.tenova.io/guides/cmmc-overlay.html) -- clearing levels mapped to CMMC and NIST 800-171
-- [SR 11-7 Model Risk Overlay](https://sovereign.tenova.io/guides/sr-11-7-overlay.html) -- clearing levels mapped to SR 11-7 requirements
+- [Before & After](https://sovereign.tenova.io/guides/developer-before-after.html) -- manual audit evidence vs. cryptographic witness anchors
+- [Integration Patterns](https://sovereign.tenova.io/guides/developer-integration-patterns.html) -- 8 instrumentation patterns mapped to regulatory requirements
+- [What Your Auditor Sees](https://sovereign.tenova.io/guides/developer-auditor-bridge.html) -- both sides of a witness anchor, developer to auditor
+- [CI/CD Integration](https://sovereign.tenova.io/guides/developer-cicd-guide.html) -- validate compliance configuration in your pipeline
+- [Assessment Mapping](https://sovereign.tenova.io/registry/assessment.html) -- which procedures satisfy which regulatory requirements
+- [All 65 Guides](https://sovereign.tenova.io/guides/) -- regulatory crosswalks, assessor walkthroughs, integration guides
 
 ---
 
