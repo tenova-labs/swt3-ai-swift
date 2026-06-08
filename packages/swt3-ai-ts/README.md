@@ -13,13 +13,17 @@ Works with OpenAI, Anthropic, AWS Bedrock, Vercel AI SDK, and any OpenAI-compati
 
 GPAI transparency obligations are enforceable now. EU AI Act high-risk enforcement begins **December 2, 2027**. This SDK gives you the evidence chain.
 
-## What's New in v0.5.6
+## What's New in v0.5.5
 
-- **Anchor References** -- `references` field links upstream anchors to downstream inferences for provenance chains. Accepts fingerprint strings, `AnchorReference` objects, or mixed arrays. Survives all clearing levels.
-- **Model Trust Profiles** -- `generateProfile()` builds portable, HMAC-signed compliance summaries. Binds model artifact hash to attestation coverage with expiry. `signProfile()` / `verifyProfileSignature()` with `PROFILE:` domain separation. `isProfileValid()` for expiry checks.
-- **Coverage Scoring** -- `coverageScore()` evaluates attestations against 7 recommended procedure sets: EU AI Act high-risk, NIST AI RMF, Defense/GovCon, Healthcare, Fintech, standard, and minimal. Returns covered/missing/extra breakdown with numeric score.
-- **Chain Verification** -- `walkChain()` traverses provenance reference chains locally via BFS with cycle detection and depth limiting. `buildLookup()` constructs traversal maps from payloads. `verifyChainIntegrity()` reports gaps, truncation, and completeness.
-- **15 profiles**, 65 procedures, 41 namespaces, 12 integrations, 1,488 cross-language tests
+- **Trust Mesh Hardened** -- 7 security layers: intra-tenant zero-trust, per-agent rate limiting, per-level freshness windows (SOVEREIGN requires 5-min anchors), verifiable boolean claims, deny list propagation with sentinel hooks. All opt-in, frictionless defaults unchanged.
+- **Key Attestation (AI-TRUST.3)** -- Bind signing keys to witness anchors. `generateKeyAttestation()` / `verifyKeyAttestation()`. Keys valid only while bound anchor is fresh. No certificate authority required.
+- **Challenge-Response Liveness** -- Prove live key possession via nonce-based challenges. `generateChallenge()` / `respondToChallenge()` / `verifyLivenessResponse()`. Defeats credential replay at ATTESTED/SOVEREIGN levels.
+- **4 New Adapters** -- Google ADK, CrewAI, A2A (Google Agent-to-Agent), Microsoft Foundry. 12 total integrations.
+- **Verify CLI** -- `swt3 verify --anchor <token>` recomputes fingerprint offline. Zero network calls.
+- **Bidirectional Framework Crosswalks** -- 222 mappings across 16 frameworks in machine-readable JSON.
+- **RFC 3161 Timestamps** -- Merkle rollups include RFC 3161 timestamp authority proof for legal non-repudiation.
+- **Microsoft Foundry Profile** -- Industry profile for Azure AI Foundry + AGT deployments.
+- **15 profiles**, 65 procedures, 41 namespaces, 12 integrations, 1,379 cross-language tests
 
 ## MCP Server -- Official Registry
 

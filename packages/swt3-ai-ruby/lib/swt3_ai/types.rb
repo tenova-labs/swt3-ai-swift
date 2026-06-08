@@ -76,16 +76,4 @@ module Swt3Ai
   }.freeze
 
   # Key purpose for key attestation (AI-TRUST.3).
-  KEY_PURPOSES = %w[signing encryption delegation].freeze
-
-  # Recommended procedure set names for coverage scoring.
-  COVERAGE_PROFILES = {
-    minimal: "minimal",
-    standard: "standard",
-    eu_ai_act_high_risk: "eu-ai-act-high-risk",
-    nist_ai_rmf: "nist-ai-rmf",
-    defense_govcon: "defense-govcon",
-    healthcare_clinical: "healthcare-clinical",
-    fintech_model_risk: "fintech-model-risk",
-  }.freeze
-end
+  KEY_PURPOSES = %w[signing encryption delegation].freezeend
