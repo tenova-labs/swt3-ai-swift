@@ -113,6 +113,7 @@ def extract_payloads(
     legal_basis: Optional[str] = None,
     purpose_class: Optional[str] = None,
     authorization_id: Optional[str] = None,
+    references: Optional[List[Dict[str, str]]] = None,
 ) -> List[WitnessPayload]:
     """Extract witness payloads from an inference record.
 
@@ -173,7 +174,7 @@ def extract_payloads(
                 signing_key_version=signing_key_version, signing_algorithm=signing_algorithm,
                 policy_version_hash=policy_version_hash,
                 jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
-                authorization_id=authorization_id,
+                authorization_id=authorization_id, references=references,
             )
 
             payloads.append(payload)
@@ -230,7 +231,7 @@ def extract_payloads(
                 signing_key_version=signing_key_version, signing_algorithm=signing_algorithm,
                 policy_version_hash=policy_version_hash,
                 jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
-                authorization_id=authorization_id,
+                authorization_id=authorization_id, references=references,
             )
 
             payloads.append(payload)
@@ -336,12 +337,27 @@ def extract_payloads(
             signing_key_version=signing_key_version, signing_algorithm=signing_algorithm,
             policy_version_hash=policy_version_hash,
             jurisdiction=jurisdiction, legal_basis=legal_basis, purpose_class=purpose_class,
-            authorization_id=authorization_id,
+            authorization_id=authorization_id, references=references,
         )
 
         payloads.append(payload)
 
     return payloads
+
+
+def normalize_references(
+    refs: Optional[List[Any]],
+) -> Optional[List[Dict[str, str]]]:
+    """Normalize references input to structured dicts. Accepts strings or dicts."""
+    if not refs:
+        return None
+    result = []
+    for ref in refs:
+        if isinstance(ref, str):
+            result.append({"fingerprint": ref})
+        elif isinstance(ref, dict):
+            result.append(ref)
+    return result if result else None
 
 
 def _apply_operational_metadata(
@@ -358,6 +374,7 @@ def _apply_operational_metadata(
     legal_basis: Optional[str] = None,
     purpose_class: Optional[str] = None,
     authorization_id: Optional[str] = None,
+    references: Optional[List[Dict[str, str]]] = None,
 ) -> None:
     """Apply operational metadata that survives all clearing levels."""
     if agent_id:
@@ -374,6 +391,8 @@ def _apply_operational_metadata(
         payload.purpose_class = purpose_class
     if authorization_id:
         payload.authorization_id = authorization_id
+    if references:
+        payload.references = references
     if signing_key:
         from .signing import sign_payload, DEFAULT_SIGNING_ALGORITHM
         algo = signing_algorithm or DEFAULT_SIGNING_ALGORITHM

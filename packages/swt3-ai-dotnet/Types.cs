@@ -128,3 +128,17 @@ public static class KeyPurposes
     public const string Encryption = "encryption";
     public const string Delegation = "delegation";
 }
+
+/// <summary>
+/// Recommended procedure set names for coverage scoring.
+/// </summary>
+public static class CoverageProfiles
+{
+    public const string Minimal = "minimal";
+    public const string Standard = "standard";
+    public const string EuAiActHighRisk = "eu-ai-act-high-risk";
+    public const string NistAiRmf = "nist-ai-rmf";
+    public const string DefenseGovcon = "defense-govcon";
+    public const string HealthcareClinical = "healthcare-clinical";
+    public const string FintechModelRisk = "fintech-model-risk";
+}

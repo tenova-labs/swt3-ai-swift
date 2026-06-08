@@ -32,6 +32,60 @@ export interface WitnessConfig {
   onFlush?: (payloads: WitnessPayload[], receipts: WitnessReceipt[]) => void;
 }
 
+/** A reference to an upstream anchor in a provenance chain. */
+export interface AnchorReference {
+  fingerprint: string;
+  relationship?: string;
+  provenance_token?: string;
+}
+
+/** A single procedure attestation within a Model Trust Profile. */
+export interface ProcedureAttestation {
+  procedure: string;
+  fingerprint: string;
+  timestamp: number;
+  status: "pass" | "fail" | "missing";
+}
+
+/** Portable, signed summary of a model's compliance posture. */
+export interface ModelTrustProfile {
+  model_id: string;
+  model_hash: string;
+  coverage: ProcedureAttestation[];
+  coverage_score: number;
+  upstream_references: AnchorReference[];
+  generated_at: number;
+  valid_until: number;
+  signature?: string;
+  signing_key_id?: string;
+}
+
+/** Result of a coverage score calculation against a target procedure set. */
+export interface CoverageResult {
+  score: number;
+  covered: string[];
+  missing: string[];
+  extra: string[];
+  target: string[];
+}
+
+/** A single link in a provenance chain traversal. */
+export interface ChainLink {
+  fingerprint: string;
+  references: AnchorReference[];
+  depth: number;
+}
+
+/** Summary of a provenance chain walk. */
+export interface ChainSummary {
+  root: string;
+  links: ChainLink[];
+  depth: number;
+  gaps: string[];
+  complete: boolean;
+  truncated: boolean;
+}
+
 export interface WitnessPayload {
   procedure_id: string;
   factor_a: number;
@@ -60,6 +114,7 @@ export interface WitnessPayload {
   legal_basis?: string;
   purpose_class?: string;
   authorization_id?: string;
+  references?: AnchorReference[];
   revocation_target?: string;
   revocation_reason?: string;
 }

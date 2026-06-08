@@ -152,3 +152,12 @@ impl KeyPurpose {
         }
     }
 }
+
+/// Recommended procedure set names for coverage scoring.
+pub const COVERAGE_PROFILE_MINIMAL: &str = "minimal";
+pub const COVERAGE_PROFILE_STANDARD: &str = "standard";
+pub const COVERAGE_PROFILE_EU_AI_ACT: &str = "eu-ai-act-high-risk";
+pub const COVERAGE_PROFILE_NIST_AI_RMF: &str = "nist-ai-rmf";
+pub const COVERAGE_PROFILE_DEFENSE_GOVCON: &str = "defense-govcon";
+pub const COVERAGE_PROFILE_HEALTHCARE: &str = "healthcare-clinical";
+pub const COVERAGE_PROFILE_FINTECH: &str = "fintech-model-risk";
