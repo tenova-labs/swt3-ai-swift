@@ -1,4 +1,4 @@
-"""SWT3 AI Witness SDK -- Client-side chain verification (PPA #17).
+"""SWT3 AI Witness SDK -- Client-side chain verification.
 
 Walk provenance reference chains using locally available data.
 No HTTP calls -- the caller provides a lookup map built from their payloads.

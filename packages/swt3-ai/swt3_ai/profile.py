@@ -1,4 +1,4 @@
-"""SWT3 AI Witness SDK -- Model Trust Profiles (PPA #18).
+"""SWT3 AI Witness SDK -- Model Trust Profiles.
 
 Portable, cryptographically signed summaries of a model's compliance posture.
 Profiles bind a model artifact hash to its attestation coverage and can be
