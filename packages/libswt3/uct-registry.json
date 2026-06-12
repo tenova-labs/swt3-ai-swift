@@ -5641,6 +5641,294 @@
       },
       "namespace": "AI"
     },
+    "AI-METAGOV.1": {
+      "procedure_id": "AI-METAGOV.1",
+      "parent_control": "AI-METAGOV",
+      "title": "Governance Infrastructure Attestation",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "attestation",
+      "factors": {
+        "factor_a": {
+          "label": "attestation_required",
+          "description": "Attestation is required (always 1).",
+          "default": 1,
+          "regulatory_ref": "NIST 800-53 CA-2"
+        },
+        "factor_b": {
+          "label": "attested",
+          "description": "Whether governance infrastructure configuration is cryptographically attested before operational events are processed (1 = yes, 0 = no).",
+          "regulatory_ref": "NIST AI RMF GOVERN 1.1"
+        },
+        "factor_c": {
+          "label": "reserved",
+          "description": "Reserved for future use. Always 0.",
+          "default": 0
+        }
+      },
+      "evaluation": {
+        "expression": "factor_b >= factor_a",
+        "description": "Confirms governance infrastructure configuration is self-attested using the same protocol it enforces."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art.9",
+        "NIST-800-53": "CA-2",
+        "NIST-AI-RMF": "GOVERN 1.1"
+      },
+      "namespace": "AI"
+    },
+    "AI-METAGOV.2": {
+      "procedure_id": "AI-METAGOV.2",
+      "parent_control": "AI-METAGOV",
+      "title": "Governance Layer Registration",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "attestation",
+      "factors": {
+        "factor_a": {
+          "label": "attestation_required",
+          "description": "Attestation is required (always 1).",
+          "default": 1,
+          "regulatory_ref": "NIST 800-53 CA-7"
+        },
+        "factor_b": {
+          "label": "attested",
+          "description": "Whether all AI governance layers are registered with the cryptographic witness layer (1 = yes, 0 = no).",
+          "regulatory_ref": "NIST AI RMF GOVERN 1.3"
+        },
+        "factor_c": {
+          "label": "reserved",
+          "description": "Reserved for future use. Always 0.",
+          "default": 0
+        }
+      },
+      "evaluation": {
+        "expression": "factor_b >= factor_a",
+        "description": "Confirms governance layers are registered with the non-AI witness layer to terminate recursion."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art.9",
+        "NIST-800-53": "CA-7",
+        "NIST-AI-RMF": "GOVERN 1.3"
+      },
+      "namespace": "AI"
+    },
+    "AI-METAGOV.3": {
+      "procedure_id": "AI-METAGOV.3",
+      "parent_control": "AI-METAGOV",
+      "title": "Policy Downgrade Detection",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "attestation",
+      "factors": {
+        "factor_a": {
+          "label": "attestation_required",
+          "description": "Attestation is required (always 1).",
+          "default": 1,
+          "regulatory_ref": "NIST 800-53 CM-3"
+        },
+        "factor_b": {
+          "label": "attested",
+          "description": "Whether policy version monotonicity is enforced and downgrade attempts are detected (1 = yes, 0 = no).",
+          "regulatory_ref": "NIST AI RMF GOVERN 1.4"
+        },
+        "factor_c": {
+          "label": "reserved",
+          "description": "Reserved for future use. Always 0.",
+          "default": 0
+        }
+      },
+      "evaluation": {
+        "expression": "factor_b >= factor_a",
+        "description": "Confirms monotonic policy version progression is enforced with downgrade detection."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art.17",
+        "NIST-800-53": "CM-3",
+        "NIST-AI-RMF": "GOVERN 1.4"
+      },
+      "namespace": "AI"
+    },
+    "AI-METAGOV.4": {
+      "procedure_id": "AI-METAGOV.4",
+      "parent_control": "AI-METAGOV",
+      "title": "Circular Dependency Check",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "attestation",
+      "factors": {
+        "factor_a": {
+          "label": "attestation_required",
+          "description": "Attestation is required (always 1).",
+          "default": 1,
+          "regulatory_ref": "NIST 800-53 CM-4"
+        },
+        "factor_b": {
+          "label": "attested",
+          "description": "Whether governance rule graphs are validated for circular dependencies at configuration load time (1 = yes, 0 = no).",
+          "regulatory_ref": "NIST AI RMF GOVERN 1.5"
+        },
+        "factor_c": {
+          "label": "reserved",
+          "description": "Reserved for future use. Always 0.",
+          "default": 0
+        }
+      },
+      "evaluation": {
+        "expression": "factor_b >= factor_a",
+        "description": "Confirms governance rule configurations are validated for circular dependencies using topological sort."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art.9",
+        "NIST-800-53": "CM-4",
+        "NIST-AI-RMF": "GOVERN 1.5"
+      },
+      "namespace": "AI"
+    },
+    "AI-METAGOV.5": {
+      "procedure_id": "AI-METAGOV.5",
+      "parent_control": "AI-METAGOV",
+      "title": "Governance Authorization",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "attestation",
+      "factors": {
+        "factor_a": {
+          "label": "attestation_required",
+          "description": "Attestation is required (always 1).",
+          "default": 1,
+          "regulatory_ref": "NIST 800-53 AC-6"
+        },
+        "factor_b": {
+          "label": "attested",
+          "description": "Whether governance changes require signed authorization with scope-appropriate credentials (1 = yes, 0 = no).",
+          "regulatory_ref": "NIST AI RMF GOVERN 2.1"
+        },
+        "factor_c": {
+          "label": "reserved",
+          "description": "Reserved for future use. Always 0.",
+          "default": 0
+        }
+      },
+      "evaluation": {
+        "expression": "factor_b >= factor_a",
+        "description": "Confirms governance configuration changes require cryptographically signed authorization."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art.17",
+        "NIST-800-53": "AC-6",
+        "NIST-AI-RMF": "GOVERN 2.1"
+      },
+      "namespace": "AI"
+    },
+    "AI-METAGOV.6": {
+      "procedure_id": "AI-METAGOV.6",
+      "parent_control": "AI-METAGOV",
+      "title": "Emergency Override Attestation",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "attestation",
+      "factors": {
+        "factor_a": {
+          "label": "attestation_required",
+          "description": "Attestation is required (always 1).",
+          "default": 1,
+          "regulatory_ref": "NIST 800-53 AC-6(1)"
+        },
+        "factor_b": {
+          "label": "attested",
+          "description": "Whether emergency governance overrides are witnessed and subject to mandatory post-hoc review (1 = yes, 0 = no).",
+          "regulatory_ref": "NIST AI RMF GOVERN 1.5"
+        },
+        "factor_c": {
+          "label": "reserved",
+          "description": "Reserved for future use. Always 0.",
+          "default": 0
+        }
+      },
+      "evaluation": {
+        "expression": "factor_b >= factor_a",
+        "description": "Confirms emergency governance changes are automatically witnessed and trigger mandatory review."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art.9",
+        "NIST-800-53": "AC-6(1)",
+        "NIST-AI-RMF": "GOVERN 1.5"
+      },
+      "namespace": "AI"
+    },
+    "AI-METAGOV.7": {
+      "procedure_id": "AI-METAGOV.7",
+      "parent_control": "AI-METAGOV",
+      "title": "Governance Sync Verification",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "attestation",
+      "factors": {
+        "factor_a": {
+          "label": "attestation_required",
+          "description": "Attestation is required (always 1).",
+          "default": 1,
+          "regulatory_ref": "NIST 800-53 SA-9"
+        },
+        "factor_b": {
+          "label": "attested",
+          "description": "Whether governance policy equivalence is verified during federated trust exchanges (1 = yes, 0 = no).",
+          "regulatory_ref": "NIST AI RMF GOVERN 1.7"
+        },
+        "factor_c": {
+          "label": "reserved",
+          "description": "Reserved for future use. Always 0.",
+          "default": 0
+        }
+      },
+      "evaluation": {
+        "expression": "factor_b >= factor_a",
+        "description": "Confirms governance policy equivalence is verified during federated trust credential exchange."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art.25",
+        "NIST-800-53": "SA-9",
+        "NIST-AI-RMF": "GOVERN 1.7"
+      },
+      "namespace": "AI"
+    },
+    "AI-METAGOV.8": {
+      "procedure_id": "AI-METAGOV.8",
+      "parent_control": "AI-METAGOV",
+      "title": "Attestation Purity Verification",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "attestation",
+      "factors": {
+        "factor_a": {
+          "label": "attestation_required",
+          "description": "Attestation is required (always 1).",
+          "default": 1,
+          "regulatory_ref": "NIST 800-53 SA-11"
+        },
+        "factor_b": {
+          "label": "attested",
+          "description": "Whether attestation engine purity is verified via source hash manifest with no ML components (1 = yes, 0 = no).",
+          "regulatory_ref": "NIST AI RMF MEASURE 2.5"
+        },
+        "factor_c": {
+          "label": "reserved",
+          "description": "Reserved for future use. Always 0.",
+          "default": 0
+        }
+      },
+      "evaluation": {
+        "expression": "factor_b >= factor_a",
+        "description": "Confirms attestation engine contains no ML inference, proving the witness layer is a non-AI recursion terminator."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art.17",
+        "NIST-800-53": "SA-11",
+        "NIST-AI-RMF": "MEASURE 2.5"
+      },
+      "namespace": "AI"
+    },
     "AI-RISK.1": {
       "procedure_id": "AI-RISK.1",
       "parent_control": "AI-RISK",

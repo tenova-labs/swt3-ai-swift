@@ -150,7 +150,7 @@ def main() -> None:
     print(f"{DIM}No API keys. No account. No network calls.{RESET}")
     print(f"{DIM}{'─' * 56}{RESET}")
     print(f"  {GREEN}New in v0.5.4:{RESET} AI-LIC.1 License Provenance,")
-    print(f"  OpenMDW-1.1 support, MCP governance, 65 procedures.")
+    print(f"  OpenMDW-1.1 support, MCP governance, 76 procedures.")
     print(f"  {DIM}License guide: sovereign.tenova.io/guides/openmdw-license-provenance.html{RESET}")
     print(f"{DIM}{'─' * 56}{RESET}")
     print()

@@ -21,7 +21,7 @@ GPAI transparency obligations are enforceable now. EU AI Act high-risk enforceme
 - **Bidirectional Framework Crosswalks** -- 222 mappings across 16 frameworks in machine-readable JSON.
 - **RFC 3161 Timestamps** -- Merkle rollups include RFC 3161 timestamp authority proof for legal non-repudiation.
 - **Microsoft Foundry Profile** -- Industry profile for Azure AI Foundry + AGT deployments.
-- **15 profiles**, 65 procedures, 41 namespaces, 12 integrations, 1,379 cross-language tests
+- **15 profiles**, 76 procedures, 42 namespaces, 12 integrations, 1,379 cross-language tests
 
 ## MCP Server -- Official Registry
 
@@ -654,7 +654,7 @@ Each inference produces anchors for these checks. Every check maps to a regulati
 
 ### EU AI Act Article Mapping
 
-All 65 SWT3 AI witnessing procedures map to specific EU AI Act obligations:
+All 76 SWT3 AI witnessing procedures map to specific EU AI Act obligations:
 
 | Procedure | EU AI Act Article | Obligation | Demo | Production |
 |-----------|-------------------|------------|------|------------|
@@ -671,7 +671,7 @@ All 65 SWT3 AI witnessing procedures map to specific EU AI Act obligations:
 | AI-EXPL.1 | Art. 13(1) | Transparency & Explainability | -| ✓ |
 | AI-EXPL.2 | Art. 13(3b) | Confidence Calibration | -| ✓ |
 
-The demo demonstrates 5 procedures using simulated data. All 65 are available in production with real inference data. 207 cross-language test vectors ensure fingerprint parity across Python, TypeScript, Rust, C#, and Ruby. [See live conformity →](https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public)
+The demo demonstrates 5 procedures using simulated data. All 76 are available in production with real inference data. 207 cross-language test vectors ensure fingerprint parity across Python, TypeScript, Rust, C#, and Ruby. [See live conformity →](https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public)
 
 ## How Verdicts Work
 
@@ -1083,3 +1083,5 @@ Your prompts and responses **never leave your infrastructure**. The SDK computes
 *SWT3: Sovereign Witness Traceability. We don't run your models. We witness them.*
 
 SWT3 and Sovereign Witness Traceability are trademarks of Tenable Nova LLC. Patent pending. Apache 2.0 licensed.
+
+This project is not affiliated with, endorsed by, or sponsored by any third-party AI provider. All third-party trademarks are the property of their respective owners: OpenAI and GPT (OpenAI, Inc.); Claude and Anthropic (Anthropic PBC); Google, Gemini, Vertex AI, and ADK (Google LLC); Azure, Foundry, and Microsoft (Microsoft Corporation); AWS and Bedrock (Amazon Web Services, Inc.); NVIDIA and Dynamo (NVIDIA Corporation); Meta and Llama (Meta Platforms, Inc.); Ollama (Ollama, Inc.); LangChain (LangChain, Inc.); CrewAI (CrewAI, Inc.); MCP (Anthropic PBC); LiteLLM (BerriAI); vLLM (vLLM Project); Cerebras (Cerebras Systems, Inc.). Use of these names is for identification and interoperability purposes only.

@@ -27,7 +27,7 @@ Copyright (c) 2026 Tenable Nova LLC. Apache 2.0. Patent pending.
 
 __version__ = "0.5.5"
 
-from .witness import Witness, GatekeeperError, ChainEnforcer, PolicyViolationError
+from .witness import Witness, GatekeeperError, ChainEnforcer, PolicyViolationError, validate_governance_graph
 from .exporters.chain_monitor import ChainMonitorExporter
 from .exporters.evidence import EvidenceExporter
 from .types import (
@@ -52,7 +52,10 @@ from .witness import (CONTENT_TYPE_CODES, MARKING_METHODS, BASELINE_MODE_CODES, 
     BENCHMARK_TYPE_CODES, PERTURBATION_TYPE_CODES, CYBER_FRAMEWORK_CODES,
     DISCLOSURE_TYPE_CODES, RECIPIENT_TYPE_CODES, DETECTION_METHOD_CODES,
     PROCESSING_TYPE_CODES, DECISION_TYPE_CODES, CLASSIFICATION_CODES,
-    REPORTING_STATUS_CODES, SUPPLY_RISK_CODES, PMM_TYPE_CODES)
+    REPORTING_STATUS_CODES, SUPPLY_RISK_CODES, PMM_TYPE_CODES,
+    LIFECYCLE_STAGE_CODES,
+    METAGOV_SCOPE_CODES, METAGOV_PERMISSION_CODES, METAGOV_OVERRIDE_REASON_CODES,
+    METAGOV_REVIEW_STATUS_CODES, METAGOV_DIVERGENCE_CODES, METAGOV_PURITY_TIERS)
 from .schema import validate_schema, ValidationResult, ValidationError as SchemaValidationError
 from .wal import WriteAheadLog
 from .merkle import (
@@ -170,5 +173,13 @@ __all__ = [
     "REPORTING_STATUS_CODES",
     "SUPPLY_RISK_CODES",
     "PMM_TYPE_CODES",
+    "LIFECYCLE_STAGE_CODES",
+    "METAGOV_SCOPE_CODES",
+    "METAGOV_PERMISSION_CODES",
+    "METAGOV_OVERRIDE_REASON_CODES",
+    "METAGOV_REVIEW_STATUS_CODES",
+    "METAGOV_DIVERGENCE_CODES",
+    "METAGOV_PURITY_TIERS",
+    "validate_governance_graph",
     "__version__",
 ]

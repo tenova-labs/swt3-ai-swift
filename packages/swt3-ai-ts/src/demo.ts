@@ -44,7 +44,7 @@ async function main() {
   console.log(`${D}No API keys. No account. No network calls.${R}`);
   console.log(`${D}${"─".repeat(56)}${R}`);
   console.log(`  ${G}New in v0.5.4:${R} AI-LIC.1 License Provenance,`);
-  console.log(`  OpenMDW-1.1 support, MCP governance, 65 procedures.`);
+  console.log(`  OpenMDW-1.1 support, MCP governance, 76 procedures.`);
   console.log(`  ${D}License guide: sovereign.tenova.io/guides/openmdw-license-provenance.html${R}`);
   console.log(`${D}${"─".repeat(56)}${R}`);
   console.log();

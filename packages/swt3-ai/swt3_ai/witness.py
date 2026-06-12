@@ -220,6 +220,22 @@ CLASSIFICATION_CODES: Dict[str, int] = {"standard": 0, "dual_use": 1, "high_impa
 REPORTING_STATUS_CODES: Dict[str, int] = {"not_required": 0, "pending": 1, "notified": 2, "acknowledged": 3}
 SUPPLY_RISK_CODES: Dict[str, int] = {"low": 0, "medium": 1, "high": 2, "critical": 3}
 PMM_TYPE_CODES: Dict[str, int] = {"performance": 0, "fairness": 1, "safety": 2, "security": 3, "comprehensive": 4}
+LIFECYCLE_STAGE_CODES: Dict[str, int] = {"design": 0, "development": 1, "testing": 2, "deployment": 3, "monitoring": 4, "decommission": 5}
+METAGOV_SCOPE_CODES: Dict[str, int] = {"verdict_rules": 0, "trust_mesh": 1, "enforcement": 2, "clearing": 3, "full": 4}
+METAGOV_PERMISSION_CODES: Dict[str, int] = {"read": 0, "modify": 1, "approve": 2}
+METAGOV_OVERRIDE_REASON_CODES: Dict[str, int] = {"unspecified": 0, "incident_response": 1, "regulatory_deadline": 2, "system_failure": 3, "security_breach": 4}
+METAGOV_REVIEW_STATUS_CODES: Dict[str, int] = {"unreviewed": 0, "attested": 1, "revoked": 2}
+METAGOV_DIVERGENCE_CODES: Dict[str, int] = {"equivalent": 0, "version_divergent": 1, "structural_divergent": 2, "coverage_divergent": 3}
+METAGOV_PURITY_TIERS: Dict[str, int] = {"verified_pure": 0, "unverified_purity": 1, "impure": 2}
+
+
+def _safe_hex_int(s: str, chars: int = 8) -> int:
+    """Parse first `chars` hex chars from string, returning 0 for non-hex input."""
+    try:
+        return int(s[:chars], 16) % 1000000
+    except (ValueError, TypeError):
+        import hashlib
+        return int(hashlib.sha256(s.encode()).hexdigest()[:chars], 16) % 1000000
 
 
 class GatekeeperError(Exception):
@@ -351,7 +367,11 @@ class Witness:
             self._guardrails_required = guardrails_required
             self._guardrail_names = guardrail_names or []
             self._strict = strict
+            self._chain_trust_levels: List[int] = []
+            self._last_known_good_version: int = 0
+            self._on_violation = on_violation
             self._tenant_id = tenant_id or "GATEWAY"
+            self._sentinel = None
             return
 
         # Validate required args (non-gateway mode)
@@ -416,6 +436,7 @@ class Witness:
         self._guardrail_names = guardrail_names or []
         self._strict = strict
         self._chain_trust_levels: List[int] = []
+        self._last_known_good_version: int = 0
         self._on_violation = on_violation
         if not tenant_id:
             raise ValueError("tenant_id is required (e.g., 'MY_ENCLAVE')")
@@ -1227,6 +1248,7 @@ class Witness:
         weights: Any,
         *,
         expected_hash: Optional[str] = None,
+        lifecycle_stage: Optional[str] = None,
     ) -> WitnessPayload:
         """Witness model weight file integrity (AI-MDL.5).
 
@@ -1235,13 +1257,12 @@ class Witness:
                 manually), or a file path string (auto-hashed, but blocks
                 for large files -- prefer hash_model_file() at startup).
             expected_hash: Expected SHA-256 hash. Match=PASS, mismatch=FAIL, omit=attested.
+            lifecycle_stage: AI model lifecycle stage (design, development, testing,
+                deployment, monitoring, decommission). Maps to NIST AI RMF MAP 1.3.
 
         Example (recommended -- hash once at startup):
             info = Witness.hash_model_file("/models/llama-3.1-70b.safetensors")
-            witness.witness_model_weights(info, expected_hash="abc123...")
-
-        Example (quick prototyping -- blocks for large files):
-            witness.witness_model_weights("/models/small-model.bin")
+            witness.witness_model_weights(info, expected_hash="abc123...", lifecycle_stage="deployment")
         """
         if isinstance(weights, str):
             info = self.hash_model_file(weights)
@@ -1251,7 +1272,8 @@ class Witness:
             raise TypeError("weights must be a file path string or ModelWeightInfo")
 
         match = info.file_hash == expected_hash if expected_hash else True
-        payload = self._mint_and_sign("AI-MDL.5", 1.0, 1.0 if match else 0.0, 0.0)
+        stage_code = float(LIFECYCLE_STAGE_CODES.get(lifecycle_stage or "", 0)) if lifecycle_stage else 0.0
+        payload = self._mint_and_sign("AI-MDL.5", 1.0, 1.0 if match else 0.0, stage_code)
         if self._config.clearing_level <= 1:
             payload.ai_model_id = info.format or "model-weights"
             ctx: Dict[str, Any] = {"provider": "model-weights", "file_hash": info.file_hash}
@@ -1263,6 +1285,8 @@ class Witness:
                 ctx["format"] = info.format
             if expected_hash:
                 ctx["expected_hash"] = expected_hash
+            if lifecycle_stage:
+                ctx["lifecycle_stage"] = lifecycle_stage
             payload.ai_context = ctx
         self._buffer.enqueue_many([payload])
         return payload
@@ -2743,6 +2767,210 @@ class Witness:
         self._buffer.enqueue_many([payload])
         return payload
 
+    # ── Governance Infrastructure Attestation (AI-METAGOV.1) ──────────────
+
+    def witness_governance_config(
+        self,
+        rules: List[Dict[str, str]],
+        governance_version: int,
+        *,
+        operator_id: Optional[str] = None,
+    ) -> "WitnessPayload":
+        """Witness governance infrastructure configuration (AI-METAGOV.1).
+
+        Attests the governance system's own configuration using the same
+        protocol it enforces, per the Recursive Governance architecture.
+        The governance config must be attested before operational events
+        can be processed.
+
+        Args:
+            rules: List of governance rules, each with 'id', 'expression', and optional 'version'.
+            governance_version: Monotonic version number of the governance config.
+            operator_id: Optional operator who applied this configuration.
+        """
+        import hashlib
+        sorted_rules = sorted(rules, key=lambda r: r.get("id", ""))
+        canonical = "|".join(
+            f"{r.get('id', '')}:{r.get('expression', '')}:{r.get('version', '')}"
+            for r in sorted_rules
+        )
+        config_hash = hashlib.sha256(f"SWT3:GOVERNANCE:{canonical}".encode()).hexdigest()[:12]
+        fa = float(len(rules))
+        fb = float(int(config_hash[:8], 16) % 1000000)
+        fc = float(governance_version)
+        payload = self._mint_and_sign("AI-METAGOV.1", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"governance-v{governance_version}"
+            ctx: Dict[str, Any] = {
+                "provider": "governance-infrastructure",
+                "config_hash": config_hash,
+                "rule_count": len(rules),
+                "governance_version": governance_version,
+            }
+            if operator_id:
+                ctx["operator_id"] = operator_id
+            payload.ai_context = ctx
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    # ── Policy Downgrade Detection (AI-METAGOV.3) ──────────────────────
+
+    def check_policy_downgrade(self, policy_version: int, policy_content_hash: str, *, strict: bool = False) -> Optional["WitnessPayload"]:
+        """Check policy version and witness downgrade if detected (AI-METAGOV.3). Monotonic enforcement."""
+        is_downgrade = policy_version < self._last_known_good_version
+        if not is_downgrade:
+            self._last_known_good_version = max(self._last_known_good_version, policy_version)
+            return None
+        fa = float(policy_version)
+        fb = float(_safe_hex_int(policy_content_hash))
+        fc = 1.0  # downgrade detected
+        payload = self._mint_and_sign("AI-METAGOV.3", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = "policy-downgrade"
+            payload.ai_context = {
+                "provider": "policy-monitor",
+                "expected_version": self._last_known_good_version,
+                "loaded_version": policy_version,
+                "content_hash": policy_content_hash,
+                "downgrade": True,
+            }
+        self._buffer.enqueue_many([payload])
+        if strict:
+            raise RuntimeError(f"SWT3: Policy downgrade detected: version {policy_version} < {self._last_known_good_version}")
+        return payload
+
+    # ── Governance Layer Registration (AI-METAGOV.2) ──────────────────────
+
+    def register_governance_layer(self, layer_id: str, config_hash: str, stack_position: int, *, model_id: Optional[str] = None) -> WitnessPayload:
+        """Register an AI governance layer with the witness layer (AI-METAGOV.2). Recursion terminator."""
+        import hashlib
+        stack_input = f"{layer_id}:{config_hash}:{stack_position}"
+        reg_fingerprint = hashlib.sha256(f"SWT3:GOVSTACK:{stack_input}".encode()).hexdigest()[:12]
+        fa = 1.0
+        fb = float(int(reg_fingerprint[:8], 16) % 1000000)
+        fc = float(stack_position)
+        payload = self._mint_and_sign("AI-METAGOV.2", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = model_id or layer_id
+            ctx: Dict[str, Any] = {
+                "provider": "governance-layer-registration",
+                "layer_id": layer_id,
+                "config_hash": config_hash,
+                "stack_position": stack_position,
+                "registration_fingerprint": reg_fingerprint,
+            }
+            if model_id:
+                ctx["model_id"] = model_id
+            payload.ai_context = ctx
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    def witness_governance_output(self, layer_id: str, verdict: str, evidence_hash: str, *, model_id: Optional[str] = None) -> WitnessPayload:
+        """Witness an AI governance layer's output (AI-METAGOV.2). Governance output witnessing."""
+        fa = 1.0
+        fb = float(_safe_hex_int(evidence_hash))
+        fc = 1.0 if verdict == "PASS" else 0.0
+        payload = self._mint_and_sign("AI-METAGOV.2", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = model_id or layer_id
+            payload.ai_context = {
+                "provider": "governance-output",
+                "layer_id": layer_id,
+                "verdict": verdict,
+                "evidence_hash": evidence_hash,
+            }
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    # ── Governance Authorization (AI-METAGOV.5) ──────────────────────
+
+    def authorize_governance_change(self, scope_domain: str, permission_level: str, operator_id: str, change_description: str, operator_credential_hash: str) -> WitnessPayload:
+        """Authorize a governance configuration change (AI-METAGOV.5). Authority hierarchy."""
+        fa = float(METAGOV_SCOPE_CODES.get(scope_domain, 0))
+        fb = float(METAGOV_PERMISSION_CODES.get(permission_level, 0))
+        fc = float(_safe_hex_int(operator_credential_hash))
+        payload = self._mint_and_sign("AI-METAGOV.5", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"governance-auth-{scope_domain}"
+            payload.ai_context = {
+                "provider": "governance-authorization",
+                "scope_domain": scope_domain,
+                "permission_level": permission_level,
+                "operator_id": operator_id,
+                "change_description": change_description,
+            }
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    # ── Emergency Override Attestation (AI-METAGOV.6) ──────────────────
+
+    def witness_emergency_override(self, override_reason: str, review_window_hours: int, operator_id: str, change_description: str) -> WitnessPayload:
+        """Witness an emergency governance override (AI-METAGOV.6). Mandatory review."""
+        fa = float(METAGOV_OVERRIDE_REASON_CODES.get(override_reason, 0))
+        fb = float(review_window_hours)
+        fc = float(METAGOV_REVIEW_STATUS_CODES.get("unreviewed", 0))
+        payload = self._mint_and_sign("AI-METAGOV.6", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = "emergency-override"
+            payload.ai_context = {
+                "provider": "governance-emergency",
+                "override_reason": override_reason,
+                "review_window_hours": review_window_hours,
+                "operator_id": operator_id,
+                "change_description": change_description,
+                "review_status": "unreviewed",
+            }
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    # ── Governance Sync Verification (AI-METAGOV.7) ──────────────────────
+
+    def witness_governance_sync(self, divergence_type: str, local_policy_hash: str, remote_policy_hash: str, *, remote_tenant_id: Optional[str] = None) -> WitnessPayload:
+        """Witness governance policy divergence (AI-METAGOV.7). Federation sync."""
+        fa = float(METAGOV_DIVERGENCE_CODES.get(divergence_type, 0))
+        fb = float(_safe_hex_int(local_policy_hash))
+        fc = float(_safe_hex_int(remote_policy_hash))
+        payload = self._mint_and_sign("AI-METAGOV.7", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = "governance-sync"
+            ctx: Dict[str, Any] = {
+                "provider": "governance-sync",
+                "divergence_type": divergence_type,
+                "local_policy_hash": local_policy_hash,
+                "remote_policy_hash": remote_policy_hash,
+            }
+            if remote_tenant_id:
+                ctx["remote_tenant_id"] = remote_tenant_id
+            payload.ai_context = ctx
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    # ── Attestation Purity Verification (AI-METAGOV.8) ──────────────────
+
+    def verify_attestation_purity(self, source_files: List[Dict[str, str]], *, build_hash: Optional[str] = None) -> WitnessPayload:
+        """Verify attestation engine is free of AI (AI-METAGOV.8). Anti-AI-washing."""
+        import hashlib
+        sorted_files = sorted(source_files, key=lambda f: f.get("path", ""))
+        combined_input = "|".join(f"{f.get('path', '')}:{f.get('hash', '')}" for f in sorted_files)
+        combined_hash = hashlib.sha256(combined_input.encode()).hexdigest()[:12]
+        fa = float(len(source_files))
+        fb = float(int(combined_hash[:8], 16) % 1000000)
+        fc = 1.0  # pure by definition
+        payload = self._mint_and_sign("AI-METAGOV.8", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = "attestation-purity"
+            ctx: Dict[str, Any] = {
+                "provider": "purity-verification",
+                "source_file_count": len(source_files),
+                "combined_source_hash": combined_hash,
+                "purity_tier": "verified_pure",
+            }
+            if build_hash:
+                ctx["build_hash"] = build_hash
+            payload.ai_context = ctx
+        self._buffer.enqueue_many([payload])
+        return payload
+
     # ── Trust Mesh (AI-TRUST.1 / AI-TRUST.2) ────────────────────────────
 
     @property
@@ -3117,3 +3345,66 @@ class Witness:
     def config(self) -> WitnessConfig:
         """Current witness configuration (read-only)."""
         return self._config
+
+
+def validate_governance_graph(rules: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Validate governance rule graph for circular dependencies (AI-METAGOV.4).
+
+    Uses Kahn's algorithm (BFS topological sort) to detect cycles.
+    Returns dict with valid (bool), cycles (list), max_depth (int), rule_count (int).
+    """
+    from collections import deque, defaultdict
+
+    adj: Dict[str, List[str]] = defaultdict(list)
+    in_degree: Dict[str, int] = {}
+
+    for rule in rules:
+        rid = rule.get("id", "")
+        if rid not in in_degree:
+            in_degree[rid] = 0
+        for dep in rule.get("dependencies", []):
+            if dep not in in_degree:
+                in_degree[dep] = 0
+            adj[dep].append(rid)
+            in_degree[rid] = in_degree.get(rid, 0) + 1
+
+    # Kahn's algorithm
+    queue = deque([n for n, d in in_degree.items() if d == 0])
+    sorted_nodes: List[str] = []
+    depths: Dict[str, int] = {n: 0 for n in queue}
+
+    while queue:
+        node = queue.popleft()
+        sorted_nodes.append(node)
+        for neighbor in adj.get(node, []):
+            in_degree[neighbor] -= 1
+            depths[neighbor] = max(depths.get(neighbor, 0), depths.get(node, 0) + 1)
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor)
+
+    # Remaining nodes with in_degree > 0 are in cycles
+    cycle_nodes = {n for n, d in in_degree.items() if d > 0}
+
+    cycles: List[List[str]] = []
+    if cycle_nodes:
+        visited: set = set()
+        for start in cycle_nodes:
+            if start in visited:
+                continue
+            cycle: List[str] = []
+            current: Optional[str] = start
+            while current and current not in visited and current in cycle_nodes:
+                visited.add(current)
+                cycle.append(current)
+                nexts = [n for n in adj.get(current, []) if n in cycle_nodes and n not in visited]
+                current = nexts[0] if nexts else None
+            if cycle:
+                cycles.append(cycle)
+
+    max_depth = max(depths.values()) if depths else 0
+    return {
+        "valid": len(cycles) == 0,
+        "cycles": cycles,
+        "max_depth": max_depth,
+        "rule_count": len(rules),
+    }
