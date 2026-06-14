@@ -162,7 +162,7 @@ export interface InferenceRecord {
   accessScope?: string;
 }
 
-/** Valid AI procedure IDs from SWT3 Spec v1.3.0 (76 procedures) */
+/** Valid AI procedure IDs from SWT3 Spec v1.3.0 (88 procedures) */
 export const AI_PROCEDURES = new Set([
   "AI-INF.1", "AI-INF.2", "AI-INF.3",
   "AI-MDL.1", "AI-MDL.2", "AI-MDL.3",

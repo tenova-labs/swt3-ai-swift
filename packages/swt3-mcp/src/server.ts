@@ -261,9 +261,11 @@ export function createServer(config: McpConfig, bundle?: McpConfigBundle): McpSe
     description:
       "List available UCT (Universal Control Taxonomy) procedures from the SWT3 registry. " +
       "Each procedure maps to a specific compliance control (e.g., AI-INF.1 for inference provenance). " +
-      "Optionally filter by namespace (AI, ACC, AUD, CFG, NET, etc.).",
+      "Optionally filter by namespace (AI, ACC, AUD, CFG, NET, etc.) or by regulatory framework " +
+      "(EU-AI-ACT, NIST-AI-RMF, CMMC, SR-11-7, etc.).",
     inputSchema: {
       namespace: z.string().optional().describe("Filter by UCT namespace prefix (e.g., 'AI' for AI procedures)"),
+      framework: z.string().optional().describe("Filter by regulatory framework (e.g., 'EU-AI-ACT', 'NIST-AI-RMF', 'CMMC')"),
     },
     annotations: { readOnlyHint: true },
   }, async (args) => {

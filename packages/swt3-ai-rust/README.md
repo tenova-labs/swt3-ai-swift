@@ -25,7 +25,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-swt3-ai = "0.5.5"
+swt3-ai = "0.5.6"
 ```
 
 Mint a fingerprint:

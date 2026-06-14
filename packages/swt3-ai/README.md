@@ -11,17 +11,18 @@ Witness your AI. Prove it followed the rules. Cryptographic accountability for e
 
 GPAI transparency obligations are enforceable now. EU AI Act high-risk enforcement begins **December 2, 2027**. This SDK gives you the evidence chain.
 
-## What's New in v0.5.5
+## What's New in v0.5.6
 
-- **Trust Mesh Hardened** -- 7 security layers: intra-tenant zero-trust, per-agent rate limiting, per-level freshness windows (SOVEREIGN requires 5-min anchors), verifiable boolean claims, deny list propagation with sentinel hooks. All opt-in, frictionless defaults unchanged.
-- **Key Attestation (AI-TRUST.3)** -- Bind signing keys to witness anchors. `generate_key_attestation()` / `verify_key_attestation()`. Keys valid only while bound anchor is fresh. No certificate authority required.
-- **Challenge-Response Liveness** -- Prove live key possession via nonce-based challenges. `generate_challenge()` / `respond_to_challenge()` / `verify_liveness_response()`. Defeats credential replay at ATTESTED/SOVEREIGN levels.
-- **4 New Adapters** -- Google ADK, CrewAI, A2A (Google Agent-to-Agent), Microsoft Foundry. 12 total integrations.
-- **Verify CLI** -- `swt3 verify --anchor <token>` recomputes fingerprint offline. Zero network calls.
-- **Bidirectional Framework Crosswalks** -- 222 mappings across 16 frameworks in machine-readable JSON.
-- **RFC 3161 Timestamps** -- Merkle rollups include RFC 3161 timestamp authority proof for legal non-repudiation.
-- **Microsoft Foundry Profile** -- Industry profile for Azure AI Foundry + AGT deployments.
-- **15 profiles**, 76 procedures, 42 namespaces, 12 integrations, 1,379 cross-language tests
+- **METAGOV Namespace** -- 8 procedures for recursive governance: governance config attestation, layer registration, policy downgrade detection, circular dependency detection (Kahn's algorithm), governance authorization, emergency override, federation sync, attestation purity verification.
+- **Japan AI Promotion Act** -- 17th regulatory framework. 10 procedure mappings to Japan's AI Promotion Act and AI Utilization Guidelines.
+- **Model Trust Profiles** -- `verify_trust()` / `present_credential()` for AI-TRUST.1 and AI-TRUST.2 anchors. Chain verification across multi-agent handoffs.
+- **Anchor References** -- Link related anchors with `anchor_refs` for causal chains and dependency tracking.
+- **Coverage Scoring** -- `get_coverage_score()` computes namespace and framework coverage from minted anchors.
+- **CLI: `swt3 procedures`** -- List and filter UCT procedures by namespace or JSON output. `swt3 quickstart` generates a working example script.
+- **MCP Framework Filter** -- `list_procedures` tool now accepts `--framework` parameter for regulatory-scoped queries.
+- **Lifecycle Stage** -- `LIFECYCLE_STAGE_CODES` for AI-MDL.5 model weight witnessing across all 5 languages.
+- **Bidirectional Crosswalks** -- 420+ mappings across 17 frameworks in machine-readable JSON.
+- **15 profiles**, 88 procedures, 47 namespaces, 12 integrations
 
 ## MCP Server -- Official Registry
 

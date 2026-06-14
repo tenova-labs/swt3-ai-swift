@@ -13,7 +13,7 @@ interface ProcedureEntry {
   namespace: string;
 }
 
-/** 76 AI procedures across 42 namespaces. */
+/** 88 AI procedures across 47 namespaces. */
 export const PROCEDURE_CATALOG: ProcedureEntry[] = [
   { id: "AI-INF.1", name: "Inference Provenance", namespace: "INF" },
   { id: "AI-INF.2", name: "Inference Latency", namespace: "INF" },

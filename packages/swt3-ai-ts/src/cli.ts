@@ -50,6 +50,10 @@ Usage:
   swt3 demo                         Run the zero-friction demo
   swt3 doctor                       Diagnose config health
   swt3 doctor --ci                   Strict mode (exit 1 on warnings)
+  swt3 procedures                   List all UCT procedures
+  swt3 procedures --namespace MDL   Filter by namespace
+  swt3 procedures --json            Machine-readable output
+  swt3 quickstart                   Generate a working example script
   swt3 verify                       Offline anchor verification
   swt3 audit                        Forensic chain timeline (html or json)
   swt3 help                         Show this message
@@ -306,6 +310,19 @@ Zero network calls. Recomputes the SHA-256 fingerprint locally.`);
         console.log(`  Claimed:    ${claimed}`);
         console.log(`  Recomputed: ${recomputed}`);
       }
+      break;
+    }
+    case "procedures": {
+      const { handleProcedures } = await import("./procedures.js");
+      const nsIdx = rest.indexOf("--namespace");
+      const namespace = nsIdx !== -1 && rest[nsIdx + 1] ? rest[nsIdx + 1] : undefined;
+      const useJson = rest.includes("--json");
+      handleProcedures({ namespace, json: useJson });
+      break;
+    }
+    case "quickstart": {
+      const { handleQuickstart } = await import("./procedures.js");
+      handleQuickstart();
       break;
     }
     case "help":

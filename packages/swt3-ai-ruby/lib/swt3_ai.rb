@@ -7,5 +7,5 @@ require_relative "swt3_ai/signing"
 require_relative "swt3_ai/types"
 
 module Swt3Ai
-  VERSION = "0.5.5"
+  VERSION = "0.5.6"
 end
