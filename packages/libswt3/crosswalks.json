@@ -3,9 +3,9 @@
   "protocol": "SWT3",
   "publisher": "Tenable Nova LLC",
   "license": "Apache-2.0",
-  "generated_at": "2026-06-13T22:02:31Z",
+  "generated_at": "2026-06-14T22:14:57Z",
   "source": "uct-registry.json",
-  "description": "Bidirectional crosswalk between 88 SWT3 AI procedures and 17 regulatory frameworks. Machine-readable, designed for CI/CD pipelines, compliance scanners, and GRC integrations.",
+  "description": "Bidirectional crosswalk between 94 SWT3 AI procedures and 21 regulatory frameworks. Machine-readable, designed for CI/CD pipelines, compliance scanners, and GRC integrations.",
   "citation": "When referencing these procedures in automated tools or derivative works, cite as: UCT Registry v1.0, Tenable Nova LLC (https://sovereign.tenova.io/registry/). SWT3 and Universal Control Taxonomy are trademarks of Tenable Nova LLC. Patent pending.",
   "frameworks": {
     "CO-SB-26-189": {
@@ -162,6 +162,42 @@
       "url": "https://www.federalreserve.gov/supervisionreg/srletters/sr1107.htm",
       "procedure_count": 19,
       "requirement_count": 6
+    },
+    "ASME-VV10": {
+      "name": "Standard for Verification and Validation in Computational Solid Mechanics",
+      "authority": "ASME",
+      "document": "ASME V&V 10",
+      "version": "2019 (R2025)",
+      "url": "https://www.asme.org/codes-standards/find-codes-standards/standard-for-verification-and-validation-in-computational-solid-mechanics",
+      "procedure_count": 5,
+      "requirement_count": 5
+    },
+    "DO-178C": {
+      "name": "Software Considerations in Airborne Systems and Equipment Certification",
+      "authority": "RTCA / FAA",
+      "document": "DO-178C",
+      "version": "2012",
+      "url": "https://www.rtca.org/products/do-178c/",
+      "procedure_count": 5,
+      "requirement_count": 5
+    },
+    "FDA-21CFR11": {
+      "name": "Electronic Records; Electronic Signatures",
+      "authority": "FDA",
+      "document": "21 CFR Part 11",
+      "version": "Current",
+      "url": "https://www.ecfr.gov/current/title-21/chapter-I/subchapter-A/part-11",
+      "procedure_count": 5,
+      "requirement_count": 5
+    },
+    "ISO-26262": {
+      "name": "Road Vehicles - Functional Safety",
+      "authority": "ISO",
+      "document": "ISO 26262",
+      "version": "2nd ed. (2018) + ISO/PAS 8800",
+      "url": "https://www.iso.org/standard/68383.html",
+      "procedure_count": 5,
+      "requirement_count": 5
     }
   },
   "procedures": {
@@ -1112,6 +1148,78 @@
         "ISO-42001": "A.8.3",
         "NIST-AI-RMF": "GOVERN 1.7"
       }
+    },
+    "AI-ENG.1": {
+      "title": "Design Generation Provenance",
+      "namespace": "AI",
+      "frameworks": {
+        "ASME-VV10": "V&V 10 3.1",
+        "DO-178C": "5.1",
+        "EU-AI-ACT": "Art.10(2)",
+        "FDA-21CFR11": "11.10(a)",
+        "ISO-26262": "Part 6",
+        "NIST-AI-RMF": "MAP 1.1"
+      }
+    },
+    "AI-ENG.2": {
+      "title": "Simulation Validation",
+      "namespace": "AI",
+      "frameworks": {
+        "ASME-VV10": "V&V 10 4.1",
+        "DO-178C": "6.3",
+        "EU-AI-ACT": "Art.15(1)",
+        "FDA-21CFR11": "11.10(a)",
+        "ISO-26262": "Part 4",
+        "NIST-AI-RMF": "MEASURE 2.6"
+      }
+    },
+    "AI-ENG.3": {
+      "title": "Safety-Critical Review Gate",
+      "namespace": "AI",
+      "frameworks": {
+        "ASME-VV10": "V&V 10 2.3",
+        "DO-178C": "7.2",
+        "EU-AI-ACT": "Art.14(1)",
+        "FDA-21CFR11": "11.10(g)",
+        "ISO-26262": "Part 2",
+        "NIST-AI-RMF": "GOVERN 1.5"
+      }
+    },
+    "AI-ENG.4": {
+      "title": "Material Specification Compliance",
+      "namespace": "AI",
+      "frameworks": {
+        "ASME-VV10": "V&V 10 3.3",
+        "DO-178C": "5.3",
+        "EU-AI-ACT": "Art.15(3)",
+        "FDA-21CFR11": "11.10(b)",
+        "ISO-26262": "Part 8",
+        "NIST-AI-RMF": "MANAGE 2.1"
+      }
+    },
+    "AI-ENG.5": {
+      "title": "Design Revision Chain",
+      "namespace": "AI",
+      "frameworks": {
+        "ASME-VV10": "V&V 10 2.4",
+        "DO-178C": "7.3",
+        "EU-AI-ACT": "Art.12(1)",
+        "FDA-21CFR11": "11.10(e)",
+        "ISO-26262": "Part 8 Ch.8",
+        "NIST-AI-RMF": "MAP 2.3"
+      }
+    },
+    "AI-ENG.6": {
+      "title": "Fabrication Release Attestation",
+      "namespace": "AI",
+      "frameworks": {
+        "ASME-VV10": "V&V 10 5.1",
+        "DO-178C": "5.5",
+        "EU-AI-ACT": "Art.16(a)",
+        "FDA-21CFR11": "11.10(f)",
+        "ISO-26262": "Part 4 7.4.4",
+        "NIST-AI-RMF": "MANAGE 2.2"
+      }
     }
   },
   "by_framework": {
@@ -1188,6 +1296,7 @@
       ],
       "Art.12(1)": [
         "AI-AUDIT.2",
+        "AI-ENG.5",
         "AI-ID.1",
         "AI-INF.1",
         "AI-INF.3",
@@ -1225,6 +1334,7 @@
         "AI-AUTO.2"
       ],
       "Art.14(1)": [
+        "AI-ENG.3",
         "AI-HITL.1"
       ],
       "Art.14(4)(d)": [
@@ -1235,9 +1345,11 @@
         "AI-HW.3"
       ],
       "Art.15(1)": [
+        "AI-ENG.2",
         "AI-PERF.1"
       ],
       "Art.15(3)": [
+        "AI-ENG.4",
         "AI-GRD.2",
         "AI-MDL.7",
         "AI-ROBUST.1",
@@ -1328,6 +1440,12 @@
       ],
       "Art.9(7)": [
         "AI-REDTEAM.1"
+      ],
+      "Art.10(2)": [
+        "AI-ENG.1"
+      ],
+      "Art.16(a)": [
+        "AI-ENG.6"
       ]
     },
     "FIVE-EYES-AGENTIC": {
@@ -1733,6 +1851,7 @@
       "GOVERN 1.5": [
         "AI-AUTO.2",
         "AI-CONSENT.1",
+        "AI-ENG.3",
         "AI-GOV.4",
         "AI-GRD.1",
         "AI-GRD.2",
@@ -1771,7 +1890,8 @@
         "AI-MDL.1"
       ],
       "MANAGE 2.2": [
-        "AI-CYBER.1"
+        "AI-CYBER.1",
+        "AI-ENG.6"
       ],
       "MANAGE 2.3": [
         "AI-SAFE.1",
@@ -1795,6 +1915,7 @@
         "AI-VIO.1"
       ],
       "MAP 1.1": [
+        "AI-ENG.1",
         "AI-GOV.3",
         "AI-ID.1",
         "AI-MDL.4",
@@ -1804,6 +1925,7 @@
         "AI-RISK.1"
       ],
       "MAP 2.3": [
+        "AI-ENG.5",
         "AI-EXPL.2",
         "AI-FAIR.2",
         "AI-FAIR.3",
@@ -1834,6 +1956,7 @@
       "MEASURE 2.6": [
         "AI-BASE.1",
         "AI-DRIFT.1",
+        "AI-ENG.2",
         "AI-MDL.3",
         "AI-MDL.7",
         "AI-ROBUST.1",
@@ -1842,6 +1965,9 @@
       "MEASURE 3.1": [
         "AI-REDTEAM.1",
         "AI-SUPPLY.1"
+      ],
+      "MANAGE 2.1": [
+        "AI-ENG.4"
       ]
     },
     "NIST-CSF": {
@@ -1923,6 +2049,84 @@
       ],
       "V.A": [
         "AI-GOV.5"
+      ]
+    },
+    "ASME-VV10": {
+      "V&V 10 3.1": [
+        "AI-ENG.1"
+      ],
+      "V&V 10 4.1": [
+        "AI-ENG.2"
+      ],
+      "V&V 10 2.3": [
+        "AI-ENG.3"
+      ],
+      "V&V 10 3.3": [
+        "AI-ENG.4"
+      ],
+      "V&V 10 2.4": [
+        "AI-ENG.5"
+      ],
+      "V&V 10 5.1": [
+        "AI-ENG.6"
+      ]
+    },
+    "DO-178C": {
+      "5.1": [
+        "AI-ENG.1"
+      ],
+      "6.3": [
+        "AI-ENG.2"
+      ],
+      "7.2": [
+        "AI-ENG.3"
+      ],
+      "5.3": [
+        "AI-ENG.4"
+      ],
+      "7.3": [
+        "AI-ENG.5"
+      ],
+      "5.5": [
+        "AI-ENG.6"
+      ]
+    },
+    "FDA-21CFR11": {
+      "11.10(a)": [
+        "AI-ENG.1",
+        "AI-ENG.2"
+      ],
+      "11.10(g)": [
+        "AI-ENG.3"
+      ],
+      "11.10(b)": [
+        "AI-ENG.4"
+      ],
+      "11.10(e)": [
+        "AI-ENG.5"
+      ],
+      "11.10(f)": [
+        "AI-ENG.6"
+      ]
+    },
+    "ISO-26262": {
+      "Part 6": [
+        "AI-ENG.1"
+      ],
+      "Part 4": [
+        "AI-ENG.2"
+      ],
+      "Part 2": [
+        "AI-ENG.3"
+      ],
+      "Part 8": [
+        "AI-ENG.4"
+      ],
+      "Part 8 Ch.8": [
+        "AI-ENG.5"
+      ],
+      "Part 4 7.4.4": [
+        "AI-ENG.6"
       ]
     }
   },

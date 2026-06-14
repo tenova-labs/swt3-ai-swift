@@ -44,7 +44,7 @@ async function main() {
   console.log(`${D}No API keys. No account. No network calls.${R}`);
   console.log(`${D}${"─".repeat(56)}${R}`);
   console.log(`  ${G}New in v0.5.6:${R} METAGOV namespace, Japan crosswalk,`);
-  console.log(`  Model Trust Profiles, coverage scoring, 88 procedures.`);
+  console.log(`  Model Trust Profiles, coverage scoring, 94 procedures.`);
   console.log(`  ${D}License guide: sovereign.tenova.io/guides/openmdw-license-provenance.html${R}`);
   console.log(`${D}${"─".repeat(56)}${R}`);
   console.log();

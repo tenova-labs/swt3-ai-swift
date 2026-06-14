@@ -150,7 +150,7 @@ def main() -> None:
     print(f"{DIM}No API keys. No account. No network calls.{RESET}")
     print(f"{DIM}{'─' * 56}{RESET}")
     print(f"  {GREEN}New in v0.5.6:{RESET} METAGOV namespace, Japan crosswalk,")
-    print(f"  Model Trust Profiles, coverage scoring, 88 procedures.")
+    print(f"  Model Trust Profiles, coverage scoring, 94 procedures.")
     print(f"  {DIM}License guide: sovereign.tenova.io/guides/openmdw-license-provenance.html{RESET}")
     print(f"{DIM}{'─' * 56}{RESET}")
     print()

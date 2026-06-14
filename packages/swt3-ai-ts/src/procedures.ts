@@ -13,7 +13,7 @@ interface ProcedureEntry {
   namespace: string;
 }
 
-/** 88 AI procedures across 47 namespaces. */
+/** 94 AI procedures across 48 namespaces. */
 export const PROCEDURE_CATALOG: ProcedureEntry[] = [
   { id: "AI-INF.1", name: "Inference Provenance", namespace: "INF" },
   { id: "AI-INF.2", name: "Inference Latency", namespace: "INF" },
@@ -93,6 +93,12 @@ export const PROCEDURE_CATALOG: ProcedureEntry[] = [
   { id: "AI-METAGOV.6", name: "Emergency Override Attestation", namespace: "METAGOV" },
   { id: "AI-METAGOV.7", name: "Governance Sync Verification", namespace: "METAGOV" },
   { id: "AI-METAGOV.8", name: "Attestation Purity Verification", namespace: "METAGOV" },
+  { id: "AI-ENG.1", name: "Design Generation Provenance", namespace: "ENG" },
+  { id: "AI-ENG.2", name: "Simulation Validation", namespace: "ENG" },
+  { id: "AI-ENG.3", name: "Safety-Critical Review Gate", namespace: "ENG" },
+  { id: "AI-ENG.4", name: "Material Specification Compliance", namespace: "ENG" },
+  { id: "AI-ENG.5", name: "Design Revision Chain", namespace: "ENG" },
+  { id: "AI-ENG.6", name: "Fabrication Release Attestation", namespace: "ENG" },
 ];
 
 export function handleProcedures(opts: { namespace?: string; json?: boolean }): void {

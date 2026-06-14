@@ -45,7 +45,7 @@ import type {
   WitnessConfig, WitnessPayload, WitnessReceipt, InferenceRecord,
   RagChunk, RagContextOptions, ModelWeightInfo, AdapterInfo, SkillInfo, MemorySource,
 } from "./types.js";
-import { QUANTIZATION_CODES, POLICY_CATEGORIES, BINDING_METHODS, APPROVAL_STATUS, PII_EVENT_TYPES, CONTENT_TYPE_CODES, BASELINE_MODE_CODES, LICENSE_TYPE_CODES, SBOM_FORMAT_CODES, REDTEAM_CATEGORY_CODES, CONSENT_BASIS_CODES, DRIFT_TYPE_CODES, LOG_FORMAT_CODES, INCIDENT_SEVERITY_CODES, INCIDENT_TYPE_CODES, BENCHMARK_TYPE_CODES, PERTURBATION_TYPE_CODES, CYBER_FRAMEWORK_CODES, DISCLOSURE_TYPE_CODES, RECIPIENT_TYPE_CODES, DETECTION_METHOD_CODES, PROCESSING_TYPE_CODES, DECISION_TYPE_CODES, CLASSIFICATION_CODES, REPORTING_STATUS_CODES, SUPPLY_RISK_CODES, PMM_TYPE_CODES, LIFECYCLE_STAGE_CODES, METAGOV_SCOPE_CODES, METAGOV_PERMISSION_CODES, METAGOV_OVERRIDE_REASON_CODES, METAGOV_REVIEW_STATUS_CODES, METAGOV_DIVERGENCE_CODES, METAGOV_PURITY_TIERS } from "./types.js";
+import { QUANTIZATION_CODES, POLICY_CATEGORIES, BINDING_METHODS, APPROVAL_STATUS, PII_EVENT_TYPES, CONTENT_TYPE_CODES, BASELINE_MODE_CODES, LICENSE_TYPE_CODES, SBOM_FORMAT_CODES, REDTEAM_CATEGORY_CODES, CONSENT_BASIS_CODES, DRIFT_TYPE_CODES, LOG_FORMAT_CODES, INCIDENT_SEVERITY_CODES, INCIDENT_TYPE_CODES, BENCHMARK_TYPE_CODES, PERTURBATION_TYPE_CODES, CYBER_FRAMEWORK_CODES, DISCLOSURE_TYPE_CODES, RECIPIENT_TYPE_CODES, DETECTION_METHOD_CODES, PROCESSING_TYPE_CODES, DECISION_TYPE_CODES, CLASSIFICATION_CODES, REPORTING_STATUS_CODES, SUPPLY_RISK_CODES, PMM_TYPE_CODES, LIFECYCLE_STAGE_CODES, METAGOV_SCOPE_CODES, METAGOV_PERMISSION_CODES, METAGOV_OVERRIDE_REASON_CODES, METAGOV_REVIEW_STATUS_CODES, METAGOV_DIVERGENCE_CODES, METAGOV_PURITY_TIERS, DESIGN_DOMAIN_CODES, SIMULATION_TYPE_CODES, APPROVAL_TYPE_CODES, MATERIAL_STANDARD_CODES, CHAIN_STATUS_CODES, RELEASE_TYPE_CODES } from "./types.js";
 import { loadConfig as loadConfigFromFile, loadFullConfig, validatePolicy } from "./config.js";
 import type { TrustMeshConfig, HardwareConfig, DensityPolicyConfig, McpPolicyConfig, MerkleConfig, ChainRule, ChainPolicyViolation, RuntimeProfileConfig } from "./types.js";
 import { MerkleAccumulator } from "./merkle.js";
@@ -3517,6 +3517,202 @@ export class Witness {
     }
     const policyHash = this.config.policyVersion ? sha256Truncated(this.config.policyVersion, 12) : undefined;
     this._applyOperationalMetadata(payload, policyHash);
+    this.buffer.enqueueMany([payload]);
+    return payload;
+  }
+
+  // ── Physical AI / Large Engineering Model (AI-ENG.1-5) ──────────
+
+  /**
+   * Witness AI-generated design provenance (AI-ENG.1).
+   * DO-178C 5.1, ASME V&V 10 3.1, FDA 21 CFR 11.10(a).
+   */
+  witnessDesignProvenance(options: {
+    constraintsApplied: number;
+    parametersGenerated: number;
+    designDomain: string;
+    designHash?: string;
+    modelVersion?: string;
+  }): WitnessPayload {
+    const fa = options.constraintsApplied;
+    const fb = options.parametersGenerated;
+    const fc = DESIGN_DOMAIN_CODES[options.designDomain] ?? 7;
+    const [ts, epoch] = timestampMs();
+    const fp = mintFingerprint(this.config.tenantId, "AI-ENG.1", fa, fb, fc, ts);
+    const payload: WitnessPayload = {
+      procedure_id: "AI-ENG.1", factor_a: fa, factor_b: fb, factor_c: fc,
+      clearing_level: this.config.clearingLevel,
+      anchor_fingerprint: fp, anchor_epoch: epoch, fingerprint_timestamp_ms: ts,
+    };
+    if (this.config.clearingLevel <= 1) {
+      payload.ai_model_id = `design-${options.designDomain}`;
+      const ctx: Record<string, unknown> = { provider: "design-generation", design_domain: options.designDomain };
+      if (options.designHash) ctx.design_hash = options.designHash;
+      if (options.modelVersion) ctx.model_version = options.modelVersion;
+      payload.ai_context = ctx;
+    }
+    this.buffer.enqueueMany([payload]);
+    return payload;
+  }
+
+  /**
+   * Witness simulation validation of AI-generated design (AI-ENG.2).
+   * DO-178C 6.3, ASME V&V 10 4.1, ISO 26262-4.
+   */
+  witnessSimulationValidation(options: {
+    simulationsRun: number;
+    simulationsPassed: number;
+    simulationType: string;
+    simulationHash?: string;
+    acceptanceCriteria?: string;
+  }): WitnessPayload {
+    const fa = options.simulationsRun;
+    const fb = options.simulationsPassed;
+    const fc = SIMULATION_TYPE_CODES[options.simulationType] ?? 6;
+    const [ts, epoch] = timestampMs();
+    const fp = mintFingerprint(this.config.tenantId, "AI-ENG.2", fa, fb, fc, ts);
+    const payload: WitnessPayload = {
+      procedure_id: "AI-ENG.2", factor_a: fa, factor_b: fb, factor_c: fc,
+      clearing_level: this.config.clearingLevel,
+      anchor_fingerprint: fp, anchor_epoch: epoch, fingerprint_timestamp_ms: ts,
+    };
+    if (this.config.clearingLevel <= 1) {
+      payload.ai_model_id = `sim-${options.simulationType}`;
+      const ctx: Record<string, unknown> = { provider: "simulation-validation", simulation_type: options.simulationType };
+      if (options.simulationHash) ctx.simulation_hash = options.simulationHash;
+      if (options.acceptanceCriteria) ctx.acceptance_criteria = options.acceptanceCriteria;
+      payload.ai_context = ctx;
+    }
+    this.buffer.enqueueMany([payload]);
+    return payload;
+  }
+
+  /**
+   * Witness safety-critical review gate (AI-ENG.3).
+   * DO-178C 7.2, FDA 21 CFR 11.10(g), ISO 26262-2.
+   */
+  witnessSafetyReview(options: {
+    reviewersRequired: number;
+    reviewersApproved: number;
+    approvalType: string;
+    reviewId?: string;
+    peLicense?: string;
+  }): WitnessPayload {
+    const fa = options.reviewersRequired;
+    const fb = options.reviewersApproved;
+    const fc = APPROVAL_TYPE_CODES[options.approvalType] ?? 0;
+    const [ts, epoch] = timestampMs();
+    const fp = mintFingerprint(this.config.tenantId, "AI-ENG.3", fa, fb, fc, ts);
+    const payload: WitnessPayload = {
+      procedure_id: "AI-ENG.3", factor_a: fa, factor_b: fb, factor_c: fc,
+      clearing_level: this.config.clearingLevel,
+      anchor_fingerprint: fp, anchor_epoch: epoch, fingerprint_timestamp_ms: ts,
+    };
+    if (this.config.clearingLevel <= 1) {
+      payload.ai_model_id = `review-${options.approvalType}`;
+      const ctx: Record<string, unknown> = { provider: "safety-review", approval_type: options.approvalType };
+      if (options.reviewId) ctx.review_id = options.reviewId;
+      if (options.peLicense) ctx.pe_license = options.peLicense;
+      payload.ai_context = ctx;
+    }
+    this.buffer.enqueueMany([payload]);
+    return payload;
+  }
+
+  /**
+   * Witness material specification compliance (AI-ENG.4).
+   * ASME V&V 10 3.3, DO-254 5.3, ISO 26262-8.
+   */
+  witnessMaterialCompliance(options: {
+    specificationsChecked: number;
+    specificationsMet: number;
+    standard: string;
+    materialId?: string;
+    specificationRef?: string;
+  }): WitnessPayload {
+    const fa = options.specificationsChecked;
+    const fb = options.specificationsMet;
+    const fc = MATERIAL_STANDARD_CODES[options.standard] ?? 6;
+    const [ts, epoch] = timestampMs();
+    const fp = mintFingerprint(this.config.tenantId, "AI-ENG.4", fa, fb, fc, ts);
+    const payload: WitnessPayload = {
+      procedure_id: "AI-ENG.4", factor_a: fa, factor_b: fb, factor_c: fc,
+      clearing_level: this.config.clearingLevel,
+      anchor_fingerprint: fp, anchor_epoch: epoch, fingerprint_timestamp_ms: ts,
+    };
+    if (this.config.clearingLevel <= 1) {
+      payload.ai_model_id = `material-${options.standard}`;
+      const ctx: Record<string, unknown> = { provider: "material-compliance", standard: options.standard };
+      if (options.materialId) ctx.material_id = options.materialId;
+      if (options.specificationRef) ctx.specification_ref = options.specificationRef;
+      payload.ai_context = ctx;
+    }
+    this.buffer.enqueueMany([payload]);
+    return payload;
+  }
+
+  /**
+   * Witness design revision chain (AI-ENG.5).
+   * DO-178C 7.3, FDA 21 CFR 11.10(e), ASME V&V 10 2.4.
+   */
+  witnessDesignChain(options: {
+    totalRevisions: number;
+    aiGeneratedRevisions: number;
+    chainStatus: string;
+    designId?: string;
+    finalHash?: string;
+  }): WitnessPayload {
+    const fa = options.totalRevisions;
+    const fb = options.aiGeneratedRevisions;
+    const fc = CHAIN_STATUS_CODES[options.chainStatus] ?? 0;
+    const [ts, epoch] = timestampMs();
+    const fp = mintFingerprint(this.config.tenantId, "AI-ENG.5", fa, fb, fc, ts);
+    const payload: WitnessPayload = {
+      procedure_id: "AI-ENG.5", factor_a: fa, factor_b: fb, factor_c: fc,
+      clearing_level: this.config.clearingLevel,
+      anchor_fingerprint: fp, anchor_epoch: epoch, fingerprint_timestamp_ms: ts,
+    };
+    if (this.config.clearingLevel <= 1) {
+      payload.ai_model_id = `design-chain-${options.chainStatus}`;
+      const ctx: Record<string, unknown> = { provider: "design-revision-chain", chain_status: options.chainStatus, ai_revision_ratio: options.aiGeneratedRevisions / Math.max(options.totalRevisions, 1) };
+      if (options.designId) ctx.design_id = options.designId;
+      if (options.finalHash) ctx.final_hash = options.finalHash;
+      payload.ai_context = ctx;
+    }
+    this.buffer.enqueueMany([payload]);
+    return payload;
+  }
+
+  /**
+   * Witness fabrication release attestation (AI-ENG.6).
+   * DO-178C 5.5, FDA 21 CFR 11.10(f), ISO 26262-4 7.4.4.
+   */
+  witnessFabricationRelease(options: {
+    designHashVerified: boolean;
+    authorizationCount: number;
+    releaseType: string;
+    productionSystemId?: string;
+    approvedDesignHash?: string;
+    finalDesignHash?: string;
+  }): WitnessPayload {
+    const fa = options.designHashVerified ? 1 : 0;
+    const fb = options.authorizationCount;
+    const fc = RELEASE_TYPE_CODES[options.releaseType] ?? 0;
+    const [ts, epoch] = timestampMs();
+    const fp = mintFingerprint(this.config.tenantId, "AI-ENG.6", fa, fb, fc, ts);
+    const payload: WitnessPayload = {
+      procedure_id: "AI-ENG.6", factor_a: fa, factor_b: fb, factor_c: fc,
+      clearing_level: this.config.clearingLevel,
+      anchor_fingerprint: fp, anchor_epoch: epoch, fingerprint_timestamp_ms: ts,
+    };
+    if (this.config.clearingLevel <= 1) {
+      payload.ai_model_id = `fabrication-${options.releaseType}`;
+      const ctx: Record<string, unknown> = { provider: "fabrication-release", release_type: options.releaseType, design_hash_verified: options.designHashVerified };
+      if (options.productionSystemId) ctx.production_system_id = options.productionSystemId;
+      if (options.approvedDesignHash) ctx.approved_design_hash = options.approvedDesignHash;
+      if (options.finalDesignHash) ctx.final_design_hash = options.finalDesignHash;
+      payload.ai_context = ctx;
+    }
     this.buffer.enqueueMany([payload]);
     return payload;
   }

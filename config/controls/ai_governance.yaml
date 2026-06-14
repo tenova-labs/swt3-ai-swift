@@ -307,6 +307,80 @@ controls:
     nist_ai_rmf_ref: "MEASURE 2.5"
     eu_ai_act_ref: "Art. 17"
 
+  # ── Physical AI / Large Engineering Model (LEM) Controls ────────────
+
+  - id: "AI-ENG.1"
+    parent_control: "AI-ENG"
+    name: "Design Generation Provenance"
+    check_type: "attestation"
+    description: "AI-generated engineering designs record provenance including applied constraints, generated parameters, and design domain for traceability from model to manufactured output"
+    attestation_prompt: "Confirm AI-generated engineering designs are witnessed with constraint count, parameter count, and design domain classification."
+    review_interval_days: 90
+    uct_category: "AI"
+    nist_800_53_ref: "SI-7"
+    nist_ai_rmf_ref: "MAP 1.1"
+    eu_ai_act_ref: "Art. 10(2)"
+
+  - id: "AI-ENG.2"
+    parent_control: "AI-ENG"
+    name: "Simulation Validation"
+    check_type: "attestation"
+    description: "AI-generated designs are validated through simulation (FEA, CFD, molecular, thermal, electromagnetic, multiphysics) with pass/fail recorded against acceptance criteria"
+    attestation_prompt: "Confirm simulation validation results for AI-generated designs are witnessed with run count, pass count, and simulation type."
+    review_interval_days: 90
+    uct_category: "AI"
+    nist_800_53_ref: "SI-7"
+    nist_ai_rmf_ref: "MEASURE 2.6"
+    eu_ai_act_ref: "Art. 15(1)"
+
+  - id: "AI-ENG.3"
+    parent_control: "AI-ENG"
+    name: "Safety-Critical Review Gate"
+    check_type: "attestation"
+    description: "AI-generated designs for safety-critical applications require human reviewer approval before fabrication, with approval type and reviewer count recorded"
+    attestation_prompt: "Confirm safety-critical review gates are enforced for AI-generated designs with required reviewer count and approval type."
+    review_interval_days: 90
+    uct_category: "AI"
+    nist_800_53_ref: "CM-3"
+    nist_ai_rmf_ref: "GOVERN 1.5"
+    eu_ai_act_ref: "Art. 14(1)"
+
+  - id: "AI-ENG.4"
+    parent_control: "AI-ENG"
+    name: "Material Specification Compliance"
+    check_type: "attestation"
+    description: "AI-generated designs are validated against material and safety specifications from standards bodies (ASME, ISO, ASTM, MIL-SPEC, FDA USP, IEC)"
+    attestation_prompt: "Confirm AI-generated designs are validated against applicable material and safety specifications with compliance count recorded."
+    review_interval_days: 90
+    uct_category: "AI"
+    nist_800_53_ref: "SA-4"
+    nist_ai_rmf_ref: "MANAGE 2.1"
+    eu_ai_act_ref: "Art. 15(3)"
+
+  - id: "AI-ENG.5"
+    parent_control: "AI-ENG"
+    name: "Design Revision Chain"
+    check_type: "attestation"
+    description: "Full revision chain from initial AI generation through human modifications to final approved design is recorded with AI vs human authorship attribution"
+    attestation_prompt: "Confirm design revision chains are maintained with total revision count, AI-generated count, and chain approval status."
+    review_interval_days: 90
+    uct_category: "AI"
+    nist_800_53_ref: "CM-3"
+    nist_ai_rmf_ref: "MAP 2.3"
+    eu_ai_act_ref: "Art. 12(1)"
+
+  - id: "AI-ENG.6"
+    parent_control: "AI-ENG"
+    name: "Fabrication Release Attestation"
+    check_type: "attestation"
+    description: "AI-generated designs are attested at the fabrication release boundary, verifying the final design hash matches the approved design and all required authorizations are recorded"
+    attestation_prompt: "Confirm fabrication releases of AI-generated designs are witnessed with design hash verification, authorization count, and release type classification."
+    review_interval_days: 90
+    uct_category: "AI"
+    nist_800_53_ref: "CM-3"
+    nist_ai_rmf_ref: "MANAGE 2.2"
+    eu_ai_act_ref: "Art. 16(a)"
+
   - id: "AI-IMPACT.1"
     parent_control: "AI-IMPACT"
     name: "AI Societal Impact Assessment"

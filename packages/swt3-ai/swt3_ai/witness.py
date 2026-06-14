@@ -228,6 +228,13 @@ METAGOV_REVIEW_STATUS_CODES: Dict[str, int] = {"unreviewed": 0, "attested": 1, "
 METAGOV_DIVERGENCE_CODES: Dict[str, int] = {"equivalent": 0, "version_divergent": 1, "structural_divergent": 2, "coverage_divergent": 3}
 METAGOV_PURITY_TIERS: Dict[str, int] = {"verified_pure": 0, "unverified_purity": 1, "impure": 2}
 
+DESIGN_DOMAIN_CODES: Dict[str, int] = {"mechanical": 0, "chemical": 1, "electrical": 2, "structural": 3, "thermal": 4, "pharmaceutical": 5, "semiconductor": 6, "custom": 7}
+SIMULATION_TYPE_CODES: Dict[str, int] = {"fea": 0, "cfd": 1, "molecular": 2, "thermal": 3, "electromagnetic": 4, "multiphysics": 5, "custom": 6}
+APPROVAL_TYPE_CODES: Dict[str, int] = {"peer": 0, "pe_stamp": 1, "safety_board": 2, "regulatory": 3, "independent_assessor": 4}
+MATERIAL_STANDARD_CODES: Dict[str, int] = {"asme": 0, "iso": 1, "astm": 2, "mil_spec": 3, "fda_usp": 4, "iec": 5, "custom": 6}
+CHAIN_STATUS_CODES: Dict[str, int] = {"in_progress": 0, "approved": 1, "rejected": 2, "superseded": 3, "archived": 4}
+RELEASE_TYPE_CODES: Dict[str, int] = {"prototype": 0, "limited_run": 1, "mass_production": 2, "field_modification": 3, "emergency": 4}
+
 
 def _safe_hex_int(s: str, chars: int = 8) -> int:
     """Parse first `chars` hex chars from string, returning 0 for non-hex input."""
@@ -2967,6 +2974,87 @@ class Witness:
             }
             if build_hash:
                 ctx["build_hash"] = build_hash
+            payload.ai_context = ctx
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    # ── Physical AI / Large Engineering Model (AI-ENG.1-5) ──────────────
+
+    def witness_design_provenance(self, constraints_applied: int, parameters_generated: int, design_domain: str, *, design_hash: Optional[str] = None, model_version: Optional[str] = None) -> WitnessPayload:
+        """Witness AI-generated design provenance (AI-ENG.1). DO-178C 5.1, ASME V&V 10 3.1."""
+        fa, fb, fc = float(constraints_applied), float(parameters_generated), float(DESIGN_DOMAIN_CODES.get(design_domain, 7))
+        payload = self._mint_and_sign("AI-ENG.1", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"design-{design_domain}"
+            ctx: Dict[str, Any] = {"provider": "design-generation", "design_domain": design_domain}
+            if design_hash: ctx["design_hash"] = design_hash
+            if model_version: ctx["model_version"] = model_version
+            payload.ai_context = ctx
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    def witness_simulation_validation(self, simulations_run: int, simulations_passed: int, simulation_type: str, *, simulation_hash: Optional[str] = None, acceptance_criteria: Optional[str] = None) -> WitnessPayload:
+        """Witness simulation validation of AI-generated design (AI-ENG.2). DO-178C 6.3, ASME V&V 10 4.1."""
+        fa, fb, fc = float(simulations_run), float(simulations_passed), float(SIMULATION_TYPE_CODES.get(simulation_type, 6))
+        payload = self._mint_and_sign("AI-ENG.2", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"sim-{simulation_type}"
+            ctx: Dict[str, Any] = {"provider": "simulation-validation", "simulation_type": simulation_type}
+            if simulation_hash: ctx["simulation_hash"] = simulation_hash
+            if acceptance_criteria: ctx["acceptance_criteria"] = acceptance_criteria
+            payload.ai_context = ctx
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    def witness_safety_review(self, reviewers_required: int, reviewers_approved: int, approval_type: str, *, review_id: Optional[str] = None, pe_license: Optional[str] = None) -> WitnessPayload:
+        """Witness safety-critical review gate (AI-ENG.3). DO-178C 7.2, FDA 21 CFR 11.10(g)."""
+        fa, fb, fc = float(reviewers_required), float(reviewers_approved), float(APPROVAL_TYPE_CODES.get(approval_type, 0))
+        payload = self._mint_and_sign("AI-ENG.3", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"review-{approval_type}"
+            ctx: Dict[str, Any] = {"provider": "safety-review", "approval_type": approval_type}
+            if review_id: ctx["review_id"] = review_id
+            if pe_license: ctx["pe_license"] = pe_license
+            payload.ai_context = ctx
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    def witness_material_compliance(self, specifications_checked: int, specifications_met: int, standard: str, *, material_id: Optional[str] = None, specification_ref: Optional[str] = None) -> WitnessPayload:
+        """Witness material specification compliance (AI-ENG.4). ASME V&V 10 3.3, DO-254 5.3."""
+        fa, fb, fc = float(specifications_checked), float(specifications_met), float(MATERIAL_STANDARD_CODES.get(standard, 6))
+        payload = self._mint_and_sign("AI-ENG.4", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"material-{standard}"
+            ctx: Dict[str, Any] = {"provider": "material-compliance", "standard": standard}
+            if material_id: ctx["material_id"] = material_id
+            if specification_ref: ctx["specification_ref"] = specification_ref
+            payload.ai_context = ctx
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    def witness_design_chain(self, total_revisions: int, ai_generated_revisions: int, chain_status: str, *, design_id: Optional[str] = None, final_hash: Optional[str] = None) -> WitnessPayload:
+        """Witness design revision chain (AI-ENG.5). DO-178C 7.3, FDA 21 CFR 11.10(e)."""
+        fa, fb, fc = float(total_revisions), float(ai_generated_revisions), float(CHAIN_STATUS_CODES.get(chain_status, 0))
+        payload = self._mint_and_sign("AI-ENG.5", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"design-chain-{chain_status}"
+            ctx: Dict[str, Any] = {"provider": "design-revision-chain", "chain_status": chain_status, "ai_revision_ratio": ai_generated_revisions / max(total_revisions, 1)}
+            if design_id: ctx["design_id"] = design_id
+            if final_hash: ctx["final_hash"] = final_hash
+            payload.ai_context = ctx
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    def witness_fabrication_release(self, design_hash_verified: bool, authorization_count: int, release_type: str, *, production_system_id: Optional[str] = None, approved_design_hash: Optional[str] = None, final_design_hash: Optional[str] = None) -> WitnessPayload:
+        """Witness fabrication release attestation (AI-ENG.6). DO-178C 5.5, FDA 21 CFR 11.10(f)."""
+        fa, fb, fc = float(1 if design_hash_verified else 0), float(authorization_count), float(RELEASE_TYPE_CODES.get(release_type, 0))
+        payload = self._mint_and_sign("AI-ENG.6", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"fabrication-{release_type}"
+            ctx: Dict[str, Any] = {"provider": "fabrication-release", "release_type": release_type, "design_hash_verified": design_hash_verified}
+            if production_system_id: ctx["production_system_id"] = production_system_id
+            if approved_design_hash: ctx["approved_design_hash"] = approved_design_hash
+            if final_design_hash: ctx["final_design_hash"] = final_design_hash
             payload.ai_context = ctx
         self._buffer.enqueue_many([payload])
         return payload

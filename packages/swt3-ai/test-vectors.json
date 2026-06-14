@@ -495,6 +495,78 @@
       "fingerprint_timestamp_ms": 1774800000000,
       "clearing_level": 1,
       "expected_fingerprint": "1500a3dcab94"
+    },
+    {
+      "id": 42,
+      "description": "AI-ENG.1 Design Generation Provenance - mechanical, 12 constraints",
+      "tenant_id": "DESIGN_ENCLAVE",
+      "procedure_id": "AI-ENG.1",
+      "factor_a": 12,
+      "factor_b": 500,
+      "factor_c": 0,
+      "fingerprint_timestamp_ms": 1774800042000,
+      "clearing_level": 1,
+      "expected_fingerprint": "3a9ad53541de"
+    },
+    {
+      "id": 43,
+      "description": "AI-ENG.2 Simulation Validation - FEA, 1000 sims all pass",
+      "tenant_id": "DESIGN_ENCLAVE",
+      "procedure_id": "AI-ENG.2",
+      "factor_a": 1000,
+      "factor_b": 1000,
+      "factor_c": 0,
+      "fingerprint_timestamp_ms": 1774800043000,
+      "clearing_level": 1,
+      "expected_fingerprint": "bd1bb0a1554b"
+    },
+    {
+      "id": 44,
+      "description": "AI-ENG.3 Safety-Critical Review Gate - PE stamp, 3/3 approved",
+      "tenant_id": "DESIGN_ENCLAVE",
+      "procedure_id": "AI-ENG.3",
+      "factor_a": 3,
+      "factor_b": 3,
+      "factor_c": 1,
+      "fingerprint_timestamp_ms": 1774800044000,
+      "clearing_level": 1,
+      "expected_fingerprint": "0f7d9d58352d"
+    },
+    {
+      "id": 45,
+      "description": "AI-ENG.4 Material Specification Compliance - ASME, 15/15 met",
+      "tenant_id": "DESIGN_ENCLAVE",
+      "procedure_id": "AI-ENG.4",
+      "factor_a": 15,
+      "factor_b": 15,
+      "factor_c": 0,
+      "fingerprint_timestamp_ms": 1774800045000,
+      "clearing_level": 1,
+      "expected_fingerprint": "34bfd6594dff"
+    },
+    {
+      "id": 46,
+      "description": "AI-ENG.5 Design Revision Chain - approved, 7/10 AI-generated",
+      "tenant_id": "DESIGN_ENCLAVE",
+      "procedure_id": "AI-ENG.5",
+      "factor_a": 10,
+      "factor_b": 7,
+      "factor_c": 1,
+      "fingerprint_timestamp_ms": 1774800046000,
+      "clearing_level": 1,
+      "expected_fingerprint": "26ae638d2064"
+    },
+    {
+      "id": 47,
+      "description": "AI-ENG.6 Fabrication Release - verified hash, mass production",
+      "tenant_id": "DESIGN_ENCLAVE",
+      "procedure_id": "AI-ENG.6",
+      "factor_a": 1,
+      "factor_b": 5,
+      "factor_c": 2,
+      "fingerprint_timestamp_ms": 1774800047000,
+      "clearing_level": 1,
+      "expected_fingerprint": "4ff83090bfc4"
     }
   ],
   "signing_vectors": [
@@ -544,7 +616,11 @@
       "description": "Profile signing canonical message and HMAC-SHA256",
       "model_id": "gpt-4o",
       "model_hash": "abc123",
-      "procedures": ["AI-INF.1", "AI-GRD.1", "AI-MDL.1"],
+      "procedures": [
+        "AI-INF.1",
+        "AI-GRD.1",
+        "AI-MDL.1"
+      ],
       "coverage_score_raw": 0.6666666666666666,
       "generated_at": 1700000000000,
       "valid_until": 1700086400000,

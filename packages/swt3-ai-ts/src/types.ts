@@ -162,7 +162,7 @@ export interface InferenceRecord {
   accessScope?: string;
 }
 
-/** Valid AI procedure IDs from SWT3 Spec v1.3.0 (88 procedures) */
+/** Valid AI procedure IDs from SWT3 Spec v1.3.0 (94 procedures) */
 export const AI_PROCEDURES = new Set([
   "AI-INF.1", "AI-INF.2", "AI-INF.3",
   "AI-MDL.1", "AI-MDL.2", "AI-MDL.3",
@@ -231,6 +231,12 @@ export const AI_PROCEDURES = new Set([
   "AI-METAGOV.6",
   "AI-METAGOV.7",
   "AI-METAGOV.8",
+  "AI-ENG.1",
+  "AI-ENG.2",
+  "AI-ENG.3",
+  "AI-ENG.4",
+  "AI-ENG.5",
+  "AI-ENG.6",
 ]);
 
 /** A single retrieved context chunk for RAG witnessing. */
@@ -457,6 +463,36 @@ export const METAGOV_DIVERGENCE_CODES: Record<string, number> = {
 /** Attestation purity tier codes for AI-METAGOV.8. */
 export const METAGOV_PURITY_TIERS: Record<string, number> = {
   verified_pure: 0, unverified_purity: 1, impure: 2,
+};
+
+/** Design domain codes for AI-ENG.1 design generation provenance. */
+export const DESIGN_DOMAIN_CODES: Record<string, number> = {
+  mechanical: 0, chemical: 1, electrical: 2, structural: 3, thermal: 4, pharmaceutical: 5, semiconductor: 6, custom: 7,
+};
+
+/** Simulation type codes for AI-ENG.2 simulation validation. */
+export const SIMULATION_TYPE_CODES: Record<string, number> = {
+  fea: 0, cfd: 1, molecular: 2, thermal: 3, electromagnetic: 4, multiphysics: 5, custom: 6,
+};
+
+/** Approval type codes for AI-ENG.3 safety-critical review gate. */
+export const APPROVAL_TYPE_CODES: Record<string, number> = {
+  peer: 0, pe_stamp: 1, safety_board: 2, regulatory: 3, independent_assessor: 4,
+};
+
+/** Material standard codes for AI-ENG.4 material specification compliance. */
+export const MATERIAL_STANDARD_CODES: Record<string, number> = {
+  asme: 0, iso: 1, astm: 2, mil_spec: 3, fda_usp: 4, iec: 5, custom: 6,
+};
+
+/** Chain status codes for AI-ENG.5 design revision chain. */
+export const CHAIN_STATUS_CODES: Record<string, number> = {
+  in_progress: 0, approved: 1, rejected: 2, superseded: 3, archived: 4,
+};
+
+/** Release type codes for AI-ENG.6 fabrication release attestation. */
+export const RELEASE_TYPE_CODES: Record<string, number> = {
+  prototype: 0, limited_run: 1, mass_production: 2, field_modification: 3, emergency: 4,
 };
 
 // ── Declarative Governance Config Types ────────────────────────────────
