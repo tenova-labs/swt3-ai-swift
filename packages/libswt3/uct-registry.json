@@ -4600,8 +4600,11 @@
         "description": "Confirms the AI diagnostic confidence meets or exceeds the clinical threshold. Ground truth match is recorded for retrospective accuracy auditing."
       },
       "frameworks": {
-        "HIPAA-CFR": "45CFR.164.312",
-        "EU-AI-ACT": "Annex-III.1"
+        "EU-AI-ACT": "Annex III.1(a)",
+        "FDA-21CFR11": "11.10(a)",
+        "FDA-21CFR820": "820.30(g)",
+        "FDA-SaMD": "510(k) Clinical Validation",
+        "HIPAA": "164.312(b)"
       },
       "namespace": "HCF"
     },
@@ -4634,8 +4637,11 @@
         "description": "Confirms all drug interaction checks passed and no unresolved contraindications exist."
       },
       "frameworks": {
-        "HIPAA-CFR": "45CFR.164.312",
-        "EU-AI-ACT": "Annex-III.1"
+        "EU-AI-ACT": "Annex III.1(a)",
+        "FDA-21CFR11": "11.10(a)",
+        "FDA-21CFR820": "820.30(f)",
+        "FDA-SaMD": "CDS Safety Assessment",
+        "HIPAA": "164.312(c)(1)"
       },
       "namespace": "HCF"
     },
@@ -4668,8 +4674,10 @@
         "description": "Confirms patient consent is on file (or waived for emergency) and the requestor is authorized. Maps to HIPAA Privacy Rule access controls."
       },
       "frameworks": {
-        "HIPAA-CFR": "45CFR.164.508",
-        "EU-AI-ACT": "Art.10"
+        "EU-AI-ACT": "Art.10",
+        "FDA-21CFR11": "11.10(e)",
+        "FDA-21CFR820": "820.180",
+        "HIPAA": "164.508"
       },
       "namespace": "HCF"
     },

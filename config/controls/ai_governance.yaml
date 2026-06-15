@@ -1233,3 +1233,38 @@ controls:
     uct_category: "AI"
     nist_800_53_ref: "SA-12"
     nist_ai_rmf_ref: "MEASURE 3.1"
+
+  # --- Healthcare / Clinical AI (HCF) ---
+
+  - id: "HCF-DX.1"
+    parent_control: "HCF-DX"
+    name: "Diagnostic Accountability"
+    check_type: "attestation"
+    description: "AI diagnostic systems meet clinical confidence thresholds and accuracy is tracked against ground truth"
+    attestation_prompt: "Confirm diagnostic AI confidence thresholds are enforced and accuracy metrics are recorded per 21 CFR 820.30(g) and FDA SaMD guidance."
+    review_interval_days: 90
+    uct_category: "HCF"
+    hipaa_ref: "164.312(b)"
+    fda_ref: "21 CFR 820.30(g); 21 CFR 11.10(a)"
+
+  - id: "HCF-RX.1"
+    parent_control: "HCF-RX"
+    name: "Prescription Safety"
+    check_type: "attestation"
+    description: "AI prescription systems complete all drug interaction and allergy checks with contraindication tracking"
+    attestation_prompt: "Confirm all drug interaction checks are completed and contraindication flags are resolved before prescription issuance per 21 CFR 820.30(f)."
+    review_interval_days: 90
+    uct_category: "HCF"
+    hipaa_ref: "164.312(c)(1)"
+    fda_ref: "21 CFR 820.30(f); 21 CFR 11.10(a)"
+
+  - id: "HCF-PRIV.1"
+    parent_control: "HCF-PRIV"
+    name: "PHI Access Audit"
+    check_type: "attestation"
+    description: "AI systems accessing protected health information verify patient consent and requestor authorization"
+    attestation_prompt: "Confirm PHI access events are logged with consent verification and authorized role checks per HIPAA 164.508 and 21 CFR 820.180."
+    review_interval_days: 90
+    uct_category: "HCF"
+    hipaa_ref: "164.508"
+    fda_ref: "21 CFR 820.180; 21 CFR 11.10(e)"

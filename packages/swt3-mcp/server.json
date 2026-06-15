@@ -2,7 +2,7 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.tenova/swt3-witness",
   "title": "SWT3 AI Witness",
-  "description": "Cryptographic AI governance + audit. 18 tools, 21 frameworks. EU AI Act, NIST, OWASP, CMMC, SR 11-7",
+  "description": "Cryptographic AI governance + audit. 18 tools, 24 frameworks. EU AI Act, NIST, OWASP, CMMC, SR 11-7, FDA, HIPAA",
   "websiteUrl": "https://tenova.io",
   "repository": {
     "url": "https://github.com/tenova-labs/swt3-ai",

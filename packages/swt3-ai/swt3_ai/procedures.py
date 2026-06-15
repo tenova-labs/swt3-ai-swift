@@ -94,6 +94,10 @@ PROCEDURE_CATALOG: List[Dict[str, str]] = [
     {"id": "AI-ENG.4", "name": "Material Specification Compliance", "namespace": "ENG"},
     {"id": "AI-ENG.5", "name": "Design Revision Chain", "namespace": "ENG"},
     {"id": "AI-ENG.6", "name": "Fabrication Release Attestation", "namespace": "ENG"},
+    # Healthcare / Clinical AI (HCF)
+    {"id": "HCF-DX.1", "name": "Diagnostic Accountability", "namespace": "HCF"},
+    {"id": "HCF-RX.1", "name": "Prescription Safety", "namespace": "HCF"},
+    {"id": "HCF-PRIV.1", "name": "PHI Access Audit", "namespace": "HCF"},
 ]
 
 
