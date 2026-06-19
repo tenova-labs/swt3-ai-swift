@@ -3,9 +3,9 @@
   "protocol": "SWT3",
   "publisher": "Tenable Nova LLC",
   "license": "Apache-2.0",
-  "generated_at": "2026-06-15T10:26:26Z",
+  "generated_at": "2026-06-17T02:06:14Z",
   "source": "uct-registry.json",
-  "description": "Bidirectional crosswalk between 97 SWT3 procedures and 24 regulatory frameworks. Machine-readable, designed for CI/CD pipelines, compliance scanners, and GRC integrations.",
+  "description": "Bidirectional crosswalk between 101 SWT3 procedures and 26 regulatory frameworks. Machine-readable, designed for CI/CD pipelines, compliance scanners, and GRC integrations.",
   "citation": "When referencing these procedures in automated tools or derivative works, cite as: UCT Registry v1.0, Tenable Nova LLC (https://sovereign.tenova.io/registry/). SWT3 and Universal Control Taxonomy are trademarks of Tenable Nova LLC. Patent pending.",
   "frameworks": {
     "CO-SB-26-189": {
@@ -226,6 +226,26 @@
       "enforcement_date": "2003-04-14",
       "procedure_count": 11,
       "requirement_count": 7
+    },
+    "KR-AI-BASIC": {
+      "name": "AI Basic Act (Artificial Intelligence Framework Act)",
+      "authority": "National Assembly of South Korea",
+      "document": "AI Basic Act",
+      "version": "2025",
+      "url": "https://www.law.go.kr/",
+      "enforcement_date": "2026-01-22",
+      "procedure_count": 8,
+      "requirement_count": 8
+    },
+    "CN-AI-STACK": {
+      "name": "China AI Regulatory Stack (5 Regulations)",
+      "authority": "Cyberspace Administration of China (CAC)",
+      "document": "Algorithm Recommendations + Deep Synthesis + GenAI Measures + TC260 Safety Framework + AI Chip Assessment",
+      "version": "2022-2026",
+      "url": "https://www.cac.gov.cn/",
+      "enforcement_date": "2022-03-01",
+      "procedure_count": 7,
+      "requirement_count": 7
     }
   },
   "procedures": {
@@ -252,7 +272,9 @@
         "ISO-42001": "9.2",
         "NIST-AI-RMF": "GOVERN 1.4",
         "FDA-21CFR820": "820.180",
-        "HIPAA": "164.312(b)"
+        "HIPAA": "164.312(b)",
+        "KR-AI-BASIC": "Incident Reporting and Monitoring (Art. 40-41)",
+        "CN-AI-STACK": "Audit Trail and Algorithm Filing (GenAI Interim Measures)"
       }
     },
     "AI-AUDIT.2": {
@@ -340,7 +362,8 @@
         "GDPR": "Art.6/7",
         "ISO-42001": "A.8.2",
         "NIST-AI-RMF": "GOVERN 1.5",
-        "HIPAA": "164.508"
+        "HIPAA": "164.508",
+        "CN-AI-STACK": "User Consent and Opt-Out (Algorithm Recommendations Provisions)"
       }
     },
     "AI-CYBER.1": {
@@ -368,7 +391,9 @@
         "SR-11-7": "III.B",
         "FDA-21CFR820": "820.184",
         "FDA-SaMD": "Training Data Documentation",
-        "HIPAA": "164.530(c)"
+        "HIPAA": "164.530(c)",
+        "KR-AI-BASIC": "Data Governance (Art. 33-34)",
+        "CN-AI-STACK": "Training Data Compliance (GenAI Interim Measures)"
       }
     },
     "AI-DATA.2": {
@@ -413,7 +438,8 @@
         "NIST-800-53": "RA-3",
         "NIST-AI-RMF": "MAP 5.2",
         "FDA-SaMD": "SaMD Risk Classification",
-        "HIPAA": "164.308(a)(1)"
+        "HIPAA": "164.308(a)(1)",
+        "KR-AI-BASIC": "Impact Assessment (Art. 29-30)"
       }
     },
     "AI-DRIFT.1": {
@@ -473,7 +499,8 @@
         "NIST-AI-RMF": "MEASURE 2.5",
         "SR-11-7": "IV.B",
         "FDA-21CFR820": "820.30(d)",
-        "FDA-SaMD": "Transparency Requirements"
+        "FDA-SaMD": "Transparency Requirements",
+        "KR-AI-BASIC": "Explainability of Decisions (Art. 24)"
       }
     },
     "AI-EXPL.2": {
@@ -500,7 +527,9 @@
         "SR-11-7": "III.A",
         "FDA-21CFR820": "820.30(g)",
         "FDA-SaMD": "SaMD Bias Assessment",
-        "HIPAA": "164.530(a)(1)"
+        "HIPAA": "164.530(a)(1)",
+        "KR-AI-BASIC": "Fairness and Non-Discrimination (Art. 25-26)",
+        "CN-AI-STACK": "Non-Discrimination (Algorithm Recommendations Provisions)"
       }
     },
     "AI-FAIR.2": {
@@ -646,7 +675,8 @@
         "SR-11-7": "IV.B",
         "FDA-21CFR820": "820.30(f)",
         "FDA-SaMD": "CDS Safety Criteria",
-        "HIPAA": "164.312(a)(1)"
+        "HIPAA": "164.312(a)(1)",
+        "KR-AI-BASIC": "Human Oversight (Art. 31-32)"
       }
     },
     "AI-HITL.2": {
@@ -736,7 +766,8 @@
         "SR-11-7": "IV.A",
         "FDA-21CFR820": "820.184",
         "FDA-SaMD": "SaMD Pre-Specifications",
-        "HIPAA": "164.312(b)"
+        "HIPAA": "164.312(b)",
+        "KR-AI-BASIC": "Transparency Disclosure (Art. 22-23)"
       }
     },
     "AI-INF.2": {
@@ -796,7 +827,8 @@
         "EU-AI-ACT": "Art.50(2)",
         "GPAI-CoP": "Transparency",
         "ISO-42001": "A.8.3",
-        "NIST-AI-RMF": "GOVERN 1.7"
+        "NIST-AI-RMF": "GOVERN 1.7",
+        "CN-AI-STACK": "Content Identification (Deep Synthesis + GenAI Measures)"
       }
     },
     "AI-MDL.1": {
@@ -1030,7 +1062,8 @@
         "JP-AI-PROMOTION": "AI Promotion Act; AI Utilization Guidelines (Risk Management)",
         "NIST-800-53": "RA-2",
         "NIST-AI-RMF": "MAP 2.1",
-        "SR-11-7": "II.A"
+        "SR-11-7": "II.A",
+        "KR-AI-BASIC": "High-Impact AI Classification (Art. 27-28)"
       }
     },
     "AI-ROBUST.1": {
@@ -1161,7 +1194,8 @@
         "NIST-AI-RMF": "GOVERN 1.7",
         "FDA-21CFR820": "820.120",
         "FDA-SaMD": "IFU Transparency",
-        "HIPAA": "164.520"
+        "HIPAA": "164.520",
+        "CN-AI-STACK": "Algorithmic Transparency (Algorithm Recommendations Provisions)"
       }
     },
     "AI-TRUST.1": {
@@ -1204,7 +1238,8 @@
         "EU-AI-ACT": "Art.50(2)",
         "GPAI-CoP": "Transparency",
         "ISO-42001": "A.8.3",
-        "NIST-AI-RMF": "GOVERN 1.7"
+        "NIST-AI-RMF": "GOVERN 1.7",
+        "CN-AI-STACK": "Content Labeling and Watermarking (Deep Synthesis Provisions)"
       }
     },
     "AI-ENG.1": {
@@ -1309,6 +1344,46 @@
         "FDA-21CFR11": "11.10(e)",
         "FDA-21CFR820": "820.180",
         "HIPAA": "164.508"
+      }
+    },
+    "AI-FIN.1": {
+      "title": "Agent Transaction Witnessing",
+      "namespace": "AI",
+      "frameworks": {
+        "EU-AI-ACT": "Art. 14",
+        "NIST-AI-RMF": "MANAGE 2.2",
+        "SR-11-7": "III.B",
+        "GPAI-COP": "Rule 17"
+      }
+    },
+    "AI-TOOL.2": {
+      "title": "Tool Permission Attestation",
+      "namespace": "AI",
+      "frameworks": {
+        "EU-AI-ACT": "Art. 9",
+        "NIST-AI-RMF": "GOVERN 1.5",
+        "OWASP-AGENTIC-10": "A01",
+        "FIVE-EYES-AGENTIC": "Principle 3"
+      }
+    },
+    "AI-LCM.1": {
+      "title": "Agent Lifecycle Witnessing",
+      "namespace": "AI",
+      "frameworks": {
+        "EU-AI-ACT": "Art. 12",
+        "NIST-AI-RMF": "MAP 1.3",
+        "ISO-42001": "6.1.2",
+        "FIVE-EYES-AGENTIC": "Principle 5"
+      }
+    },
+    "AI-JUR.1": {
+      "title": "Cross-Border Inference Routing",
+      "namespace": "AI",
+      "frameworks": {
+        "EU-AI-ACT": "Art. 10(5)",
+        "GDPR": "Art. 44-49",
+        "NIST-AI-RMF": "GOVERN 1.7",
+        "GPAI-COP": "Rule 5"
       }
     }
   },
@@ -2324,7 +2399,26 @@
       "II.A": [
         "AI-RISK.1"
       ]
-    }
+    },
+    "KR-AI-BASIC": [
+      "AI-DPIA.1",
+      "AI-RISK.1",
+      "AI-FAIR.1",
+      "AI-HITL.1",
+      "AI-EXPL.1",
+      "AI-AUDIT.1",
+      "AI-DATA.1",
+      "AI-INF.1"
+    ],
+    "CN-AI-STACK": [
+      "AI-TRANS.1",
+      "AI-WATERMARK.1",
+      "AI-DATA.1",
+      "AI-MARK.1",
+      "AI-CONSENT.1",
+      "AI-FAIR.1",
+      "AI-AUDIT.1"
+    ]
   },
   "profiles": [
     {

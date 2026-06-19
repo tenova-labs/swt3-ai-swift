@@ -16,4 +16,7 @@ Adapters:
     crewai      - CrewAI Crew.kickoff() witness (duck-typed)
     a2a         - A2A Agent.send() witness (duck-typed, Google Agent-to-Agent)
     foundry     - Microsoft Foundry Agent.execute() witness (duck-typed)
+    qdrant      - Qdrant vector DB search() witness (RAG pipeline, AI-RAG.1)
+    cohere      - Cohere chat() and chat_stream() witness (V2 API)
+    skillspector - NVIDIA SkillSpector scan result witness (static analysis, AI-SEC.1)
 """

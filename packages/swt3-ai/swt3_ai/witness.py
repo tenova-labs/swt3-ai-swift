@@ -3059,6 +3059,255 @@ class Witness:
         self._buffer.enqueue_many([payload])
         return payload
 
+    # ── Agent Transaction Witnessing (AI-FIN.1) ──────────────────────
+
+    TRANSACTION_AUTH_CODES = {
+        "none": 0, "pre_approved": 1, "human": 2,
+        "policy": 3, "budget_limit": 4,
+    }
+
+    TRANSACTION_STATUS_CODES = {
+        "pending": 0, "authorized": 1, "denied": 2, "escalated": 3,
+    }
+
+    def witness_transaction(
+        self,
+        amount_cents: int,
+        authorization_type: str,
+        status: str,
+        *,
+        currency: Optional[str] = None,
+        recipient_hash: Optional[str] = None,
+        purpose: Optional[str] = None,
+        transaction_ref: Optional[str] = None,
+    ) -> WitnessPayload:
+        """Witness autonomous agent financial transaction (AI-FIN.1).
+
+        Records authorization evidence before an agent executes a
+        financial transaction. Creates an immutable anchor proving
+        what was authorized, by whom, and for what purpose.
+
+        Args:
+            amount_cents: Transaction amount in smallest currency unit.
+            authorization_type: Auth method (none, pre_approved, human, policy, budget_limit).
+            status: Transaction status (pending, authorized, denied, escalated).
+            currency: ISO 4217 currency code (e.g. "USD").
+            recipient_hash: SHA-256 hash of recipient identifier.
+            purpose: Transaction purpose description.
+            transaction_ref: External reference ID.
+
+        Returns:
+            WitnessPayload for the AI-FIN.1 anchor.
+        """
+        fa = float(self.TRANSACTION_AUTH_CODES.get(authorization_type, 0))
+        fb = float(amount_cents)
+        fc = float(self.TRANSACTION_STATUS_CODES.get(status, 0))
+
+        payload = self._mint_and_sign("AI-FIN.1", fa, fb, fc)
+
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"transaction-{authorization_type}"
+            ctx: Dict[str, Any] = {
+                "provider": "transaction-witness",
+                "authorization_type": authorization_type,
+                "status": status,
+            }
+            if currency:
+                ctx["currency"] = currency
+            if recipient_hash:
+                ctx["recipient_hash"] = recipient_hash
+            if purpose:
+                ctx["purpose"] = purpose
+            if transaction_ref:
+                ctx["transaction_ref"] = transaction_ref
+            payload.ai_context = ctx
+
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    # ── Tool Permission Attestation (AI-TOOL.2) ─────────────────────
+
+    PERMISSION_CHANGE_CODES = {
+        "none": 0, "added": 1, "removed": 2, "escalated": 3,
+    }
+
+    def witness_tool_permissions(
+        self,
+        tools: List[str],
+        charter_match: bool,
+        *,
+        charter_hash: Optional[str] = None,
+        change_type: str = "none",
+        drift_details: Optional[str] = None,
+    ) -> WitnessPayload:
+        """Witness agent tool permission state (AI-TOOL.2).
+
+        Records the current set of tools granted to an agent and
+        whether it matches the agent's charter. Detects permission
+        drift at runtime, complementing static scanning.
+
+        Args:
+            tools: List of granted tool names.
+            charter_match: True if current permissions match charter.
+            charter_hash: SHA-256 of the original charter document.
+            change_type: Permission change type (none, added, removed, escalated).
+            drift_details: Description of any detected drift.
+
+        Returns:
+            WitnessPayload for the AI-TOOL.2 anchor.
+        """
+        snapshot_hash = sha256_truncated(":".join(sorted(tools)))
+        fa = float(len(tools))
+        fb = 1.0 if charter_match else 0.0
+        fc = float(self.PERMISSION_CHANGE_CODES.get(change_type, 0))
+
+        payload = self._mint_and_sign("AI-TOOL.2", fa, fb, fc)
+
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"tool-permissions-{len(tools)}"
+            ctx: Dict[str, Any] = {
+                "provider": "permission-attestation",
+                "snapshot_hash": snapshot_hash,
+                "tool_count": len(tools),
+                "charter_match": charter_match,
+                "change_type": change_type,
+            }
+            if charter_hash:
+                ctx["charter_hash"] = charter_hash
+            if drift_details:
+                ctx["drift_details"] = drift_details
+            payload.ai_context = ctx
+
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    # ── Agent Lifecycle Witnessing (AI-LCM.1) ────────────────────────
+
+    LIFECYCLE_EVENT_CODES = {
+        "spawn": 0, "checkpoint": 1, "migrate": 2,
+        "terminate": 3, "crash": 4,
+    }
+
+    def witness_lifecycle(
+        self,
+        event: str,
+        context_tokens: int = 0,
+        *,
+        state_hash: Optional[str] = None,
+        parent_agent_id: Optional[str] = None,
+        uptime_ms: Optional[int] = None,
+        termination_reason: Optional[str] = None,
+    ) -> WitnessPayload:
+        """Witness agent lifecycle event (AI-LCM.1).
+
+        Records agent creation, checkpointing, migration, and
+        termination. Creates an immutable record of every agent's
+        existence and state transitions.
+
+        Args:
+            event: Lifecycle event (spawn, checkpoint, migrate, terminate, crash).
+            context_tokens: Current context window size in tokens.
+            state_hash: SHA-256 hash of agent state at event time.
+            parent_agent_id: Parent agent ID for spawn chains.
+            uptime_ms: Agent uptime in milliseconds.
+            termination_reason: Reason for terminate/crash events.
+
+        Returns:
+            WitnessPayload for the AI-LCM.1 anchor.
+        """
+        fa = float(self.LIFECYCLE_EVENT_CODES.get(event, 0))
+        fb = float(context_tokens)
+        fc = 1.0 if state_hash else 0.0
+
+        payload = self._mint_and_sign("AI-LCM.1", fa, fb, fc)
+
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"lifecycle-{event}"
+            ctx: Dict[str, Any] = {
+                "provider": "lifecycle-witness",
+                "event": event,
+                "context_tokens": context_tokens,
+            }
+            if state_hash:
+                ctx["state_hash"] = state_hash
+            if parent_agent_id:
+                ctx["parent_agent_id"] = parent_agent_id
+            if uptime_ms is not None:
+                ctx["uptime_ms"] = uptime_ms
+            if termination_reason:
+                ctx["termination_reason"] = termination_reason
+            payload.ai_context = ctx
+
+        self._buffer.enqueue_many([payload])
+        return payload
+
+    # ── Cross-Border Inference Routing (AI-JUR.1) ────────────────────
+
+    # ISO 3166-1 numeric codes for common regions (subset)
+    REGION_CODES = {
+        "US": 840, "GB": 826, "DE": 276, "FR": 250, "JP": 392,
+        "KR": 410, "CN": 156, "IN": 356, "BR": 76, "AU": 36,
+        "CA": 124, "SG": 702, "NL": 528, "SE": 752, "IE": 372,
+        "IL": 376, "AE": 784, "CH": 756, "IT": 380, "ES": 724,
+    }
+
+    ROUTING_STATUS_CODES = {
+        "unchecked": 0, "compliant": 1, "blocked": 2, "override": 3,
+    }
+
+    def witness_routing(
+        self,
+        serving_region: str,
+        user_region: str,
+        compliance_status: str = "unchecked",
+        *,
+        routing_decision: Optional[str] = None,
+        applicable_frameworks: Optional[List[str]] = None,
+        data_residency_required: Optional[bool] = None,
+    ) -> WitnessPayload:
+        """Witness cross-border inference routing decision (AI-JUR.1).
+
+        Records where inference was served, where the user resides,
+        and whether the routing complied with applicable jurisdiction
+        requirements. Extends CJT jurisdiction fields with procedural
+        attestation.
+
+        Args:
+            serving_region: ISO 3166-1 alpha-2 code of serving location.
+            user_region: ISO 3166-1 alpha-2 code of user location.
+            compliance_status: Routing status (unchecked, compliant, blocked, override).
+            routing_decision: Description of routing logic applied.
+            applicable_frameworks: List of frameworks that apply to this route.
+            data_residency_required: Whether data must stay in user region.
+
+        Returns:
+            WitnessPayload for the AI-JUR.1 anchor.
+        """
+        fa = float(self.REGION_CODES.get(serving_region.upper(), 0))
+        fb = float(self.REGION_CODES.get(user_region.upper(), 0))
+        fc = float(self.ROUTING_STATUS_CODES.get(compliance_status, 0))
+
+        payload = self._mint_and_sign("AI-JUR.1", fa, fb, fc)
+
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = f"routing-{serving_region}-{user_region}"
+            ctx: Dict[str, Any] = {
+                "provider": "jurisdiction-witness",
+                "serving_region": serving_region.upper(),
+                "user_region": user_region.upper(),
+                "compliance_status": compliance_status,
+            }
+            if routing_decision:
+                ctx["routing_decision"] = routing_decision
+            if applicable_frameworks:
+                ctx["applicable_frameworks"] = applicable_frameworks
+            if data_residency_required is not None:
+                ctx["data_residency_required"] = data_residency_required
+            payload.ai_context = ctx
+
+        self._buffer.enqueue_many([payload])
+        return payload
+
     # ── Trust Mesh (AI-TRUST.1 / AI-TRUST.2) ────────────────────────────
 
     @property

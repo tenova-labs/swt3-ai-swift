@@ -7823,10 +7823,154 @@
         "NIST-AI-RMF": "MANAGE 2.2"
       },
       "namespace": "AI"
+    },
+    "AI-FIN.1": {
+      "procedure_id": "AI-FIN.1",
+      "parent_control": "AI-FIN",
+      "title": "Agent Transaction Witnessing",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "AI_TRANSACTION_WITNESS",
+      "factors": {
+        "factor_a": {
+          "label": "authorization_type",
+          "description": "Authorization type: 0=none, 1=pre-approved, 2=human, 3=policy, 4=budget_limit.",
+          "regulatory_ref": "EU AI Act Art. 14; NIST AI RMF MANAGE 2.2"
+        },
+        "factor_b": {
+          "label": "amount_cents",
+          "description": "Transaction amount in cents (integer).",
+          "regulatory_ref": "SR 11-7 III.B"
+        },
+        "factor_c": {
+          "label": "status",
+          "description": "Transaction status: 0=pending, 1=authorized, 2=denied, 3=escalated.",
+          "regulatory_ref": "EU AI Act Art. 14(4)"
+        }
+      },
+      "evaluation": {
+        "expression": "factor_a >= 1",
+        "description": "Transaction must have some form of authorization (not 'none')."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art. 14",
+        "NIST-AI-RMF": "MANAGE 2.2",
+        "SR-11-7": "III.B",
+        "GPAI-COP": "Rule 17"
+      },
+      "namespace": "AI"
+    },
+    "AI-TOOL.2": {
+      "procedure_id": "AI-TOOL.2",
+      "parent_control": "AI-TOOL",
+      "title": "Tool Permission Attestation",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "AI_TOOL_PERMISSION",
+      "factors": {
+        "factor_a": {
+          "label": "granted_tool_count",
+          "description": "Number of tools granted to the agent at runtime.",
+          "regulatory_ref": "NIST AI RMF GOVERN 1.5"
+        },
+        "factor_b": {
+          "label": "charter_match",
+          "description": "1 if runtime tools match agent charter, 0 if drift detected.",
+          "regulatory_ref": "EU AI Act Art. 9"
+        },
+        "factor_c": {
+          "label": "permission_change_type",
+          "description": "Permission change: 0=none, 1=added, 2=removed, 3=escalated.",
+          "regulatory_ref": "OWASP-AGENTIC-10 A01"
+        }
+      },
+      "evaluation": {
+        "expression": "factor_b == 1",
+        "description": "Runtime tools must match the agent charter (no drift)."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art. 9",
+        "NIST-AI-RMF": "GOVERN 1.5",
+        "OWASP-AGENTIC-10": "A01",
+        "FIVE-EYES-AGENTIC": "Principle 3"
+      },
+      "namespace": "AI"
+    },
+    "AI-LCM.1": {
+      "procedure_id": "AI-LCM.1",
+      "parent_control": "AI-LCM",
+      "title": "Agent Lifecycle Witnessing",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "AI_LIFECYCLE_EVENT",
+      "factors": {
+        "factor_a": {
+          "label": "event_type",
+          "description": "Lifecycle event: 0=spawn, 1=checkpoint, 2=migrate, 3=terminate, 4=crash.",
+          "regulatory_ref": "EU AI Act Art. 12; NIST AI RMF MAP 1.3"
+        },
+        "factor_b": {
+          "label": "context_tokens",
+          "description": "Number of context tokens at event time (integer).",
+          "regulatory_ref": "EU AI Act Art. 12(2)"
+        },
+        "factor_c": {
+          "label": "state_hash_present",
+          "description": "1 if state hash was recorded, 0 if no state hash.",
+          "regulatory_ref": "NIST AI RMF MAP 1.3"
+        }
+      },
+      "evaluation": {
+        "expression": "factor_a >= 0",
+        "description": "All lifecycle events are recorded (always PASS for witnessing)."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art. 12",
+        "NIST-AI-RMF": "MAP 1.3",
+        "ISO-42001": "6.1.2",
+        "FIVE-EYES-AGENTIC": "Principle 5"
+      },
+      "namespace": "AI"
+    },
+    "AI-JUR.1": {
+      "procedure_id": "AI-JUR.1",
+      "parent_control": "AI-JUR",
+      "title": "Cross-Border Inference Routing",
+      "category": "AI",
+      "scope": "ai_governance",
+      "check_type": "AI_ROUTING_ATTESTATION",
+      "factors": {
+        "factor_a": {
+          "label": "serving_region_code",
+          "description": "ISO 3166 numeric code for serving region.",
+          "regulatory_ref": "GDPR Art. 44-49"
+        },
+        "factor_b": {
+          "label": "user_region_code",
+          "description": "ISO 3166 numeric code for user region.",
+          "regulatory_ref": "EU AI Act Art. 10(5)"
+        },
+        "factor_c": {
+          "label": "compliance_status",
+          "description": "Routing compliance: 0=unchecked, 1=compliant, 2=blocked, 3=override.",
+          "regulatory_ref": "GDPR Art. 46"
+        }
+      },
+      "evaluation": {
+        "expression": "factor_c == 1 or factor_c == 2",
+        "description": "Routing must be compliant or blocked (not unchecked or override without justification)."
+      },
+      "frameworks": {
+        "EU-AI-ACT": "Art. 10(5)",
+        "GDPR": "Art. 44-49",
+        "NIST-AI-RMF": "GOVERN 1.7",
+        "GPAI-COP": "Rule 5"
+      },
+      "namespace": "AI"
     }
   },
   "namespaces": {
-    "AI": "Artificial Intelligence governance, model integrity, inference witnessing (78 procedures)",
+    "AI": "Artificial Intelligence governance, model integrity, inference witnessing (82 procedures)",
     "INF": "Infrastructure controls, OS hardening, network, database, web, container, endpoint",
     "FIN": "Financial services model risk management, SR 11-7 / OCC 2011-12 compliance",
     "CON": "Construction site accountability, structural verification, OSHA 1926 compliance",

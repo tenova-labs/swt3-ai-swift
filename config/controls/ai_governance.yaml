@@ -1236,6 +1236,58 @@ controls:
 
   # --- Healthcare / Clinical AI (HCF) ---
 
+  # ── Frontier Procedures (v0.5.7: agentic infrastructure) ──────
+
+  - id: "AI-FIN.1"
+    parent_control: "AI-FIN"
+    name: "Agent Transaction Witnessing"
+    check_type: "attestation"
+    description: "AI agents executing financial transactions attest authorization type, amount, and status before settlement"
+    attestation_prompt: "Confirm agent financial transactions are witnessed with authorization type, amount, and settlement status before execution."
+    review_interval_days: 90
+    uct_category: "AI"
+    nist_800_53_ref: "AU-2"
+    nist_ai_rmf_ref: "MANAGE 2.2"
+    eu_ai_act_ref: "Art. 14"
+
+  - id: "AI-TOOL.2"
+    parent_control: "AI-TOOL"
+    name: "Tool Permission Attestation"
+    check_type: "attestation"
+    description: "Runtime tool permission sets are attested against agent charter, detecting permission drift and escalation"
+    attestation_prompt: "Confirm runtime tool permissions are validated against charter and permission changes are witnessed."
+    review_interval_days: 90
+    uct_category: "AI"
+    nist_800_53_ref: "AC-6"
+    nist_ai_rmf_ref: "GOVERN 1.5"
+    eu_ai_act_ref: "Art. 9"
+
+  - id: "AI-LCM.1"
+    parent_control: "AI-LCM"
+    name: "Agent Lifecycle Witnessing"
+    check_type: "attestation"
+    description: "Agent lifecycle events (spawn, checkpoint, migrate, terminate, crash) are witnessed with context size and state hash"
+    attestation_prompt: "Confirm agent lifecycle events are witnessed with context token count and optional state hash for recovery."
+    review_interval_days: 90
+    uct_category: "AI"
+    nist_800_53_ref: "CM-3"
+    nist_ai_rmf_ref: "MAP 1.3"
+    eu_ai_act_ref: "Art. 12"
+
+  - id: "AI-JUR.1"
+    parent_control: "AI-JUR"
+    name: "Cross-Border Inference Routing"
+    check_type: "attestation"
+    description: "Cross-border AI inference routing decisions are witnessed with serving and user regions and compliance status"
+    attestation_prompt: "Confirm cross-border inference routing decisions are evaluated and witnessed with region codes and compliance status."
+    review_interval_days: 90
+    uct_category: "AI"
+    nist_800_53_ref: "AC-4"
+    nist_ai_rmf_ref: "GOVERN 1.7"
+    eu_ai_act_ref: "Art. 10(5)"
+
+  # ── Healthcare / Clinical AI (HCF) ──────
+
   - id: "HCF-DX.1"
     parent_control: "HCF-DX"
     name: "Diagnostic Accountability"

@@ -11,18 +11,17 @@ Witness your AI. Prove it followed the rules. Cryptographic accountability for e
 
 GPAI transparency obligations are enforceable now. EU AI Act high-risk enforcement begins **December 2, 2027**. This SDK gives you the evidence chain.
 
-## What's New in v0.5.6
+## What's New in v0.5.7
 
-- **METAGOV Namespace** -- 8 procedures for recursive governance: governance config attestation, layer registration, policy downgrade detection, circular dependency detection (Kahn's algorithm), governance authorization, emergency override, federation sync, attestation purity verification.
-- **Japan AI Promotion Act** -- 17th regulatory framework. 10 procedure mappings to Japan's AI Promotion Act and AI Utilization Guidelines.
-- **Model Trust Profiles** -- `verify_trust()` / `present_credential()` for AI-TRUST.1 and AI-TRUST.2 anchors. Chain verification across multi-agent handoffs.
-- **Anchor References** -- Link related anchors with `anchor_refs` for causal chains and dependency tracking.
-- **Coverage Scoring** -- `get_coverage_score()` computes namespace and framework coverage from minted anchors.
-- **CLI: `swt3 procedures`** -- List and filter UCT procedures by namespace or JSON output. `swt3 quickstart` generates a working example script.
-- **MCP Framework Filter** -- `list_procedures` tool now accepts `--framework` parameter for regulatory-scoped queries.
-- **Lifecycle Stage** -- `LIFECYCLE_STAGE_CODES` for AI-MDL.5 model weight witnessing across all 5 languages.
-- **Bidirectional Crosswalks** -- 420+ mappings across 17 frameworks in machine-readable JSON.
-- **15 profiles**, 88 procedures, 47 namespaces, 12 integrations
+- **Agent Transaction Witnessing (AI-FIN.1)** -- cryptographic evidence for autonomous agent financial transactions. Authorization type, amount, and settlement status anchored before execution.
+- **Tool Permission Attestation (AI-TOOL.2)** -- runtime tool permission sets attested against agent charter. Detects permission drift and escalation at runtime.
+- **Agent Lifecycle Witnessing (AI-LCM.1)** -- spawn, checkpoint, migrate, terminate, and crash events witnessed with context size and state hash.
+- **Cross-Border Inference Routing (AI-JUR.1)** -- routing decisions witnessed with ISO 3166 region codes and compliance status. Extends CJT jurisdiction fields.
+- **Cohere Adapter** -- `wrap_cohere()` for Cohere V2 API. Chat and streaming witnessed transparently.
+- **Qdrant RAG Witness** -- `wrap_qdrant()` for database-level RAG pipeline compliance. Every vector search mints AI-RAG.1.
+- **SkillSpector Integration** -- `witness_skill_scan()` bridges NVIDIA SkillSpector static analysis into SWT3 anchors. No runtime dependency.
+- **Ollama 0.30+ Refresh** -- explicit `wrap_ollama()` export, GGUF model name normalization.
+- **98 procedures**, 51 namespaces, 26 frameworks, 15 profiles, 16 integrations
 
 ## MCP Server -- Official Registry
 

@@ -3717,6 +3717,179 @@ export class Witness {
     return payload;
   }
 
+  // ── Agent Transaction Witnessing (AI-FIN.1) ─────────────────────
+
+  /**
+   * Witness an agent-initiated financial transaction (AI-FIN.1).
+   * Factors: fa=authorization_type code, fb=amount_cents, fc=status code.
+   */
+  witnessTransaction(options: {
+    amountCents: number;
+    authorizationType: string;
+    status: string;
+    currency?: string;
+    recipientHash?: string;
+    purpose?: string;
+    transactionRef?: string;
+  }): WitnessPayload {
+    const authCodes: Record<string, number> = { none: 0, pre_approved: 1, human: 2, policy: 3, budget_limit: 4 };
+    const statusCodes: Record<string, number> = { pending: 0, authorized: 1, denied: 2, escalated: 3 };
+    const fa = authCodes[options.authorizationType] ?? 0;
+    const fb = options.amountCents;
+    const fc = statusCodes[options.status] ?? 0;
+    const [ts, epoch] = timestampMs();
+    const fp = mintFingerprint(this.config.tenantId, "AI-FIN.1", fa, fb, fc, ts);
+    const payload: WitnessPayload = {
+      procedure_id: "AI-FIN.1", factor_a: fa, factor_b: fb, factor_c: fc,
+      clearing_level: this.config.clearingLevel,
+      anchor_fingerprint: fp, anchor_epoch: epoch, fingerprint_timestamp_ms: ts,
+    };
+    if (this.config.clearingLevel <= 1) {
+      payload.ai_model_id = `transaction-${options.authorizationType}`;
+      const ctx: Record<string, unknown> = {
+        provider: "transaction-witness",
+        authorization_type: options.authorizationType,
+        status: options.status,
+      };
+      if (options.currency) ctx.currency = options.currency;
+      if (options.recipientHash) ctx.recipient_hash = options.recipientHash;
+      if (options.purpose) ctx.purpose = options.purpose;
+      if (options.transactionRef) ctx.transaction_ref = options.transactionRef;
+      payload.ai_context = ctx;
+    }
+    this.buffer.enqueueMany([payload]);
+    return payload;
+  }
+
+  // ── Tool Permission Attestation (AI-TOOL.2) ────────────────────
+
+  /**
+   * Witness tool permission grants and changes (AI-TOOL.2).
+   * Factors: fa=granted_tool_count, fb=charter_match (1/0), fc=permission_change_type code.
+   */
+  witnessToolPermissions(options: {
+    tools: string[];
+    charterMatch: boolean;
+    charterHash?: string;
+    changeType?: string;
+    driftDetails?: string;
+  }): WitnessPayload {
+    const changeCodes: Record<string, number> = { none: 0, added: 1, removed: 2, escalated: 3 };
+    const fa = options.tools.length;
+    const fb = options.charterMatch ? 1 : 0;
+    const fc = changeCodes[options.changeType ?? "initial"] ?? 0;
+    const [ts, epoch] = timestampMs();
+    const fp = mintFingerprint(this.config.tenantId, "AI-TOOL.2", fa, fb, fc, ts);
+    const payload: WitnessPayload = {
+      procedure_id: "AI-TOOL.2", factor_a: fa, factor_b: fb, factor_c: fc,
+      clearing_level: this.config.clearingLevel,
+      anchor_fingerprint: fp, anchor_epoch: epoch, fingerprint_timestamp_ms: ts,
+    };
+    if (this.config.clearingLevel <= 1) {
+      payload.ai_model_id = `tool-permissions-${options.changeType ?? "initial"}`;
+      const ctx: Record<string, unknown> = {
+        provider: "tool-permission-witness",
+        tools: options.tools,
+        charter_match: options.charterMatch,
+        change_type: options.changeType ?? "initial",
+      };
+      if (options.charterHash) ctx.charter_hash = options.charterHash;
+      if (options.driftDetails) ctx.drift_details = options.driftDetails;
+      payload.ai_context = ctx;
+    }
+    this.buffer.enqueueMany([payload]);
+    return payload;
+  }
+
+  // ── Agent Lifecycle Witnessing (AI-LCM.1) ──────────────────────
+
+  /**
+   * Witness agent lifecycle events (AI-LCM.1).
+   * Factors: fa=event_type code, fb=context_tokens, fc=state_hash_present (1/0).
+   */
+  witnessLifecycle(options: {
+    event: string;
+    contextTokens?: number;
+    stateHash?: string;
+    parentAgentId?: string;
+    uptimeMs?: number;
+    terminationReason?: string;
+  }): WitnessPayload {
+    const eventCodes: Record<string, number> = { spawn: 0, checkpoint: 1, migrate: 2, terminate: 3, crash: 4 };
+    const fa = eventCodes[options.event] ?? 0;
+    const fb = options.contextTokens ?? 0;
+    const fc = options.stateHash ? 1 : 0;
+    const [ts, epoch] = timestampMs();
+    const fp = mintFingerprint(this.config.tenantId, "AI-LCM.1", fa, fb, fc, ts);
+    const payload: WitnessPayload = {
+      procedure_id: "AI-LCM.1", factor_a: fa, factor_b: fb, factor_c: fc,
+      clearing_level: this.config.clearingLevel,
+      anchor_fingerprint: fp, anchor_epoch: epoch, fingerprint_timestamp_ms: ts,
+    };
+    if (this.config.clearingLevel <= 1) {
+      payload.ai_model_id = `lifecycle-${options.event}`;
+      const ctx: Record<string, unknown> = {
+        provider: "lifecycle-witness",
+        event: options.event,
+      };
+      if (options.contextTokens !== undefined) ctx.context_tokens = options.contextTokens;
+      if (options.stateHash) ctx.state_hash = options.stateHash;
+      if (options.parentAgentId) ctx.parent_agent_id = options.parentAgentId;
+      if (options.uptimeMs !== undefined) ctx.uptime_ms = options.uptimeMs;
+      if (options.terminationReason) ctx.termination_reason = options.terminationReason;
+      payload.ai_context = ctx;
+    }
+    this.buffer.enqueueMany([payload]);
+    return payload;
+  }
+
+  // ── Cross-Border Inference Routing (AI-JUR.1) ──────────────────
+
+  /**
+   * Witness cross-border inference routing decisions (AI-JUR.1).
+   * Factors: fa=serving_region ISO numeric, fb=user_region ISO numeric, fc=compliance_status code.
+   */
+  witnessRouting(options: {
+    servingRegion: string;
+    userRegion: string;
+    complianceStatus?: string;
+    routingDecision?: string;
+    applicableFrameworks?: string[];
+    dataResidencyRequired?: boolean;
+  }): WitnessPayload {
+    const regionCodes: Record<string, number> = {
+      US: 840, GB: 826, DE: 276, FR: 250, JP: 392, KR: 410, CN: 156,
+      IN: 356, BR: 76, AU: 36, CA: 124, SG: 702, NL: 528, SE: 752, IE: 372,
+      IL: 376, AE: 784, CH: 756, IT: 380, ES: 724,
+    };
+    const complianceCodes: Record<string, number> = { unchecked: 0, compliant: 1, blocked: 2, override: 3 };
+    const fa = regionCodes[options.servingRegion] ?? 0;
+    const fb = regionCodes[options.userRegion] ?? 0;
+    const fc = complianceCodes[options.complianceStatus ?? "compliant"] ?? 0;
+    const [ts, epoch] = timestampMs();
+    const fp = mintFingerprint(this.config.tenantId, "AI-JUR.1", fa, fb, fc, ts);
+    const payload: WitnessPayload = {
+      procedure_id: "AI-JUR.1", factor_a: fa, factor_b: fb, factor_c: fc,
+      clearing_level: this.config.clearingLevel,
+      anchor_fingerprint: fp, anchor_epoch: epoch, fingerprint_timestamp_ms: ts,
+    };
+    if (this.config.clearingLevel <= 1) {
+      payload.ai_model_id = `routing-${options.servingRegion}-${options.userRegion}`;
+      const ctx: Record<string, unknown> = {
+        provider: "routing-witness",
+        serving_region: options.servingRegion,
+        user_region: options.userRegion,
+        compliance_status: options.complianceStatus ?? "compliant",
+      };
+      if (options.routingDecision) ctx.routing_decision = options.routingDecision;
+      if (options.applicableFrameworks) ctx.applicable_frameworks = options.applicableFrameworks;
+      if (options.dataResidencyRequired !== undefined) ctx.data_residency_required = options.dataResidencyRequired;
+      payload.ai_context = ctx;
+    }
+    this.buffer.enqueueMany([payload]);
+    return payload;
+  }
+
   // ── Trust Mesh (AI-TRUST.1 / AI-TRUST.2) ────────────────────────
 
   private _trustRegistry?: TrustRegistry;

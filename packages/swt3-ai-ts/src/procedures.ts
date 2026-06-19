@@ -13,7 +13,7 @@ interface ProcedureEntry {
   namespace: string;
 }
 
-/** 94 AI procedures across 48 namespaces. */
+/** 98 AI procedures across 51 namespaces. */
 export const PROCEDURE_CATALOG: ProcedureEntry[] = [
   { id: "AI-INF.1", name: "Inference Provenance", namespace: "INF" },
   { id: "AI-INF.2", name: "Inference Latency", namespace: "INF" },
@@ -99,6 +99,11 @@ export const PROCEDURE_CATALOG: ProcedureEntry[] = [
   { id: "AI-ENG.4", name: "Material Specification Compliance", namespace: "ENG" },
   { id: "AI-ENG.5", name: "Design Revision Chain", namespace: "ENG" },
   { id: "AI-ENG.6", name: "Fabrication Release Attestation", namespace: "ENG" },
+  // Frontier (v0.5.7: agentic infrastructure)
+  { id: "AI-FIN.1", name: "Agent Transaction Witnessing", namespace: "FIN" },
+  { id: "AI-TOOL.2", name: "Tool Permission Attestation", namespace: "TOOL" },
+  { id: "AI-LCM.1", name: "Agent Lifecycle Witnessing", namespace: "LCM" },
+  { id: "AI-JUR.1", name: "Cross-Border Inference Routing", namespace: "JUR" },
   // Healthcare / Clinical AI (HCF)
   { id: "HCF-DX.1", name: "Diagnostic Accountability", namespace: "HCF" },
   { id: "HCF-RX.1", name: "Prescription Safety", namespace: "HCF" },
