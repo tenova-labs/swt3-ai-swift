@@ -49,6 +49,8 @@ policies/
 **/.next/
 **/dist/
 **/build/
+**/.build/
+**/.swiftpm/
 **/.venv/
 **/venv/
 **/obj/
