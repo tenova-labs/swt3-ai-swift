@@ -90,7 +90,7 @@ All verification is local. Zero cloud overhead. No data exchanged until both age
 
 ## Offline Verification
 
-Verify any witness anchor without network calls. The fingerprint formula is deterministic and identical across all 6 SDK languages -- recompute it anywhere in microseconds.
+Verify any witness anchor without network calls. The fingerprint formula is deterministic and identical across all 7 SDK languages -- recompute it anywhere in microseconds.
 
 ```python
 from swt3_ai import verify_anchor
@@ -105,7 +105,7 @@ result = verify_anchor(
 # result.status: "CERTIFIED TRUTH" | "TAMPERED"
 ```
 
-Zero vendor dependency. Zero network calls. Works air-gapped. The same formula runs in Python, TypeScript, Rust, C#, and Ruby with identical output for identical inputs.
+Zero vendor dependency. Zero network calls. Works air-gapped. The same formula runs in Python, TypeScript, Swift, Rust, C#, and Ruby with identical output for identical inputs.
 
 ## See It Work (No Account Needed)
 
@@ -671,7 +671,7 @@ All 76 SWT3 AI witnessing procedures map to specific EU AI Act obligations:
 | AI-EXPL.1 | Art. 13(1) | Transparency & Explainability | -| ✓ |
 | AI-EXPL.2 | Art. 13(3b) | Confidence Calibration | -| ✓ |
 
-The demo demonstrates 5 procedures using simulated data. All 76 are available in production with real inference data. 207 cross-language test vectors ensure fingerprint parity across Python, TypeScript, Rust, C#, and Ruby. [See live conformity →](https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public)
+The demo demonstrates 5 procedures using simulated data. All 76 are available in production with real inference data. 207 cross-language test vectors ensure fingerprint parity across Python, TypeScript, Swift, Rust, C#, and Ruby. [See live conformity →](https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public)
 
 ## How Verdicts Work
 

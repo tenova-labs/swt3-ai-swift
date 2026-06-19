@@ -17,7 +17,7 @@ GPAI transparency obligations are enforceable now. EU AI Act high-risk enforceme
 - **`timestamp_ms`** -- millisecond-precision timestamps matching the protocol clock
 - **Types** -- `WitnessPayload`, `WitnessReceipt`, `WitnessConfig`, `RevocationReason` structs ready for serialization
 
-All output is byte-identical to the Python, TypeScript, C#, and Ruby SDKs. Verified by 207 shared test vectors at build time.
+All output is byte-identical to the Python, TypeScript, Swift, C#, and Ruby SDKs. Verified by shared test vectors at build time.
 
 ## Quick Start
 
@@ -61,6 +61,7 @@ All SWT3 SDKs produce identical fingerprints from the same inputs. A unified aud
 |----------|---------|----------|
 | Python | [swt3-ai](https://pypi.org/project/swt3-ai/) | PyPI |
 | TypeScript | [@tenova/swt3-ai](https://www.npmjs.com/package/@tenova/swt3-ai) | npm |
+| Swift | [swt3-ai](https://github.com/tenova-labs/swt3-ai-swift) | Swift Package Index |
 | Rust | swt3-ai (this package) | crates.io |
 | C# / .NET | [swt3-ai](https://www.nuget.org/packages/swt3-ai) | NuGet |
 | Ruby | [swt3-ai](https://rubygems.org/gems/swt3-ai) | RubyGems |
