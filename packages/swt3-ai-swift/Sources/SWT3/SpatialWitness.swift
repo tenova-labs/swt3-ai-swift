@@ -1,23 +1,26 @@
-#if canImport(ARKit) && canImport(simd)
-import ARKit
+#if canImport(simd) && (os(iOS) || os(macOS) || os(visionOS))
 import simd
 import Foundation
 
 extension SWT3 {
 
-    /// Witness an AI decision with spatial context (visionOS / AR).
+    /// Witness an AI decision with spatial context.
     ///
     /// Captures the 4x4 world transform matrix and hashes it into the
     /// witness payload. For AI systems making decisions in physical space
     /// (navigation, object recognition, spatial reasoning), this proves
     /// WHERE the decision was made, not just WHAT was decided.
     ///
+    /// The transform matrix is typically obtained from ARKit, RealityKit,
+    /// or any spatial framework that provides world-space coordinates.
+    /// This function does not access sensors, cameras, or AR sessions.
+    ///
     /// - Parameters:
     ///   - procedure: UCT procedure ID (e.g. "AI-INF.1")
     ///   - factorA: Numeric factor A
     ///   - factorB: Numeric factor B
     ///   - factorC: Numeric factor C
-    ///   - worldTransform: The 4x4 world transform matrix from ARKit
+    ///   - worldTransform: The 4x4 world transform matrix
     ///   - tenant: Tenant identifier
     ///   - clearingLevel: Clearing level (0=Analytics, 1=Standard, 2=Sensitive, 3=Classified)
     ///   - agentId: Optional agent identity
