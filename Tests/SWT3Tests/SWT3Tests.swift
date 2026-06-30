@@ -426,7 +426,7 @@ final class HashTests: XCTestCase {
 final class TypesTests: XCTestCase {
 
     func testVersion() {
-        XCTAssertEqual(SWT3.version, "0.5.7")
+        XCTAssertEqual(SWT3.version, "0.5.8")
     }
 
     func testSigningAlgorithmRawValues() {
@@ -522,7 +522,7 @@ final class TypesTests: XCTestCase {
         let receipt = WitnessReceipt(
             procedureId: "AI-INF.1",
             verdict: "PASS",
-            swt3Anchor: "SWT3-E-AWS-AI-INF1-PASS-1774800000-2e16e2fe92dd",
+            swt3Anchor: "SWT3-E-VULTR-AI-INF1-PASS-1774800000-2e16e2fe92dd",
             clearingLevel: 1,
             witnessedAt: "2026-06-19T00:00:00Z",
             verificationUrl: "https://sovereign.tenova.io/verify/2e16e2fe92dd",
