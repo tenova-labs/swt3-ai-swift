@@ -25,7 +25,7 @@ Usage:
 Copyright (c) 2026 Tenable Nova LLC. Apache 2.0. Patent pending.
 """
 
-__version__ = "0.5.6"
+__version__ = "0.5.8"
 
 from .witness import Witness, GatekeeperError, ChainEnforcer, PolicyViolationError, validate_governance_graph
 from .exporters.chain_monitor import ChainMonitorExporter
@@ -33,7 +33,7 @@ from .exporters.evidence import EvidenceExporter
 from .types import (
     WitnessConfig, WitnessReceipt, WitnessPayload, RagChunk,
     ModelWeightInfo, AdapterInfo, SkillInfo, MemorySource,
-    GpuInfo, HardwareSnapshot, PcrRegister, TPMSnapshot, EnvironmentSnapshot,
+    AcceleratorInfo, GpuInfo, HardwareSnapshot, PcrRegister, TPMSnapshot, EnvironmentSnapshot,
     ChainRule, ChainPolicyViolation,
     AnchorReference, ProcedureAttestation, ModelTrustProfile, CoverageResult,
     ChainLink, ChainSummary,
@@ -92,6 +92,7 @@ __all__ = [
     "AdapterInfo",
     "SkillInfo",
     "MemorySource",
+    "AcceleratorInfo",
     "GpuInfo",
     "HardwareSnapshot",
     "EnvironmentSnapshot",

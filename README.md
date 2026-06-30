@@ -56,9 +56,45 @@ response = client.chat.completions.create(
 
 Works with OpenAI, Anthropic, AWS Bedrock, Vercel AI SDK, LangChain, LiteLLM (100+ providers), and any OpenAI-compatible endpoint (vLLM, Ollama, Azure OpenAI).
 
+## K8s Hardware Attestation
+
+AI compliance doesn't stop at the model layer. Regulators want to know what hardware ran the inference, whether it was authorized, and whether the compute environment changed between audit periods. Today, no platform provides cryptographic proof of which silicon processed which workload. SWT3 does.
+
+Deploy a DaemonSet that discovers accelerator hardware on every node and mints AI-HW.1 attestation anchors. Zero application code changes. One Helm install.
+
+```bash
+helm install swt3-witness oci://ghcr.io/tenova-labs/charts/swt3-witness \
+  --set config.endpoint="https://sovereign.tenova.io" \
+  --set config.apiKey="axm_live_..." \
+  --set config.tenantId="YOUR_TENANT"
+```
+
+The DaemonSet auto-discovers 6 accelerator types per node:
+
+| Discovery Path | Silicon | Method |
+|---------------|---------|--------|
+| NVIDIA GPU | A100, H100, H200, B200, GB200, NVL72 | `nvidia-smi` |
+| Google TPU | v4, v5e, v5p, v6e, Trillium | `TPU_NAME` env |
+| AMD MI | MI300X, MI325X, MI250 | `rocm-smi` |
+| AWS Trainium | Trainium2, Inferentia2 | `neuron-ls` |
+| Intel Gaudi | Gaudi3, Gaudi2 | `hl-smi` |
+| PCI Fallback | Any 3D controller / processing accelerator | `/sys/bus/pci` |
+
+Each node reports its silicon vendor, topology, memory, and per-accelerator detail. Non-accelerator nodes produce a valid anchor attesting "no accelerator detected" -- absence of hardware is also auditable evidence. Mixed-silicon clusters (NVIDIA + TPU + AMD in the same cluster) are fully supported.
+
+**What this proves to your auditor:**
+- Which hardware ran each AI workload (EU AI Act Art. 15(4), NIST 800-53 SI-7)
+- Whether the compute environment changed between assessments (drift detection)
+- That inference didn't silently migrate to unauthorized or unqualified silicon
+- Full hardware provenance from silicon to model, combined with AI-HW.3 (TPM attestation)
+
+The witness context includes `silicon_vendor`, `discovery_method`, and `accelerators[]`. All device identifiers are SHA-256 hashed before leaving the node. Serial numbers, UUIDs, and bus IDs are never transmitted in plaintext.
+
+See the [Cross-Silicon K8s Attestation Guide](https://sovereign.tenova.io/guides/cross-silicon-k8s-attestation.html) for GKE, EKS, AKS, and on-prem deployment patterns.
+
 ## What Gets Witnessed
 
-Each inference produces anchors across 47 AI procedures spanning 23 domains:
+Each inference produces anchors across 103 AI procedures spanning 52 namespaces:
 
 | Procedure | Domain | What It Proves | Regulatory Mapping |
 |-----------|--------|---------------|-------------------|
@@ -100,7 +136,7 @@ Each inference produces anchors across 47 AI procedures spanning 23 domains:
 | AI-DATA.4 | Data | Data quality metrics recorded | EU AI Act Art. 10(3) |
 | AI-CHAIN.2 | Chain | Chain-of-trust credential verified | EU AI Act Art. 9(4)(c) |
 
-Plus 10 additional procedures covering fairness, explainability, inference volume, model drift, and human oversight. See the [full procedure registry](packages/libswt3/SWT3-SPEC-v1.0.md).
+Plus 65 additional procedures covering fairness, explainability, inference volume, model drift, human oversight, cybersecurity, supply chain, content marking, agent lifecycle, financial transactions, and cross-border routing. See the [full procedure registry](https://sovereign.tenova.io/registry).
 
 ## View an Anchor
 
@@ -148,12 +184,13 @@ At Level 1+, raw prompts and responses **never leave your infrastructure**.
 |----------|---------|---------|
 | Python | [`swt3-ai`](https://pypi.org/project/swt3-ai/) | `pip install swt3-ai` |
 | TypeScript | [`@tenova/swt3-ai`](https://www.npmjs.com/package/@tenova/swt3-ai) | `npm install @tenova/swt3-ai` |
+| Swift | [`swt3-ai`](https://github.com/tenova-labs/swt3-ai-swift) | Swift Package Manager |
 | Rust | [`swt3-ai`](https://crates.io/crates/swt3-ai) | `cargo add swt3-ai` |
 | C# | [`swt3-ai`](https://www.nuget.org/packages/swt3-ai) | `dotnet add package swt3-ai` |
 | Ruby | [`swt3-ai`](https://rubygems.org/gems/swt3-ai) | `gem install swt3-ai` |
 | MCP Server | [`@tenova/swt3-mcp`](https://www.npmjs.com/package/@tenova/swt3-mcp) | `npx @tenova/swt3-mcp` |
 
-All SWT3 SDKs produce identical fingerprints. 40 cross-language test vectors validated at build time.
+7 SDKs, identical fingerprints. 207 cross-language test vectors validated at build time.
 
 ## Get Started
 
@@ -175,14 +212,16 @@ All SWT3 SDKs produce identical fingerprints. 40 cross-language test vectors val
 ## Repository Structure
 
 ```
-packages/swt3-ai/       Python SDK (PyPI: swt3-ai)
-packages/swt3-ai-ts/    TypeScript SDK (npm: @tenova/swt3-ai)
-packages/swt3-ai-rust/  Rust SDK (crates.io: swt3-ai)
+packages/swt3-ai/        Python SDK (PyPI: swt3-ai)
+packages/swt3-ai-ts/     TypeScript SDK (npm: @tenova/swt3-ai)
+packages/swt3-ai-swift/  Swift SDK (Swift Package Index)
+packages/swt3-ai-rust/   Rust SDK (crates.io: swt3-ai)
 packages/swt3-ai-dotnet/ C# SDK (NuGet: swt3-ai)
-packages/swt3-ai-ruby/  Ruby SDK (RubyGems: swt3-ai)
-packages/swt3-mcp/      MCP Server (npm: @tenova/swt3-mcp)
-packages/libswt3/       Protocol reference implementation
-config/                 Control definitions and framework crosswalks
+packages/swt3-ai-ruby/   Ruby SDK (RubyGems: swt3-ai)
+packages/swt3-mcp/       MCP Server (npm: @tenova/swt3-mcp)
+packages/swt3-witness/   K8s DaemonSet (GHCR + Helm)
+packages/libswt3/        Protocol reference implementation
+config/                  Control definitions and framework crosswalks
 ```
 
 ## Compliance & Privacy

@@ -426,7 +426,7 @@ final class HashTests: XCTestCase {
 final class TypesTests: XCTestCase {
 
     func testVersion() {
-        XCTAssertEqual(SWT3.version, "0.5.7")
+        XCTAssertEqual(SWT3.version, "0.5.8")
     }
 
     func testSigningAlgorithmRawValues() {

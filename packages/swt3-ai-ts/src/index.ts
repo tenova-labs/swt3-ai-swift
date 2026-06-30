@@ -56,8 +56,10 @@ export { wrapGoogleADK } from "./adapters/google-adk.js";
 export { wrapCrewAI } from "./adapters/crewai.js";
 export { wrapA2A } from "./adapters/a2a.js";
 export { wrapFoundry } from "./adapters/foundry.js";
-export { queryHardware, detectTopology, topologyCode, TOPOLOGY_CODES, queryTPM, parseTPMPcrOutput, ZERO_PCR_HASH } from "./hardware.js";
-export type { GpuInfo, HardwareSnapshot, TPMSnapshot, PcrRegister } from "./hardware.js";
+export { wrapAGT } from "./adapters/agt.js";
+export { wrapLangGraph } from "./adapters/langgraph.js";
+export { queryHardware, detectTopology, topologyCode, TOPOLOGY_CODES, queryTPM, parseTPMPcrOutput, ZERO_PCR_HASH, queryGoogleTPU, queryAmdRocm, queryAwsNeuron, queryIntelGaudi, queryPciFallback } from "./hardware.js";
+export type { GpuInfo, HardwareSnapshot, TPMSnapshot, PcrRegister, AcceleratorInfo, SiliconVendor } from "./hardware.js";
 export {
   hashLeaf, hashNode, getMerkleRoot, getMerkleProof, verifyMerkleProof,
   MerkleAccumulator,

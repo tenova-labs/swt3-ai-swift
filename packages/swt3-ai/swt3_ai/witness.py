@@ -1464,25 +1464,29 @@ class Witness:
             snapshot = query_hardware()
 
         self._last_hw_snapshot = snapshot
-        gpu_count = len(snapshot.gpus)
-        all_healthy = gpu_count > 0
+        accel_count = len(snapshot.accelerators) if snapshot.accelerators else len(snapshot.gpus)
+        all_healthy = accel_count > 0
         if expected_topology and snapshot.topology != expected_topology:
             all_healthy = False
 
-        fa = float(gpu_count)
+        fa = float(accel_count)
         fb = 1.0 if all_healthy else 0.0
         fc = float(topology_code(snapshot.topology))
 
         payload = self._mint_and_sign("AI-HW.1", fa, fb, fc)
 
         if self._config.clearing_level <= 1:
-            payload.ai_model_id = f"hw-{snapshot.topology}"
+            sv = snapshot.silicon_vendor if (snapshot.silicon_vendor and snapshot.silicon_vendor != "none") else ("nvidia" if snapshot.gpus else "none")
+            payload.ai_model_id = f"hw-{sv}-{snapshot.topology}"
             ctx: Dict[str, Any] = {
-                "provider": "nvidia-hw",
+                "provider": sv,
+                "silicon_vendor": sv,
+                "discovery_method": snapshot.discovery_method if snapshot.discovery_method else ("nvidia-smi" if snapshot.gpus else ""),
                 "topology": snapshot.topology,
                 "interconnect": snapshot.interconnect,
                 "total_memory_mb": snapshot.total_memory_mb,
-                "gpu_count": gpu_count,
+                "accelerator_count": accel_count,
+                "gpu_count": len(snapshot.gpus),
                 "hostname_hash": snapshot.hostname_hash,
             }
             if snapshot.driver_version:
@@ -1498,6 +1502,18 @@ class Witness:
                         "uuid_hash": g.uuid_hash,
                     }
                     for g in snapshot.gpus
+                ]
+            if snapshot.accelerators:
+                ctx["accelerators"] = [
+                    {
+                        "vendor": a.vendor,
+                        "name": a.name,
+                        "memory_mb": a.memory_mb,
+                        "id_hash": a.id_hash,
+                        "bus_id_hash": a.bus_id_hash,
+                        "discovery_method": a.discovery_method,
+                    }
+                    for a in snapshot.accelerators
                 ]
             if expected_topology:
                 ctx["expected_topology"] = expected_topology

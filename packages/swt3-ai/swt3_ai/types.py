@@ -305,6 +305,18 @@ class MemorySource:
 
 
 @dataclass
+class AcceleratorInfo:
+    """Accelerator metadata for AI-HW.1 cross-silicon witnessing. IDs are pre-hashed."""
+
+    vendor: str = ""  # nvidia, google-tpu, amd, aws-trainium, intel-gaudi, pci-generic
+    name: str = ""
+    memory_mb: int = 0
+    id_hash: str = ""  # SHA-256 truncated device identifier
+    bus_id_hash: str = ""  # SHA-256 truncated bus/slot ID
+    discovery_method: str = ""  # nvidia-smi, tpu-env, rocm-smi, neuron-ls, hl-smi, pci-sysfs
+
+
+@dataclass
 class GpuInfo:
     """GPU metadata for AI-HW.1 witnessing. IDs are pre-hashed."""
 
@@ -321,10 +333,13 @@ class HardwareSnapshot:
     gpus: List[GpuInfo] = field(default_factory=list)
     driver_version: str = ""
     cuda_version: str = ""
-    topology: str = "unknown"  # NVL72, DGX-H100, DGX-A100, HGX, multi-gpu, single, unknown
-    interconnect: str = "unknown"  # nvswitch, nvlink, pcie, unknown
+    topology: str = "unknown"
+    interconnect: str = "unknown"
     total_memory_mb: int = 0
-    hostname_hash: str = ""  # SHA-256 truncated, never cleartext
+    hostname_hash: str = ""
+    accelerators: List[AcceleratorInfo] = field(default_factory=list)
+    silicon_vendor: str = "none"  # nvidia, google-tpu, amd, aws-trainium, intel-gaudi, pci-generic, mixed, none
+    discovery_method: str = ""  # comma-separated methods that returned results
 
 
 @dataclass

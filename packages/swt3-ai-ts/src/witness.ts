@@ -1441,13 +1441,13 @@ export class Witness {
   }): WitnessPayload {
     const snapshot = options?.snapshot ?? queryHw();
     this._lastHwSnapshot = snapshot;
-    const gpuCount = snapshot.gpus.length;
-    let allHealthy = gpuCount > 0;
+    const accelCount = snapshot.accelerators?.length ?? snapshot.gpus.length;
+    let allHealthy = accelCount > 0;
     if (options?.expectedTopology && snapshot.topology !== options.expectedTopology) {
       allHealthy = false;
     }
 
-    const fa = gpuCount;
+    const fa = accelCount;
     const fb = allHealthy ? 1 : 0;
     const fc = topoCode(snapshot.topology);
     const [ts, epoch] = timestampMs();
@@ -1465,13 +1465,17 @@ export class Witness {
     };
 
     if (this.config.clearingLevel <= 1) {
-      payload.ai_model_id = `hw-${snapshot.topology}`;
+      const sv = snapshot.siliconVendor ?? (snapshot.gpus.length > 0 ? "nvidia" : "none");
+      payload.ai_model_id = `hw-${sv}-${snapshot.topology}`;
       const ctx: Record<string, unknown> = {
-        provider: "nvidia-hw",
+        provider: sv,
+        silicon_vendor: sv,
+        discovery_method: snapshot.discoveryMethod ?? (snapshot.gpus.length > 0 ? "nvidia-smi" : ""),
         topology: snapshot.topology,
         interconnect: snapshot.interconnect,
         total_memory_mb: snapshot.totalMemoryMb,
-        gpu_count: gpuCount,
+        accelerator_count: accelCount,
+        gpu_count: snapshot.gpus.length,
         hostname_hash: snapshot.hostnameHash,
       };
       if (snapshot.driverVersion) ctx.driver_version = snapshot.driverVersion;
@@ -1482,6 +1486,16 @@ export class Witness {
           memory_mb: g.memoryMb,
           bus_id_hash: g.busIdHash,
           uuid_hash: g.uuidHash,
+        }));
+      }
+      if (snapshot.accelerators && snapshot.accelerators.length > 0) {
+        ctx.accelerators = snapshot.accelerators.map((a) => ({
+          vendor: a.vendor,
+          name: a.name,
+          memory_mb: a.memoryMb,
+          id_hash: a.idHash,
+          bus_id_hash: a.busIdHash,
+          discovery_method: a.discoveryMethod,
         }));
       }
       if (options?.expectedTopology) ctx.expected_topology = options.expectedTopology;
