@@ -38,7 +38,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-async function main() {
+export async function main() {
   console.log();
   console.log(`${B}SWT3 AI Witness SDK — Live Demo${R}`);
   console.log(`${D}No API keys. No account. No network calls.${R}`);

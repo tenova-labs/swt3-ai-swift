@@ -25,6 +25,7 @@ import { handleReportViolation } from "./tools/violation.js";
 import { handleWitnessModelIntegrity, handleWitnessAdapterStack } from "./tools/model.js";
 import { handleAttestSkillManifest, handleAttestMemoryContext } from "./tools/skill.js";
 import { handleVerifyAgentTrust, handlePresentCredential } from "./tools/trust.js";
+import { handleResolveCrosswalk, handleCoverageReport } from "./tools/crosswalk.js";
 import { readRegistry } from "./resources/registry.js";
 import { readHealth } from "./resources/health.js";
 import { REGISTRY_RESOURCE } from "./resources/registry.js";
@@ -704,6 +705,50 @@ export function createServer(config: McpConfig, bundle?: McpConfigBundle): McpSe
   }, async (args) => {
     try {
       const text = handlePresentCredential(args as any, config);
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  server.registerTool("resolve_crosswalk", {
+    description:
+      "Look up regulatory crosswalk mappings. Given a procedure ID (e.g., AI-FAIR.1), " +
+      "returns all framework requirements it satisfies. Given a framework ID (e.g., EU-AI-ACT), " +
+      "returns all requirement-to-procedure mappings. With no arguments, lists all available frameworks. " +
+      "Offline -- uses bundled crosswalk data, no API calls.",
+    inputSchema: {
+      procedure_id: z.string().optional().describe("UCT procedure ID to resolve (e.g., AI-INF.1, AI-FAIR.1)"),
+      framework_id: z.string().optional().describe("Framework ID to resolve (e.g., EU-AI-ACT, NIST-AI-RMF, CMMC)"),
+    },
+    annotations: { readOnlyHint: true },
+  }, async (args) => {
+    try {
+      const text = handleResolveCrosswalk(args as any);
+      return { content: [{ type: "text" as const, text }] };
+    } catch (err) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${(err as Error).message}` }],
+        isError: true,
+      };
+    }
+  });
+
+  server.registerTool("coverage_report", {
+    description:
+      "Report framework coverage for the current audit session. Shows which " +
+      "procedures have been witnessed and which remain, with a coverage percentage. " +
+      "Requires an active audit session (use start_audit_session first).",
+    inputSchema: {
+      framework: z.string().describe("Framework ID to check coverage against (e.g., EU-AI-ACT, NIST-AI-RMF, CMMC)"),
+    },
+    annotations: { readOnlyHint: true },
+  }, async (args) => {
+    try {
+      const text = handleCoverageReport(args as any, sessionState);
       return { content: [{ type: "text" as const, text }] };
     } catch (err) {
       return {
