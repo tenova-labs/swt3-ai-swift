@@ -4422,6 +4422,63 @@ export class Witness {
     return payload;
   }
 
+  /**
+   * Witness cumulative resource consumption (AI-COST.1).
+   *
+   * Records token usage, API call counts, and estimated cost for
+   * accountability and budget governance. Verdict is always PASS --
+   * this procedure witnesses consumption, it does not enforce budgets.
+   */
+  witnessResourceConsumption(options: {
+    tokensIn: number;
+    tokensOut: number;
+    apiCalls: number;
+    costCents?: number;
+    provider?: string;
+    modelId?: string;
+    computeSeconds?: number;
+    costTableVersion?: string;
+  }): WitnessPayload {
+    const costCents = options.costCents ?? -1;
+    const provider = options.provider ?? "unknown";
+    const fa = options.tokensIn + options.tokensOut;
+    const fb = options.apiCalls;
+    const fc = costCents;
+    const [ts, ep] = timestampMs();
+    const fp = mintFingerprint(this.config.tenantId, "AI-COST.1", fa, fb, fc, ts);
+    const policyHash = this.config.policyVersion
+      ? sha256Truncated(this.config.policyVersion, 12) : undefined;
+    const payload: WitnessPayload = {
+      procedure_id: "AI-COST.1",
+      factor_a: fa, factor_b: fb, factor_c: fc,
+      clearing_level: this.config.clearingLevel,
+      anchor_fingerprint: fp, anchor_epoch: ep,
+      fingerprint_timestamp_ms: ts,
+    };
+    if (this.config.clearingLevel <= 1) {
+      payload.ai_model_id = options.modelId ?? "unknown-model";
+      const ctx: Record<string, unknown> = {
+        provider,
+        tokens_in: options.tokensIn,
+        tokens_out: options.tokensOut,
+        api_calls: options.apiCalls,
+        cost_cents: costCents,
+      };
+      if (options.computeSeconds !== undefined) ctx.compute_seconds = options.computeSeconds;
+      if (options.costTableVersion) ctx.cost_table_version = options.costTableVersion;
+      payload.ai_context = ctx;
+    } else if (this.config.clearingLevel === 2) {
+      payload.ai_model_id = options.modelId ?? "unknown-model";
+      payload.ai_context = {
+        provider_category: "llm_provider",
+      };
+    }
+    // clearing_level 3: factors only, no metadata
+    this._applyOperationalMetadata(payload, policyHash);
+    this.buffer.enqueueMany([payload]);
+    return payload;
+  }
+
   // ── Lifecycle Chain API (v6.0) ──────────────────────────────────
 
   /**

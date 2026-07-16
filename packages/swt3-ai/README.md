@@ -1025,6 +1025,7 @@ docker save axiom-sovereign-engine:latest | gzip > axiom-sovereign.tar.gz
 | Anthropic | `anthropic.Anthropic` / `anthropic.AsyncAnthropic` | Supported |
 | Azure OpenAI | `openai.AzureOpenAI` | Supported (via openai SDK) |
 | xAI (Grok) | `openai.OpenAI(base_url="https://api.x.ai/v1")` | Supported (OpenAI-compatible) |
+| Thinking Machines (Inkling) | `openai.OpenAI(base_url="http://gpu-cluster:8000/v1")` | Supported (OpenAI-compatible, vLLM Day-0) |
 | Ollama / vLLM | `openai.OpenAI(base_url=...)` | Supported (OpenAI-compatible) |
 | AWS Bedrock | `boto3` (`bedrock-runtime`) | Supported |
 | LiteLLM | `litellm` module | Supported (100+ providers) |

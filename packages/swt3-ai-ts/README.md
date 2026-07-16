@@ -994,6 +994,11 @@ const grokClient = witness.wrap(
   }),
 ) as OpenAI;
 
+// Thinking Machines Inkling (vLLM)
+const client = witness.wrapOpenAI(
+  new OpenAI({ apiKey: "not-needed", baseURL: "http://gpu-cluster:8000/v1" })
+);
+
 // Azure OpenAI
 const azureClient = witness.wrap(
   new OpenAI({

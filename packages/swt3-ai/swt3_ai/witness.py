@@ -3925,6 +3925,61 @@ class Witness:
         self._buffer.enqueue_many([payload])
         return payload
 
+    def witness_resource_consumption(
+        self,
+        tokens_in: int,
+        tokens_out: int,
+        api_calls: int,
+        cost_cents: int = -1,
+        provider: str = "unknown",
+        model_id: Optional[str] = None,
+        compute_seconds: Optional[float] = None,
+        cost_table_version: Optional[str] = None,
+    ) -> WitnessPayload:
+        """Witness cumulative resource consumption (AI-COST.1).
+
+        Records token usage, API call counts, and estimated cost for
+        accountability and budget governance. Verdict is always PASS --
+        this procedure witnesses consumption, it does not enforce budgets.
+
+        Args:
+            tokens_in: Input token count (cumulative).
+            tokens_out: Output token count (cumulative).
+            api_calls: Number of API calls (cumulative).
+            cost_cents: Estimated cost in cents (integer, provider-normalized).
+                Use -1 for unknown.
+            provider: Provider name (e.g., "openai", "anthropic").
+            model_id: AI model identifier.
+            compute_seconds: Wall-clock compute time in seconds.
+            cost_table_version: Version of the cost table used for estimation.
+        """
+        fa = float(tokens_in + tokens_out)
+        fb = float(api_calls)
+        fc = float(cost_cents)
+        payload = self._mint_and_sign("AI-COST.1", fa, fb, fc)
+        if self._config.clearing_level <= 1:
+            payload.ai_model_id = model_id or "unknown-model"
+            ctx: Dict[str, Any] = {
+                "provider": provider,
+                "tokens_in": tokens_in,
+                "tokens_out": tokens_out,
+                "api_calls": api_calls,
+                "cost_cents": cost_cents,
+            }
+            if compute_seconds is not None:
+                ctx["compute_seconds"] = compute_seconds
+            if cost_table_version:
+                ctx["cost_table_version"] = cost_table_version
+            payload.ai_context = ctx
+        elif self._config.clearing_level == 2:
+            payload.ai_model_id = model_id or "unknown-model"
+            payload.ai_context = {
+                "provider_category": "llm_provider",
+            }
+        # clearing_level 3: factors only, no metadata
+        self._buffer.enqueue_many([payload])
+        return payload
+
     # ── Lifecycle Chain API (v6.0) ──────────────────────────────────
 
     def begin_lifecycle(
