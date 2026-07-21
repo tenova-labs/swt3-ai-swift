@@ -8,7 +8,7 @@ import json
 import sys
 from typing import Optional, List, Dict
 
-# 98 AI procedures across 51 namespaces
+# 108 AI procedures across 56 namespaces
 PROCEDURE_CATALOG: List[Dict[str, str]] = [
     {"id": "AI-INF.1", "name": "Inference Provenance", "namespace": "INF"},
     {"id": "AI-INF.2", "name": "Inference Latency", "namespace": "INF"},
@@ -105,6 +105,15 @@ PROCEDURE_CATALOG: List[Dict[str, str]] = [
     {"id": "AI-ASSESS.1", "name": "Champion-Challenger Assessment", "namespace": "ASSESS"},
     # Resource Governance (v6.1)
     {"id": "AI-COST.1", "name": "Resource Consumption Witnessing", "namespace": "COST"},
+    {"id": "AI-DEL.1", "name": "Delegation Tree Witnessing", "namespace": "DEL"},
+    # Governance Framework (v6.2)
+    {"id": "AI-GOV.1", "name": "Governance Framework Attestation", "namespace": "GOV"},
+    {"id": "AI-GOV.2", "name": "Governance Review Cadence", "namespace": "GOV"},
+    {"id": "AI-GOV.3", "name": "Governance Escalation Path", "namespace": "GOV"},
+    {"id": "AI-GOV.4", "name": "Governance Update Tracking", "namespace": "GOV"},
+    {"id": "AI-GOV.5", "name": "Governance Accountability Assignment", "namespace": "GOV"},
+    {"id": "AI-IMPACT.1", "name": "Fundamental Rights Impact Assessment", "namespace": "IMPACT"},
+    {"id": "AI-LOG.1", "name": "Logging Completeness Attestation", "namespace": "LOG"},
     # Healthcare / Clinical AI (HCF)
     {"id": "HCF-DX.1", "name": "Diagnostic Accountability", "namespace": "HCF"},
     {"id": "HCF-RX.1", "name": "Prescription Safety", "namespace": "HCF"},
