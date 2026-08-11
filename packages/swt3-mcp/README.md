@@ -6,13 +6,67 @@ MCP server for the SWT3 AI Witness protocol. Adds cryptographic compliance attes
 
 SWT3 (Sovereign Witness Traceability) works by hashing your AI's inputs and outputs locally, extracting numeric factors (latency, token count, guardrail status), and anchoring them into a cryptographic fingerprint that anyone can independently verify. Your prompts and responses never leave your machine. The auditor gets tamper-proof evidence. You keep your data.
 
-## What's New in v0.6.1
+## What's New in v0.6.4
 
-Multi-agent systems delegate in trees, not pairs. Production AI burns tokens across providers. Regulators want to know who had access to what, how much it cost, and where it ran. Two new tools make these answers part of the witness record without leaving your MCP client.
+10 new compliance tools, 1 prompt template, and the pre-inference gate. The MCP server now exposes 33 tools covering the full AI governance lifecycle: from authorization before inference to incident reporting after.
 
-- **Delegation Tree Witnessing** (AI-DEL.1) -- `witness_delegation_tree` tool. When Agent A delegates to Agent B and B sub-delegates to C, auditors need to see the full permission tree: scope, depth from human authorization, and whether revoking the root cascades to every descendant. This tool witnesses the entire tree structure, not just individual hops.
-- **Resource Consumption Witnessing** (AI-COST.1) -- `witness_resource_consumption` tool. EU AI Act Art. 53, EO 14110 FLOP thresholds, SR 11-7 operational risk -- all require evidence of resource consumption. This tool records tokens, API calls, and estimated cost as cryptographic evidence. Notary, not budget enforcer.
-- **22 tools**, 31 frameworks, 108 procedures, 2 resources.
+### 10 New Compliance Tools
+
+| Tool | Procedure | What It Does | Why It Matters |
+|------|-----------|-------------|----------------|
+| `swt3_gate` | AI-ACC.1 | Pre-inference authorization checkpoint | Proves someone approved the AI to run before it acted. EU AI Act Art. 9 requires risk management prior to deployment. |
+| `swt3_guardrail` | AI-GRD.1 | Records guardrail activation status | Proves safety filters were active at inference time, not just configured. |
+| `swt3_hitl` | AI-HITL.1 | Records human review completion | Proves a qualified human reviewed the AI decision. Required by EU AI Act Art. 14. |
+| `swt3_consent` | AI-CONSENT.1 | Records consent collection | Proves user consent was obtained before data processing. GDPR Art. 6/7. |
+| `swt3_data_provenance` | AI-DATA.1 | Records training data governance review | Proves data governance was performed without disclosing the data itself. |
+| `swt3_rag` | AI-RAG.1 | Records RAG retrieval provenance | Proves which sources were retrieved and their relevance scores. |
+| `swt3_output_filter` | AI-GRD.2 | Records output safety classification result | Proves the output passed content safety filters. Distinct from input-side guardrails. |
+| `swt3_incident` | AI-INCIDENT.1 | Records incident documentation | Proves the incident was reported and documented per policy. |
+| `swt3_reconstruct` | AI-CHAIN.1 | Rebuilds forensic chain from anchors | Produces a verifiable timeline for incident response or audit. |
+| `swt3_trajectory` | AI-MOB.6 | Records autonomous trajectory decisions | Proves VLA/path planning models documented their decisions. ISO/PAS 8800. |
+
+### Compliance Check Prompt
+
+New prompt template `compliance-check` guides LLMs through a structured compliance evaluation. The prompt takes a framework ID and returns a step-by-step assessment plan using the available SWT3 tools. Assessors can run it directly in Claude Desktop, Cursor, or any MCP client.
+
+### Why 33 Tools Matters
+
+The original 23 tools covered the witness lifecycle: mint, verify, sign, query. The 10 new tools cover the governance lifecycle: authorize, filter, review, consent, reconstruct. An AI agent using SWT3 via MCP can now handle the complete compliance workflow without leaving the MCP protocol. No separate SDK integration. No separate API calls. One tool call per compliance obligation.
+
+### v0.6.3
+
+Six new tools, one prompt template. The newest closes the autonomous vehicle compliance vacuum: NVIDIA open-sourced a 34B VLA model for robotaxis, the EU AI Act classifies AV as high-risk (Annex III, 3a), and every company fine-tuning open VLA models needs accountability infrastructure that doesn't exist yet.
+
+- **Trajectory Decision Attestation** (AI-MOB.6) -- `witness_trajectory` tool. Every autonomous driving decision produces a planned trajectory and a causal reasoning trace. This tool records that a VLA or path planning model produced a trajectory, whether it passed safety validation, and its classification level (nominal, cautionary, degraded, emergency, abort). Context stores ONLY hashes and counts -- never raw coordinates, waypoints, or proprietary CoC traces. Model-agnostic -- works with any VLA, path planner, or motion model. ISO/PAS 8800, EU AI Act Annex III(3a), UNECE WP.29 R157.
+
+- **RAG Context Witnessing** (AI-RAG.1/RAG.2) -- `witness_rag_context` tool. Every RAG pipeline retrieves chunks, but none can prove which chunks were used, from which corpus, at what relevance score. This tool mints a provenance anchor for every retrieval: chunk count, corpus identity, embedding model. Chunk text is hashed locally and never sent to the server. When similarity scores and a threshold are provided, a second AI-RAG.2 anchor records context relevance -- proving the retrieval met quality thresholds, not just that it happened. EU AI Act Art. 12 (record-keeping) and NIST AI RMF MEASURE 2.6 require this evidence. Without it, a RAG system has no provenance chain.
+
+- **Guardrail Witnessing** (AI-GRD.1) -- `witness_guardrail` tool. Guardrails run, but there is no proof they ran. When a content filter blocks a response, a PII redactor strips sensitive data, or a toxicity classifier flags output, this tool creates a cryptographic record: which guardrail, whether it triggered, and what action it took (blocked, redacted, flagged, allowed). This is the evidence gap that EU AI Act Art. 9 (risk management measures) and NIST AI RMF GOVERN 1.7 require. Evidence only -- never blocks execution.
+
+- **Human Review Witnessing** (AI-HITL.1) -- `witness_human_review` tool. Regulators require proof that a human reviewed AI output before consequential decisions. This tool records the review outcome (approved, rejected, modified, escalated), binds it to a hashed reviewer identity, and captures review latency. EU AI Act Art. 14 (human oversight), GDPR Art. 22 (automated decision-making), and SR 11-7 Section III.A (effective challenge) all require evidence that human review occurred -- not just that it was possible. The difference between "we have a review process" and "here is the anchor proving reviewer #a8f3 approved output #7c91 after 45 seconds of review."
+
+- **Governance Gate Evaluation** -- `gate_evaluate` tool. Teams define compliance policies in `.swt3-gate.yml` files, but until now those policies were only checkable from the CLI. This tool parses and validates gate configs directly from any MCP client: gate counts, framework coverage, model risk assignments, and warnings. Set `evaluate_live: true` to check policy against actual witness anchors on the server -- answering "does my running system satisfy my declared policy right now?" Offline validation runs without network calls.
+
+- **Forensic Timeline Reconstruction** -- `reconstruct_timeline` tool. When an incident occurs, auditors need the full sequence of what happened, in order, with no cherry-picking. This tool queries the server for a chronological view of all witness anchors matching a cycle, agent, fingerprint, chain, or time window. Returns procedure labels, verdicts, cost data, and drift/override/violation flags. The evidence an incident response team needs to answer "what did the AI do and when" without depending on application logs that may be incomplete or tampered with.
+
+- **Compliance Check Prompt** -- `compliance-check` prompt template. Generates an adaptive session prompt for any of the 34 supported regulatory frameworks. Lists which procedures apply to the framework, which MCP tools cover them, and guides the session from audit start to coverage report. Reduces the "where do I start?" friction for developers new to compliance witnessing.
+
+- **Consent Witnessing** (AI-CONSENT.1) -- `witness_consent` tool. GDPR Art. 6/7 consent is the single most litigated AI compliance topic in Europe. This tool records that consent or lawful basis was documented before processing: legal basis type (consent, contract, legitimate interest, etc.), subject count, withdrawal mechanism availability, and jurisdiction. CJT fields (jurisdiction, legal_basis, purpose_class) survive all clearing levels -- even at Level 3 (classified), the regulatory metadata is preserved. The evidence that an auditor asks for first.
+
+- **Output Safety Witnessing** (AI-GRD.2) -- `witness_output_filter` tool. Distinct from `witness_guardrail` (AI-GRD.1, which witnesses guardrail activation). This tool records the classification RESULT on the output side: did the model output pass content safety filters? What filter type ran? What action was taken? When regulators shut down AI systems for output violations, the gap is not whether guardrails existed but whether there is proof each output was classified. EU AI Act Art. 15(3).
+
+- **Incident Witnessing** (AI-INCIDENT.1) -- `witness_incident` tool. NIS-2 requires incident reporting within 24 hours. EU AI Act Art. 62 requires serious incident reporting. This tool creates a tamper-evident record of when an incident was detected, its severity, type, and whether authorities were notified. The anchor timestamp is the proof of detection time -- critical when the regulatory window is 24 hours and the question is "when did you know?"
+
+- **Data Provenance Witnessing** (AI-DATA.1) -- `witness_data_provenance` tool. Attests that training data governance review was performed WITHOUT disclosing training data contents. No dataset names, no license strings -- just governance reviewed (bool), documentation hash (of the data card, not the data), license verified, demographic features confirmed absent. Designed for the tension between EU AI Act Art. 10 (training data documentation) and trade secret protection. The evidence says "we did our diligence" not "here is our data."
+
+- **Jurisdiction Resolver** -- `resolve_jurisdiction` tool. Pass an ISO 3166-1 country code (e.g., "JP", "DE") or ISO 3166-2 subdivision (e.g., "US-CA") and get back every applicable regulatory framework, grouped by binding status: mandatory (laws with enforcement), advisory (government guidance), and voluntary (industry standards). For subdivisions, returns both local and national frameworks. 34 frameworks mapped across 50+ jurisdiction codes. The answer to "I deploy in Germany -- what frameworks apply to me?" without reading 34 crosswalk tables.
+
+- **33 tools**, 1 prompt, 36 frameworks, 113 procedures, 2 resources.
+
+### v0.6.1
+
+- **Delegation Tree Witnessing** (AI-DEL.1) -- `witness_delegation_tree` tool.
+- **Resource Consumption Witnessing** (AI-COST.1) -- `witness_resource_consumption` tool.
 
 ### v0.6.0
 
@@ -20,7 +74,7 @@ Multi-agent systems delegate in trees, not pairs. Production AI burns tokens acr
 
 ### v0.5.9
 
-- **Compliance Intelligence** -- `resolve_crosswalk` maps any procedure to every framework control it satisfies (29 frameworks, 108 procedures, offline). `coverage_report` shows which procedures your audit session has covered for a given framework, with a score and remaining gaps.
+- **Compliance Intelligence** -- `resolve_crosswalk` maps any procedure to every framework control it satisfies (27 frameworks, 113 procedures, offline). `coverage_report` shows which procedures your audit session has covered for a given framework, with a score and remaining gaps.
 - Aligned with core SDK v0.5.9 (`resolve()`, `coverage()`, local witness mode).
 
 ## Why This Exists
@@ -220,14 +274,23 @@ Every anchor maps to specific regulatory obligations:
 - **SR 11-7**: Model risk management for financial services
 - **ISO 42001**: Annex A AI management controls
 
-## Tools (22)
+## Tools (33)
 
 **Witnessing:**
 `witness_inference` -- mint a cryptographic anchor for any AI inference. Prompt and response are hashed locally, never sent to the server. Returns verdict (PASS/FAIL), anchor token, and verification URL.
+`witness_rag_context` -- witness RAG retrieval provenance and optional relevance scoring (AI-RAG.1/RAG.2). Chunks are hashed locally.
+`witness_guardrail` -- witness guardrail implementation and activation state (AI-GRD.1). Records trigger status and action taken.
+`witness_human_review` -- witness human-in-the-loop review of AI output (AI-HITL.1). Records outcome, reviewer binding, and latency.
 
 **Delegation and Resource Governance:**
 `witness_delegation_tree` -- witness hierarchical permission delegation with scope binding, cascade revocation, and depth tracking (AI-DEL.1).
 `witness_resource_consumption` -- witness cumulative token usage, API call counts, and estimated cost (AI-COST.1).
+
+**Governance Gates:**
+`gate_evaluate` -- parse and validate .swt3-gate.yml governance configs. Offline validation or live evaluation against server anchors.
+
+**Forensic Reconstruction:**
+`reconstruct_timeline` -- reconstruct a forensic timeline of witness anchors by cycle, agent, fingerprint, chain, or time window.
 
 **Verification:**
 `verify_anchor` -- verify the cryptographic integrity of an existing anchor.
@@ -261,10 +324,14 @@ Every anchor maps to specific regulatory obligations:
 `coverage_report` -- report framework coverage for procedures witnessed in the current audit session. Shows covered/remaining procedures with a coverage percentage.
 
 **Discovery:**
-`list_procedures` -- browse the UCT procedure registry (108 procedures, 56 namespaces).
+`list_procedures` -- browse the UCT procedure registry (113 procedures, 61 namespaces).
 `suggest_procedures` -- get recommended procedures based on your use case.
 `check_posture` -- check current tenant compliance posture.
 `signup` -- create a free account without leaving your editor.
+
+## Prompts (1)
+
+`compliance-check` -- generates an adaptive compliance witnessing session prompt for a regulatory framework. Arguments: `framework` (required), `model_id` (optional), `context` (optional). Lists applicable procedures, available MCP tools, and session workflow.
 
 ## Environment variables (optional)
 

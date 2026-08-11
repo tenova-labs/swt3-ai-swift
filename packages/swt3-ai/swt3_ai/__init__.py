@@ -25,9 +25,10 @@ Usage:
 Copyright (c) 2026 Tenable Nova LLC. Apache 2.0. Patent pending.
 """
 
-__version__ = "0.6.1"
+__version__ = "0.6.3"
 
-from .witness import Witness, GatekeeperError, ChainEnforcer, PolicyViolationError, validate_governance_graph, LifecycleChain, LIFECYCLE_CHAIN_STAGES
+from .witness import Witness, GatekeeperError, ChainEnforcer, PolicyViolationError, validate_governance_graph, LifecycleChain, ChainContext, LIFECYCLE_CHAIN_STAGES
+from .gate import GateConfig, GateProcedure, GateGroup, FrameworkGate, GateDefaults, GateModel, load_gate_config, parse_gate_dict, parse_max_age, find_gate_file, validate_procedures, all_procedures
 from .exporters.chain_monitor import ChainMonitorExporter
 from .exporters.evidence import EvidenceExporter
 from .types import (
@@ -51,7 +52,7 @@ from .witness import (OVERRIDE_TRIGGER_CODES, AUTHORIZATION_LEVEL_CODES, FALLBAC
     CONTENT_TYPE_CODES, MARKING_METHODS, BASELINE_MODE_CODES, LICENSE_TYPE_CODES,
     SBOM_FORMAT_CODES, REDTEAM_CATEGORY_CODES, CONSENT_BASIS_CODES,
     DRIFT_TYPE_CODES, LOG_FORMAT_CODES, INCIDENT_SEVERITY_CODES, INCIDENT_TYPE_CODES,
-    BENCHMARK_TYPE_CODES, PERTURBATION_TYPE_CODES, CYBER_FRAMEWORK_CODES,
+    BENCHMARK_TYPE_CODES, PERTURBATION_TYPE_CODES, CYBER_FRAMEWORK_CODES, SAFETY_CLASSIFICATION_CODES,
     DISCLOSURE_TYPE_CODES, RECIPIENT_TYPE_CODES, DETECTION_METHOD_CODES,
     PROCESSING_TYPE_CODES, DECISION_TYPE_CODES, CLASSIFICATION_CODES,
     REPORTING_STATUS_CODES, SUPPLY_RISK_CODES, PMM_TYPE_CODES,
@@ -59,7 +60,8 @@ from .witness import (OVERRIDE_TRIGGER_CODES, AUTHORIZATION_LEVEL_CODES, FALLBAC
     METAGOV_SCOPE_CODES, METAGOV_PERMISSION_CODES, METAGOV_OVERRIDE_REASON_CODES,
     METAGOV_REVIEW_STATUS_CODES, METAGOV_DIVERGENCE_CODES, METAGOV_PURITY_TIERS,
     DESIGN_DOMAIN_CODES, SIMULATION_TYPE_CODES, APPROVAL_TYPE_CODES,
-    MATERIAL_STANDARD_CODES, CHAIN_STATUS_CODES, RELEASE_TYPE_CODES)
+    MATERIAL_STANDARD_CODES, CHAIN_STATUS_CODES, RELEASE_TYPE_CODES,
+    REACHABILITY_METHOD_CODES, DISPOSAL_METHOD_CODES, RECOMMISSION_TYPE_CODES, LOCK_SCOPE_CODES)
 from .schema import validate_schema, ValidationResult, ValidationError as SchemaValidationError
 from .wal import WriteAheadLog
 from .merkle import (
@@ -79,6 +81,7 @@ from .chain import build_lookup, walk_chain, verify_chain_integrity
 from .crosswalk import (
     resolve, resolve_framework, frameworks as crosswalk_frameworks,
     procedures as crosswalk_procedures, crosswalk_version,
+    frameworks_for_jurisdiction,
 )
 
 __all__ = [
@@ -91,6 +94,7 @@ __all__ = [
     "crosswalk_frameworks",
     "crosswalk_procedures",
     "crosswalk_version",
+    "frameworks_for_jurisdiction",
     "ChainRule",
     "ChainPolicyViolation",
     "ChainMonitorExporter",
@@ -178,6 +182,7 @@ __all__ = [
     "BENCHMARK_TYPE_CODES",
     "PERTURBATION_TYPE_CODES",
     "CYBER_FRAMEWORK_CODES",
+    "SAFETY_CLASSIFICATION_CODES",
     "DISCLOSURE_TYPE_CODES",
     "RECIPIENT_TYPE_CODES",
     "DETECTION_METHOD_CODES",
@@ -200,6 +205,10 @@ __all__ = [
     "MATERIAL_STANDARD_CODES",
     "CHAIN_STATUS_CODES",
     "RELEASE_TYPE_CODES",
+    "REACHABILITY_METHOD_CODES",
+    "DISPOSAL_METHOD_CODES",
+    "RECOMMISSION_TYPE_CODES",
+    "LOCK_SCOPE_CODES",
     "validate_governance_graph",
     "LifecycleChain",
     "LIFECYCLE_CHAIN_STAGES",

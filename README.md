@@ -94,7 +94,7 @@ See the [Cross-Silicon K8s Attestation Guide](https://sovereign.tenova.io/guides
 
 ## What Gets Witnessed
 
-Each inference produces anchors across 103 AI procedures spanning 52 namespaces:
+Each inference produces anchors across 108 AI procedures spanning 56 namespaces:
 
 | Procedure | Domain | What It Proves | Regulatory Mapping |
 |-----------|--------|---------------|-------------------|
@@ -136,7 +136,7 @@ Each inference produces anchors across 103 AI procedures spanning 52 namespaces:
 | AI-DATA.4 | Data | Data quality metrics recorded | EU AI Act Art. 10(3) |
 | AI-CHAIN.2 | Chain | Chain-of-trust credential verified | EU AI Act Art. 9(4)(c) |
 
-Plus 65 additional procedures covering fairness, explainability, inference volume, model drift, human oversight, cybersecurity, supply chain, content marking, agent lifecycle, financial transactions, and cross-border routing. See the [full procedure registry](https://sovereign.tenova.io/registry).
+Plus 70 additional procedures covering fairness, explainability, inference volume, model drift, human oversight, cybersecurity, supply chain, content marking, agent lifecycle, financial transactions, and cross-border routing. See the [full procedure registry](https://sovereign.tenova.io/registry).
 
 ## View an Anchor
 
@@ -188,9 +188,10 @@ At Level 1+, raw prompts and responses **never leave your infrastructure**.
 | Rust | [`swt3-ai`](https://crates.io/crates/swt3-ai) | `cargo add swt3-ai` |
 | C# | [`swt3-ai`](https://www.nuget.org/packages/swt3-ai) | `dotnet add package swt3-ai` |
 | Ruby | [`swt3-ai`](https://rubygems.org/gems/swt3-ai) | `gem install swt3-ai` |
+| Kotlin | [`swt3-ai`](https://central.sonatype.com/artifact/io.tenova/swt3-ai) | Gradle/Maven |
 | MCP Server | [`@tenova/swt3-mcp`](https://www.npmjs.com/package/@tenova/swt3-mcp) | `npx @tenova/swt3-mcp` |
 
-7 SDKs, identical fingerprints. 207 cross-language test vectors validated at build time.
+8 SDKs, identical fingerprints. 226 cross-language test vectors validated at build time.
 
 ## Get Started
 
@@ -218,6 +219,7 @@ packages/swt3-ai-swift/  Swift SDK (Swift Package Index)
 packages/swt3-ai-rust/   Rust SDK (crates.io: swt3-ai)
 packages/swt3-ai-dotnet/ C# SDK (NuGet: swt3-ai)
 packages/swt3-ai-ruby/   Ruby SDK (RubyGems: swt3-ai)
+packages/swt3-ai-kotlin/ Kotlin SDK (Maven Central: io.tenova:swt3-ai)
 packages/swt3-mcp/       MCP Server (npm: @tenova/swt3-mcp)
 packages/swt3-witness/   K8s DaemonSet (GHCR + Helm)
 packages/libswt3/        Protocol reference implementation

@@ -1,5 +1,7 @@
 FROM node:20-alpine
-RUN adduser -D -u 10001 swt3
+RUN adduser -D -u 10001 swt3 && \
+    apk upgrade --no-cache && \
+    rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /opt/yarn* /usr/local/bin/yarn /usr/local/bin/yarnpkg
 WORKDIR /app
 COPY package.json ./
 COPY dist/ ./dist/
