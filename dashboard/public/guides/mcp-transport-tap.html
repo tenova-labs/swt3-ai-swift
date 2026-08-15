@@ -96,6 +96,10 @@
     <strong>Audience:</strong> Platform engineers, compliance leads, AI governance teams. No prior SWT3 experience required.
   </div>
 
+  <div class="gap-box">
+    <strong>CRITICAL ASSESSOR NOTICE:</strong> SWT3 witness anchors are evidence artifacts, not compliance determinations. Each anchor records that a governance-relevant event occurred and preserves its cryptographic fingerprint. The assessor determines whether the evidence satisfies a given control requirement. The protocol does not make pass/fail compliance decisions on behalf of any regulatory body. Substance verification remains the assessor's responsibility.
+  </div>
+
   <nav class="toc">
     <h4>Contents</h4>
     <a href="#problem">1. The Problem</a>
@@ -119,7 +123,7 @@
 
   <p>Application logs were never designed to be compliance evidence. They can be incomplete, modified, or lost. They lack cryptographic integrity. They do not map to regulatory controls. They are not independently verifiable.</p>
 
-  <p>The Witness Middleware creates a cryptographic witness record for every tool call your server processes. Each record proves which tool ran, how long it took, and whether it succeeded. The record is anchored by a SHA-256 fingerprint that anyone can independently recompute. If a single bit changes, the hash breaks. That is the difference between a log entry and evidence.</p>
+  <p>The Witness Middleware creates a cryptographic witness record for every tool call your server processes (or a deterministic fraction, if you configure <a href="#sampling">sampling</a>). Each record proves which tool ran, how long it took, and whether it succeeded. The record is anchored by a SHA-256 fingerprint that anyone can independently recompute. If a single bit changes, the hash breaks. That is the difference between a log entry and evidence.</p>
 
   <!-- 2. One Line of Code -->
   <h2 id="one-line">2. One Line of Code</h2>
@@ -134,9 +138,15 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 const transport = withSWT3(new StdioServerTransport(), {
   apiKey: process.env.SWT3_API_KEY,
 });
-await server.connect(transport);</code></pre>
+await server.connect(transport);
 
-  <p>This wraps the communication layer between your server and the MCP client. Your tool handlers run exactly as before. The middleware observes what passes through and creates witness records after each tool call completes.</p>
+// Drain buffered evidence before exit
+process.on("SIGTERM", async () => {
+  await transport.flush();
+  process.exit(0);
+});</code></pre>
+
+  <p>This wraps the communication layer between your server and the MCP client. Your tool handlers run exactly as before. The middleware buffers witness payloads and flushes them in batches. The <code>flush()</code> call on shutdown ensures no evidence is lost when the process exits. See <a href="#batching">Batching and Graceful Shutdown</a> for details.</p>
 
   <p>No API key? Omit it entirely. The middleware runs in demo mode and logs witness records to stderr. No network calls, no account required. Upgrade to a free account when you want persistent evidence.</p>
 
@@ -145,22 +155,20 @@ await server.connect(transport);</code></pre>
 
 <div class="flow-diagram">Client sends tool request ──> Your tool handler runs ──> Response sent to client
                                                                    │
-                                                       Witness payload buffered
-                                                       (after response is committed)
-                                                       ● Tool name
-                                                       ● Execution time
-                                                       ● Success or failure
-                                                       ● SHA-256 fingerprint
-                                                       ● Timestamp
+                                                       Sampling gate (deterministic)
+                                                       ● Witnessed? ──> Payload buffered
+                                                       ● Skipped?   ──> Skip counter incremented
                                                                    │
                                                        Buffer flushed in batch
-                                                       (on count threshold, timer, or shutdown)</div>
+                                                       (on count threshold, timer, or shutdown)
+                                                       ● Includes AI-SAMPLE.1 summaries
+                                                       ● Failed batches retried automatically</div>
 
   <div class="principle-box">
     <strong>Three guarantees:</strong>
     <ol style="margin: 10px 0 0 20px;">
       <li>Your tool response is already sent before the witness fires. The middleware cannot slow down, block, or fail your tool calls.</li>
-      <li>If the witness network call fails, your tool call is completely unaffected. Silent failure by design.</li>
+      <li>If the witness network call fails, your tool call is completely unaffected. Failed batches are automatically <a href="#retry">retried with exponential backoff</a>. If all retries are exhausted, error receipts are fired and the batch is dropped. Evidence delivery is best-effort; tool execution is never compromised.</li>
       <li>The middleware sees tool names and execution time. It does not see prompt content, response content, or anything inside your tool handlers.</li>
     </ol>
   </div>
@@ -190,6 +198,7 @@ await server.connect(transport);</code></pre>
       <tr><th>Setting</th><th>Default</th><th>When You Need It</th></tr>
     </thead>
     <tbody>
+      <tr><td colspan="3" style="background: var(--bg-elevated); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Core</td></tr>
       <tr><td><code>endpoint</code></td><td>sovereign.tenova.io</td><td>Only change if you are self-hosting the Axiom platform</td></tr>
       <tr><td><code>apiKey</code></td><td>demo mode</td><td>Omit to evaluate locally. Set an <code>axm_</code> key to persist anchors to the ledger</td></tr>
       <tr><td><code>tenantId</code></td><td>auto-resolved</td><td>Set explicitly if your API key serves multiple tenants</td></tr>
@@ -198,11 +207,15 @@ await server.connect(transport);</code></pre>
       <tr><td><code>signingKey</code></td><td>none</td><td>Set for HMAC non-repudiation. If someone disputes the evidence, the signature proves who minted it</td></tr>
       <tr><td><code>maxBuffer</code></td><td>100</td><td>Raise if your server handles more than 100 concurrent in-flight tool calls</td></tr>
       <tr><td><code>onWitness</code></td><td>none</td><td>Set a callback to pipe witness receipts to your logging or metrics system</td></tr>
-      <tr><td><code>batchSize</code></td><td>10</td><td>Number of witness payloads buffered before a batch flush. Lower for real-time evidence, higher for throughput</td></tr>
+      <tr><td colspan="3" style="background: var(--bg-elevated); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Batching</td></tr>
+      <tr><td><code>batchSize</code></td><td>10</td><td>Number of witness payloads buffered before a batch flush. Set to 1 for per-call behavior</td></tr>
       <tr><td><code>flushIntervalMs</code></td><td>5000</td><td>Maximum time (ms) before the buffer is flushed, even if <code>batchSize</code> has not been reached</td></tr>
+      <tr><td colspan="3" style="background: var(--bg-elevated); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Sampling</td></tr>
       <tr><td><code>samplingRate</code></td><td>1.0</td><td>Global sampling rate (0.0 to 1.0). Set below 1.0 to witness a fraction of tool calls</td></tr>
       <tr><td><code>samplingRates</code></td><td>none</td><td>Per-tool overrides: <code>{ "critical_tool": 1.0, "health_check": 0.01 }</code></td></tr>
+      <tr><td colspan="3" style="background: var(--bg-elevated); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Multi-Tenant</td></tr>
       <tr><td><code>resolveTenant</code></td><td>none</td><td>Callback to resolve tenant per tool call. For multi-tenant MCP servers</td></tr>
+      <tr><td colspan="3" style="background: var(--bg-elevated); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Retry</td></tr>
       <tr><td><code>maxRetries</code></td><td>3</td><td>Number of retry attempts for failed batch submissions (5xx or network errors)</td></tr>
       <tr><td><code>maxRetryBuffer</code></td><td>500</td><td>Maximum payloads held in the retry queue. Oldest batches evicted first</td></tr>
     </tbody>
@@ -250,6 +263,10 @@ withSWT3(transport, { batchSize: 1 });
 // High-throughput server (batch up to 50, flush every 10s)
 withSWT3(transport, { batchSize: 50, flushIntervalMs: 10_000 });</code></pre>
 
+  <div class="principle-box">
+    <strong>Upgrading from v0.6.4:</strong> Previous versions fired one HTTP POST per tool call. The default is now batched (10 payloads per flush). To preserve the old per-call behavior, set <code>batchSize: 1</code>. All other settings are backward-compatible.
+  </div>
+
   <!-- 7. Sampling -->
   <h2 id="sampling">7. Sampling</h2>
 
@@ -281,6 +298,10 @@ withSWT3(transport, {
 
   <p>The sampling algorithm uses the first two bytes of the SHA-256 fingerprint hash as a uint16 threshold. This is the same algorithm used by the Python and TypeScript SDKs, producing identical sampling decisions across all SWT3 implementations for the same input.</p>
 
+  <div class="gap-box">
+    <strong>Demo mode note:</strong> In demo mode (no API key), every tool call logs to stderr regardless of sampling settings. Sampling only applies to live API submissions. If you set <code>samplingRate: 0.1</code> in demo mode, all calls appear in stderr. When you switch to a live API key, only 10% will produce anchors. This is intentional: demo mode is for validation, not volume simulation.
+  </div>
+
   <!-- 8. Multi-Tenant -->
   <h2 id="multi-tenant">8. Multi-Tenant</h2>
 
@@ -291,7 +312,7 @@ withSWT3(transport, {
   tenantId: "DEFAULT_TENANT",
   resolveTenant: (toolName, params) => {
     // Extract tenant from the tool call parameters
-    return params.tenant_id as string | undefined;
+    return params.tenant_id;
   },
 });</code></pre>
 
@@ -323,11 +344,52 @@ withSWT3(transport, {
   <p>The retry queue is bounded at <code>maxRetryBuffer</code> payloads (default: 500). If the queue overflows, the oldest batches are evicted first. After <code>maxRetries</code> attempts (default: 3), the batch is dropped and error receipts are fired via <code>onWitness</code>.</p>
 
   <div class="gap-box">
-    <strong>Not a WAL:</strong> The retry queue is in-memory only. If the process crashes, queued payloads are lost. This is intentional. The middleware is a best-effort evidence layer, not a message broker. For crash-resilient witnessing, use the full SDK with write-ahead log support.
+    <strong>Not a WAL:</strong> The retry queue is in-memory only. If the process crashes, queued payloads are lost. This is intentional. The middleware is a best-effort evidence layer, not a message broker. For crash-resilient witnessing, use the full SDK (<a href="https://www.npmjs.com/package/@tenova/swt3-ai">@tenova/swt3-ai</a> for TypeScript or <a href="https://pypi.org/project/swt3-ai/">swt3-ai</a> for Python) which includes write-ahead log support.
   </div>
 
   <!-- 10. Real-World Patterns -->
   <h2 id="patterns">10. Real-World Patterns</h2>
+
+  <h3>Production MCP Server</h3>
+
+  <p>A typical production configuration combines batching, sampling, signing, and retry. This is the recommended starting point for regulated environments.</p>
+
+<pre><code>const transport = withSWT3(new StdioServerTransport(), {
+  apiKey: process.env.SWT3_API_KEY,
+  agentId: "claims-processor-v3",
+  signingKey: process.env.SWT3_SIGNING_KEY,
+  clearingLevel: 2,
+
+  // Batching: flush every 20 payloads or 10 seconds
+  batchSize: 20,
+  flushIntervalMs: 10_000,
+
+  // Sampling: witness all trades, 10% of reads, skip health checks
+  samplingRate: 0.1,
+  samplingRates: {
+    "execute_trade": 1.0,
+    "modify_account": 1.0,
+    "health_check": 0.0,
+  },
+
+  // Retry: 3 attempts with exponential backoff
+  maxRetries: 3,
+
+  // Observability: pipe receipts to your logging stack
+  onWitness: (receipt) => {
+    logger.info("swt3.witness", {
+      tool: receipt.toolName,
+      fingerprint: receipt.fingerprint,
+      error: receipt.error ?? null,
+    });
+  },
+});
+await server.connect(transport);
+
+process.on("SIGTERM", async () => {
+  await transport.flush();
+  process.exit(0);
+});</code></pre>
 
   <h3>Observability Pipeline</h3>
 
@@ -345,7 +407,7 @@ withSWT3(transport, {
   },
 });</code></pre>
 
-  <p>The callback fires for every tool call regardless of witness success or failure. If the witness POST failed, <code>receipt.error</code> tells you why. The tool call itself was never affected.</p>
+  <p>The callback fires for every witnessed tool call when the batch is flushed, regardless of whether the POST succeeded or failed. If the POST failed, <code>receipt.error</code> tells you why. Sampled-out calls do not fire <code>onWitness</code> (they appear in AI-SAMPLE.1 summaries instead). The tool call itself is never affected.</p>
 
   <h3>Signed Anchors for Regulated Environments</h3>
 
