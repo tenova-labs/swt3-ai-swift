@@ -21,7 +21,7 @@
  *   // On shutdown:
  *   await transport.flush();
  *
- * Copyright (c) 2026 Tenable Nova LLC. Apache 2.0. Patent pending (PPA #7, Claim Area 6).
+ * Copyright (c) 2026 Tenable Nova LLC. Apache 2.0. Patent pending.
  */
 
 import { createHash } from "crypto";
