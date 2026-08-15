@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zero-Code Compliance for Any MCP Server</title>
+<meta name="description" content="Add a tamper-proof audit trail to your existing MCP server tools in one line of code. No latency impact. No failure risk. Cryptographic evidence for every tool call.">
+<link rel="canonical" href="https://sovereign.tenova.io/guides/mcp-transport-tap.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Zero-Code Compliance for Any MCP Server">
+<meta property="og:description" content="Add a tamper-proof audit trail to your existing MCP server tools in one line of code. No latency impact. No failure risk. Cryptographic evidence for every tool call.">
+<meta property="og:url" content="https://sovereign.tenova.io/guides/mcp-transport-tap.html">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Zero-Code Compliance for Any MCP Server",
+  "description": "Add a tamper-proof audit trail to your existing MCP server tools in one line of code. Witness Middleware for the SWT3 AI Witness protocol.",
+  "author": { "@type": "Organization", "name": "Tenable Nova LLC" },
+  "publisher": { "@type": "Organization", "name": "Tenable Nova LLC" },
+  "datePublished": "2026-08-14",
+  "dateModified": "2026-08-15",
+  "proficiencyLevel": "Beginner",
+  "about": [
+    {"@type": "Thing", "name": "SWT3 protocol"},
+    {"@type": "Thing", "name": "Model Context Protocol"},
+    {"@type": "Thing", "name": "AI compliance"},
+    {"@type": "Thing", "name": "transport middleware"}
+  ]
+}
+</script>
+<style>
+  :root {
+    --bg: #FAFAFA; --bg-surface: #F5F5F4; --bg-elevated: #EFEFED;
+    --text: #1A1A1A; --text-muted: #555555; --accent: #c4875a;
+    --emerald: #22C55E; --red: #EF4444; --blue: #3B82F6;
+    --border: #D1D5DB; --code-bg: #F3F4F6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', 'Inter', -apple-system, sans-serif; line-height: 1.7; font-size: 15px; }
+  .site-header { background: var(--bg-surface); border-bottom: 1px solid var(--border); padding: 32px 0 24px; text-align: center; }
+  .site-header .brand { font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .site-header h1 { font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .site-header .subtitle { font-size: 14px; color: var(--text-muted); max-width: 640px; margin: 0 auto; }
+  .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+  .breadcrumb { font-size: 12px; color: var(--text-muted); margin: 16px 0 0; text-align: center; }
+  .breadcrumb a { color: var(--text-muted); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--accent); }
+  .audience { background: rgba(232,168,124,0.04); border: 1px solid rgba(232,168,124,0.15); border-radius: 8px; padding: 16px 20px; margin: 32px 0; font-size: 13px; }
+  .audience strong { color: var(--accent); }
+  .toc { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin: 0 0 32px; }
+  .toc h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--accent); margin-bottom: 12px; }
+  .toc a { display: block; font-size: 13px; color: var(--text-muted); text-decoration: none; padding: 3px 0; }
+  .toc a:hover { color: var(--accent); }
+  h2 { font-size: 20px; font-weight: 700; color: var(--accent); margin: 40px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 16px; font-weight: 600; margin: 28px 0 12px; }
+  p { margin: 0 0 14px; }
+  ul, ol { margin: 0 0 16px 24px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 16px; overflow-x: auto; font-size: 13px; line-height: 1.5; margin: 0 0 16px; }
+  code { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 13px; }
+  p code, li code { background: var(--code-bg); padding: 2px 6px; border-radius: 3px; }
+  table { width: 100%; border-collapse: collapse; margin: 0 0 20px; font-size: 14px; }
+  th { text-align: left; padding: 10px 12px; background: var(--bg-surface); border: 1px solid var(--border); font-weight: 600; }
+  td { padding: 10px 12px; border: 1px solid var(--border); }
+  .principle-box { background: rgba(59,130,246,0.04); border: 1px solid rgba(59,130,246,0.15); border-left: 4px solid var(--blue); border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 14px; }
+  .principle-box strong { color: var(--blue); }
+  .gap-box { background: rgba(239,68,68,0.04); border: 1px solid rgba(239,68,68,0.15); border-left: 4px solid var(--red); border-radius: 8px; padding: 16px 20px; margin: 20px 0; font-size: 14px; }
+  .gap-box strong { color: var(--red); }
+  .flow-diagram { background: #1a1a2e; color: #e0e0e0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; line-height: 1.6; padding: 20px 24px; border-radius: 8px; margin: 16px 0 20px; overflow-x: auto; white-space: pre; }
+  .qa { margin: 24px 0; }
+  .qa h3 { font-size: 15px; font-weight: 600; color: var(--text); margin: 20px 0 6px; }
+  .qa p { margin: 0 0 16px; color: var(--text-muted); }
+  .footer { border-top: 1px solid var(--border); padding: 24px 0; margin-top: 48px; text-align: center; font-size: 12px; color: var(--text-muted); }
+  .footer a { color: var(--text-muted); }
+  .footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <div class="brand">SWT3 AI Witness Protocol</div>
+    <h1>Zero-Code Compliance for Any MCP Server</h1>
+    <p class="subtitle">Add a tamper-proof audit trail to your existing AI tools in one line. No code changes. No latency. No risk.</p>
+    <p class="breadcrumb"><a href="/">Home</a> / <a href="/docs/">Docs</a> / Witness Middleware</p>
+  </div>
+</header>
+
+<main class="container" style="padding-top: 32px;">
+
+  <div class="audience">
+    <strong>Audience:</strong> Platform engineers, compliance leads, AI governance teams. No prior SWT3 experience required.
+  </div>
+
+  <nav class="toc">
+    <h4>Contents</h4>
+    <a href="#problem">1. The Problem</a>
+    <a href="#one-line">2. One Line of Code</a>
+    <a href="#how-it-works">3. What Happens When a Tool Runs</a>
+    <a href="#when-to-use">4. When to Use This</a>
+    <a href="#configuration">5. Configuration</a>
+    <a href="#batching">6. Batching and Graceful Shutdown</a>
+    <a href="#sampling">7. Sampling</a>
+    <a href="#multi-tenant">8. Multi-Tenant</a>
+    <a href="#retry">9. Retry</a>
+    <a href="#patterns">10. Real-World Patterns</a>
+    <a href="#questions">11. Common Questions</a>
+    <a href="#boundaries">12. What This Does Not Do</a>
+  </nav>
+
+  <!-- 1. The Problem -->
+  <h2 id="problem">1. The Problem</h2>
+
+  <p>Your MCP server runs tools. Those tools make decisions, access data, and take actions on behalf of users. When an auditor asks "what did the AI do?", the answer is usually application logs.</p>
+
+  <p>Application logs were never designed to be compliance evidence. They can be incomplete, modified, or lost. They lack cryptographic integrity. They do not map to regulatory controls. They are not independently verifiable.</p>
+
+  <p>The Witness Middleware creates a cryptographic witness record for every tool call your server processes. Each record proves which tool ran, how long it took, and whether it succeeded. The record is anchored by a SHA-256 fingerprint that anyone can independently recompute. If a single bit changes, the hash breaks. That is the difference between a log entry and evidence.</p>
+
+  <!-- 2. One Line of Code -->
+  <h2 id="one-line">2. One Line of Code</h2>
+
+  <div class="principle-box">
+    <strong>Key point:</strong> You do not modify your tools. You do not modify your server logic. You wrap the transport layer, and the audit trail appears automatically.
+  </div>
+
+<pre><code>import { withSWT3 } from "@tenova/swt3-mcp/middleware";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+
+const transport = withSWT3(new StdioServerTransport(), {
+  apiKey: process.env.SWT3_API_KEY,
+});
+await server.connect(transport);</code></pre>
+
+  <p>This wraps the communication layer between your server and the MCP client. Your tool handlers run exactly as before. The middleware observes what passes through and creates witness records after each tool call completes.</p>
+
+  <p>No API key? Omit it entirely. The middleware runs in demo mode and logs witness records to stderr. No network calls, no account required. Upgrade to a free account when you want persistent evidence.</p>
+
+  <!-- 3. What Happens When a Tool Runs -->
+  <h2 id="how-it-works">3. What Happens When a Tool Runs</h2>
+
+<div class="flow-diagram">Client sends tool request ──> Your tool handler runs ──> Response sent to client
+                                                                   │
+                                                       Witness payload buffered
+                                                       (after response is committed)
+                                                       ● Tool name
+                                                       ● Execution time
+                                                       ● Success or failure
+                                                       ● SHA-256 fingerprint
+                                                       ● Timestamp
+                                                                   │
+                                                       Buffer flushed in batch
+                                                       (on count threshold, timer, or shutdown)</div>
+
+  <div class="principle-box">
+    <strong>Three guarantees:</strong>
+    <ol style="margin: 10px 0 0 20px;">
+      <li>Your tool response is already sent before the witness fires. The middleware cannot slow down, block, or fail your tool calls.</li>
+      <li>If the witness network call fails, your tool call is completely unaffected. Silent failure by design.</li>
+      <li>The middleware sees tool names and execution time. It does not see prompt content, response content, or anything inside your tool handlers.</li>
+    </ol>
+  </div>
+
+  <p>Each witness record is anchored to the AI-TOOL.1 procedure in the <a href="https://sovereign.tenova.io/registry/">Universal Control Taxonomy</a>. This maps directly to EU AI Act Art. 12 (record-keeping), NIST AI RMF MEASURE 2.5, and OWASP Agentic Top 10 controls for tool abuse prevention.</p>
+
+  <!-- 4. When to Use This -->
+  <h2 id="when-to-use">4. When to Use This</h2>
+
+  <h3>"I already have an MCP server and want compliance evidence."</h3>
+
+  <p>Use the middleware. One import, one line, zero changes to your tools. You get a witness anchor for every tool call. Start in demo mode, upgrade to the persistent ledger when ready. This is the fastest path from zero evidence to cryptographic audit trail.</p>
+
+  <h3>"I am building a new MCP server and want full governance."</h3>
+
+  <p>Use the full SWT3 MCP server (<code>@tenova/swt3-mcp</code>). It exposes 33 compliance tools that cover the entire governance lifecycle: authorization gates before inference, trust verification between agents, guardrail witnessing, consent recording, forensic timeline reconstruction, and more.</p>
+
+  <p>The middleware and the full server can run together. The middleware witnesses at the transport layer. The server's tools witness at the handler layer. Two independent evidence streams. No conflict.</p>
+
+  <!-- 5. Configuration -->
+  <h2 id="configuration">5. Configuration</h2>
+
+  <p>All settings are optional. The middleware runs with zero configuration in demo mode.</p>
+
+  <table>
+    <thead>
+      <tr><th>Setting</th><th>Default</th><th>When You Need It</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>endpoint</code></td><td>sovereign.tenova.io</td><td>Only change if you are self-hosting the Axiom platform</td></tr>
+      <tr><td><code>apiKey</code></td><td>demo mode</td><td>Omit to evaluate locally. Set an <code>axm_</code> key to persist anchors to the ledger</td></tr>
+      <tr><td><code>tenantId</code></td><td>auto-resolved</td><td>Set explicitly if your API key serves multiple tenants</td></tr>
+      <tr><td><code>clearingLevel</code></td><td>1 (standard)</td><td>Raise to 2 or 3 to reduce how much metadata leaves the wire</td></tr>
+      <tr><td><code>agentId</code></td><td>none</td><td>Set to identify which agent produced the anchor (required for multi-agent chains)</td></tr>
+      <tr><td><code>signingKey</code></td><td>none</td><td>Set for HMAC non-repudiation. If someone disputes the evidence, the signature proves who minted it</td></tr>
+      <tr><td><code>maxBuffer</code></td><td>100</td><td>Raise if your server handles more than 100 concurrent in-flight tool calls</td></tr>
+      <tr><td><code>onWitness</code></td><td>none</td><td>Set a callback to pipe witness receipts to your logging or metrics system</td></tr>
+      <tr><td><code>batchSize</code></td><td>10</td><td>Number of witness payloads buffered before a batch flush. Lower for real-time evidence, higher for throughput</td></tr>
+      <tr><td><code>flushIntervalMs</code></td><td>5000</td><td>Maximum time (ms) before the buffer is flushed, even if <code>batchSize</code> has not been reached</td></tr>
+      <tr><td><code>samplingRate</code></td><td>1.0</td><td>Global sampling rate (0.0 to 1.0). Set below 1.0 to witness a fraction of tool calls</td></tr>
+      <tr><td><code>samplingRates</code></td><td>none</td><td>Per-tool overrides: <code>{ "critical_tool": 1.0, "health_check": 0.01 }</code></td></tr>
+      <tr><td><code>resolveTenant</code></td><td>none</td><td>Callback to resolve tenant per tool call. For multi-tenant MCP servers</td></tr>
+      <tr><td><code>maxRetries</code></td><td>3</td><td>Number of retry attempts for failed batch submissions (5xx or network errors)</td></tr>
+      <tr><td><code>maxRetryBuffer</code></td><td>500</td><td>Maximum payloads held in the retry queue. Oldest batches evicted first</td></tr>
+    </tbody>
+  </table>
+
+  <!-- 6. Batching and Graceful Shutdown -->
+  <h2 id="batching">6. Batching and Graceful Shutdown</h2>
+
+  <p>By default, the middleware buffers witness payloads and flushes them in batches of 10 (or every 5 seconds, whichever comes first). This reduces network overhead from one HTTP call per tool invocation to one call per batch.</p>
+
+  <div class="principle-box">
+    <strong>Flush triggers:</strong> The buffer flushes when any of these conditions is met:
+    <ol style="margin: 10px 0 0 20px;">
+      <li>The buffer reaches <code>batchSize</code> payloads (default: 10)</li>
+      <li>The flush timer fires (default: every 5000ms)</li>
+      <li>You call <code>transport.flush()</code> manually</li>
+      <li>You call <code>transport.close()</code> (best-effort flush before teardown)</li>
+    </ol>
+  </div>
+
+  <h3>Graceful Shutdown</h3>
+
+  <p><code>withSWT3()</code> returns the transport with a <code>flush()</code> method attached. Call it before your process exits to drain any remaining payloads.</p>
+
+<pre><code>const transport = withSWT3(new StdioServerTransport(), {
+  apiKey: process.env.SWT3_API_KEY,
+});
+await server.connect(transport);
+
+// On shutdown:
+process.on("SIGTERM", async () => {
+  await transport.flush();
+  process.exit(0);
+});</code></pre>
+
+  <p>If you call <code>transport.close()</code> instead (the standard MCP transport lifecycle), the middleware flushes automatically before closing. If the flush fails, the close still completes. Evidence delivery is best-effort; transport teardown is never blocked.</p>
+
+  <p>The flush timer uses <code>.unref()</code> so it will not keep a Node.js process alive after all other work is done. You do not need to explicitly clean up the timer.</p>
+
+  <h3>Tuning for Real-Time vs. Throughput</h3>
+
+<pre><code>// Real-time evidence (every tool call flushed immediately)
+withSWT3(transport, { batchSize: 1 });
+
+// High-throughput server (batch up to 50, flush every 10s)
+withSWT3(transport, { batchSize: 50, flushIntervalMs: 10_000 });</code></pre>
+
+  <!-- 7. Sampling -->
+  <h2 id="sampling">7. Sampling</h2>
+
+  <p>High-volume servers may not need to witness every single tool call. The middleware supports deterministic sampling: given the same fingerprint input, the same witness/skip decision is made every time. This is not random. It is reproducible.</p>
+
+<pre><code>// Witness 10% of tool calls globally
+withSWT3(transport, {
+  apiKey: process.env.SWT3_API_KEY,
+  samplingRate: 0.1,
+});</code></pre>
+
+  <h3>Per-Tool Overrides</h3>
+
+  <p>Critical tools can be witnessed at a higher rate than routine ones. Per-tool rates override the global rate.</p>
+
+<pre><code>withSWT3(transport, {
+  apiKey: process.env.SWT3_API_KEY,
+  samplingRate: 0.01,   // 1% for everything else
+  samplingRates: {
+    "execute_trade": 1.0,    // 100% for trades
+    "modify_account": 1.0,   // 100% for account changes
+    "health_check": 0.0,     // never witness health checks
+  },
+});</code></pre>
+
+  <div class="principle-box">
+    <strong>AI-SAMPLE.1 summaries:</strong> When tools are sampled out, the middleware tracks how many calls were skipped per tool. On each batch flush, it emits an AI-SAMPLE.1 summary anchor that records the skip count and sampling rate. The audit trail always shows what was witnessed and what was intentionally excluded.
+  </div>
+
+  <p>The sampling algorithm uses the first two bytes of the SHA-256 fingerprint hash as a uint16 threshold. This is the same algorithm used by the Python and TypeScript SDKs, producing identical sampling decisions across all SWT3 implementations for the same input.</p>
+
+  <!-- 8. Multi-Tenant -->
+  <h2 id="multi-tenant">8. Multi-Tenant</h2>
+
+  <p>If your MCP server handles requests from multiple tenants, the middleware can resolve the correct tenant for each tool call at runtime.</p>
+
+<pre><code>withSWT3(transport, {
+  apiKey: process.env.SWT3_API_KEY,
+  tenantId: "DEFAULT_TENANT",
+  resolveTenant: (toolName, params) => {
+    // Extract tenant from the tool call parameters
+    return params.tenant_id as string | undefined;
+  },
+});</code></pre>
+
+  <p>The callback receives the tool name and the full JSON-RPC params object. Return a tenant ID string, or <code>undefined</code> to fall back to the configured <code>tenantId</code>.</p>
+
+  <p>Each payload in the batch carries its own <code>tenant_id</code> field. A single batch can contain payloads for multiple tenants. The server routes each payload to the correct tenant ledger.</p>
+
+  <p>The resolved tenant is also used in the fingerprint formula, so fingerprints are always scoped to the correct tenant. Cross-tenant fingerprint collisions are not possible.</p>
+
+  <!-- 9. Retry -->
+  <h2 id="retry">9. Retry</h2>
+
+  <p>Network failures and server errors do not lose evidence. The middleware maintains an in-memory retry queue for failed batches.</p>
+
+  <table>
+    <thead>
+      <tr><th>Response</th><th>Behavior</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>2xx (success)</td><td>Receipts fired, payloads cleared</td></tr>
+      <tr><td>4xx (client error)</td><td>Dropped immediately. Error receipts fired. No retry (the request itself is invalid)</td></tr>
+      <tr><td>5xx (server error)</td><td>Queued for retry with exponential backoff (1s, 2s, 4s)</td></tr>
+      <tr><td>Network error</td><td>Queued for retry with exponential backoff</td></tr>
+    </tbody>
+  </table>
+
+  <p>Retries piggyback on the flush interval timer. There are no extra timers or background threads. Each flush cycle checks the retry queue first, sends any eligible batches (past their backoff delay), then flushes new payloads.</p>
+
+  <p>The retry queue is bounded at <code>maxRetryBuffer</code> payloads (default: 500). If the queue overflows, the oldest batches are evicted first. After <code>maxRetries</code> attempts (default: 3), the batch is dropped and error receipts are fired via <code>onWitness</code>.</p>
+
+  <div class="gap-box">
+    <strong>Not a WAL:</strong> The retry queue is in-memory only. If the process crashes, queued payloads are lost. This is intentional. The middleware is a best-effort evidence layer, not a message broker. For crash-resilient witnessing, use the full SDK with write-ahead log support.
+  </div>
+
+  <!-- 10. Real-World Patterns -->
+  <h2 id="patterns">10. Real-World Patterns</h2>
+
+  <h3>Observability Pipeline</h3>
+
+  <p>Pipe witness receipts into your existing observability stack. Every tool call becomes a structured event in Datadog, Splunk, CloudWatch, or any system that accepts structured logs.</p>
+
+<pre><code>withSWT3(transport, {
+  apiKey: process.env.SWT3_API_KEY,
+  onWitness: (receipt) => {
+    logger.info("swt3.tool.witnessed", {
+      tool: receipt.toolName,
+      fingerprint: receipt.fingerprint,
+      latency_ms: receipt.latencyMs,
+      error: receipt.error ?? null,
+    });
+  },
+});</code></pre>
+
+  <p>The callback fires for every tool call regardless of witness success or failure. If the witness POST failed, <code>receipt.error</code> tells you why. The tool call itself was never affected.</p>
+
+  <h3>Signed Anchors for Regulated Environments</h3>
+
+  <p>When evidence may be disputed, HMAC-SHA256 signatures bind each anchor to the holder of the signing key. The signature proves the anchor was minted by an authorized system, not reconstructed after the fact.</p>
+
+<pre><code>withSWT3(transport, {
+  apiKey: process.env.SWT3_API_KEY,
+  signingKey: process.env.SWT3_SIGNING_KEY,
+  agentId: "claims-processor-v3",
+});</code></pre>
+
+  <p>Register the signing key server-side to enable verification. Every anchor minted by this agent carries a tamper-evident signature.</p>
+
+  <h3>Minimal Metadata for Classified Environments</h3>
+
+  <p>Clearing level 3 strips all descriptive metadata. Tool names are hashed. Only numeric factors (call count, latency, success/failure) and the cryptographic fingerprint leave the wire. The evidence proves something happened without revealing what.</p>
+
+<pre><code>withSWT3(transport, {
+  apiKey: process.env.SWT3_API_KEY,
+  clearingLevel: 3,
+});</code></pre>
+
+  <!-- 11. Common Questions -->
+  <h2 id="questions">11. Common Questions</h2>
+
+  <div class="qa">
+
+    <h3>"Can the middleware break my server?"</h3>
+    <p>No. The tool response is committed to the wire before the witness fires. If the witness fails, your server never knows. This behavior is verified by 358 automated tests covering error injection, network failure, concurrent load, batching, sampling, multi-tenant routing, and retry scenarios.</p>
+
+    <h3>"Can I use this with any MCP transport?"</h3>
+    <p>Yes. Stdio, SSE, HTTP, WebSocket, or any custom transport that implements the standard MCP Transport interface. The middleware does not import the MCP SDK. It works with the interface shape, not a specific implementation.</p>
+
+    <h3>"What if I already use the full SWT3 MCP server?"</h3>
+    <p>They coexist without conflict. The middleware witnesses at the transport layer (tool names and latency). The server's 33 tools witness at the handler layer (detailed compliance metadata). Two independent evidence streams that complement each other.</p>
+
+    <h3>"What about high-volume servers?"</h3>
+    <p>The middleware batches witness payloads (default: 10 per batch, flush every 5 seconds) to reduce network overhead. For servers processing thousands of tool calls per minute, use <a href="#sampling">sampling</a> to witness a configurable fraction of calls while emitting AI-SAMPLE.1 summaries that document exactly what was excluded. Failed batches are automatically retried with exponential backoff. The pending call tracker holds up to 100 concurrent in-flight calls (configurable via <code>maxBuffer</code>).</p>
+
+    <h3>"Does this work without an account?"</h3>
+    <p>Yes. Omit the API key and the middleware runs in demo mode. Witness records log to stderr with a <code>(demo)</code> tag. No network calls. When you are ready for persistent evidence, <a href="https://sovereign.tenova.io/signup">create a free account</a> and set the API key.</p>
+
+    <h3>"What regulatory frameworks does this cover?"</h3>
+    <p>Every AI-TOOL.1 anchor maps to EU AI Act Art. 12 (record-keeping), NIST AI RMF MEASURE 2.5 (AI system monitoring), OWASP Agentic Top 10 (tool abuse detection), and CMMC AU-2/AU-3 (audit event generation). The <a href="https://sovereign.tenova.io/registry/">UCT Registry</a> documents the full mapping.</p>
+
+  </div>
+
+  <!-- 12. What This Does Not Do -->
+  <h2 id="boundaries">12. What This Does Not Do</h2>
+
+  <div class="gap-box">
+    <strong>Clear boundaries:</strong>
+    <ul style="margin: 10px 0 0 16px; list-style: none;">
+      <li style="margin-bottom: 8px;"><strong>Does not enforce policy.</strong> The middleware witnesses. It cannot block, reject, or modify tool calls. If you need authorization gates, guardrail enforcement, or pre-inference policy checks, use the <a href="https://www.npmjs.com/package/@tenova/swt3-mcp">full MCP server</a>.</li>
+      <li style="margin-bottom: 8px;"><strong>Does not see prompt or response content.</strong> It operates at the transport layer. Tool names and execution time are visible. What your tools receive and return is not.</li>
+      <li style="margin-bottom: 8px;"><strong>Does not require the MCP SDK as a dependency.</strong> The middleware works with the Transport interface shape. No class imports from <code>@modelcontextprotocol/sdk</code>.</li>
+      <li><strong>Does not replace the full MCP server.</strong> The middleware adds an evidence layer. The server adds governance. They serve different purposes and can run together.</li>
+    </ul>
+  </div>
+
+  <h3>Getting Started</h3>
+
+  <p>Install the package:</p>
+
+<pre><code>npm install @tenova/swt3-mcp</code></pre>
+
+  <p>Import the middleware, wrap your transport, and connect. Every tool call your server processes now produces a cryptographic witness record. Start in demo mode, verify the output, then connect to the ledger when you are ready.</p>
+
+  <ul>
+    <li><a href="/guides/mcp-connect.html">MCP server setup guide</a></li>
+    <li><a href="/guides/mcp-governance-compliance.html">Full MCP governance guide</a></li>
+    <li><a href="https://www.npmjs.com/package/@tenova/swt3-mcp">npm package</a></li>
+    <li><a href="/signup">Create a free account</a></li>
+    <li><a href="/docs/">SDK documentation</a></li>
+  </ul>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>&copy; 2026 Tenable Nova LLC. All rights reserved. Patent pending.</p>
+    <p style="margin-top:6px;">114 AI Procedures across 62 Namespaces. 36 frameworks. 205 compliance guides. SDKs in 10 languages. 358 automated tests.</p>
+    <p style="margin-top:6px;">SWT3 and Sovereign Witness Traceability are trademarks of Tenable Nova LLC. MCP (Model Context Protocol) is a trademark of Anthropic PBC. All other third-party trademarks are the property of their respective owners. Use of these names is for identification and interoperability purposes only.</p>
+    <p style="margin-top:6px;">This guide is informational and does not constitute legal advice. Consult qualified counsel for regulatory compliance decisions.</p>
+  </div>
+</footer>
+
+</body>
+</html>
