@@ -6,7 +6,11 @@ MCP server for the SWT3 AI Witness protocol. Adds cryptographic compliance attes
 
 SWT3 (Sovereign Witness Traceability) works by hashing your AI's inputs and outputs locally, extracting numeric factors (latency, token count, guardrail status), and anchoring them into a cryptographic fingerprint that anyone can independently verify. Your prompts and responses never leave your machine. The auditor gets tamper-proof evidence. You keep your data.
 
-## What's New in v0.6.4
+## What's New in v0.6.5
+
+**Witness Middleware.** `withSWT3(transport)` wraps any MCP transport to auto-witness every tool call as an AI-TOOL.1 anchor. Zero code changes to tool handlers. Response is already sent before the witness fires -- cannot block, cannot fail your tools. Works with any MCP server, not just ours. See [Witness Middleware](#witness-middleware) below.
+
+### v0.6.4
 
 10 new compliance tools, 1 prompt template, and the pre-inference gate. The MCP server now exposes 33 tools covering the full AI governance lifecycle: from authorization before inference to incident reporting after.
 
@@ -76,6 +80,54 @@ Six new tools, one prompt template. The newest closes the autonomous vehicle com
 
 - **Compliance Intelligence** -- `resolve_crosswalk` maps any procedure to every framework control it satisfies (27 frameworks, 113 procedures, offline). `coverage_report` shows which procedures your audit session has covered for a given framework, with a score and remaining gaps.
 - Aligned with core SDK v0.5.9 (`resolve()`, `coverage()`, local witness mode).
+
+## Witness Middleware
+
+Zero-integration compliance witnessing for any MCP server. Wrap your transport and every tool call automatically mints an AI-TOOL.1 witness anchor. No code changes to your tool handlers. No SDK integration. One line.
+
+```typescript
+import { withSWT3 } from "@tenova/swt3-mcp/middleware";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+
+const transport = withSWT3(new StdioServerTransport(), {
+  apiKey: process.env.SWT3_API_KEY,
+});
+await server.connect(transport);
+// Every tool call now auto-witnesses AI-TOOL.1 anchors
+```
+
+**How it works:** The middleware wraps the transport's `send()` and `onmessage` to observe `tools/call` request/response pairs. After the response is already committed to the wire, it fires a witness POST. The tool handler never knows SWT3 exists. Failures never propagate. Your tool calls cannot be blocked, delayed, or affected in any way.
+
+**Works with any transport:** Stdio, SSE, HTTP, WebSocket, custom. The middleware duck-types the MCP Transport interface -- no dependency on `@modelcontextprotocol/sdk`.
+
+**Demo mode:** Omit the `apiKey` and anchors are logged to stderr instead of POSTed. Useful for local development.
+
+### Configuration
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `endpoint` | `https://sovereign.tenova.io` | Axiom API endpoint |
+| `apiKey` | demo mode | API key (`axm_...`) |
+| `tenantId` | auto-resolved | Tenant ID |
+| `clearingLevel` | `1` | Data clearing level (0-3) |
+| `agentId` | | Agent identity (AI-ID.1) |
+| `signingKey` | | HMAC signing key |
+| `maxBuffer` | `100` | Max pending calls tracked before drop-oldest eviction |
+| `onWitness` | | Callback fired after each witness attempt |
+
+### Callback
+
+```typescript
+withSWT3(transport, {
+  apiKey: process.env.SWT3_API_KEY,
+  onWitness: (receipt) => {
+    console.log(`${receipt.toolName} -> ${receipt.fingerprint} (${receipt.latencyMs}ms)`);
+    if (receipt.error) console.warn(`Witness failed: ${receipt.error}`);
+  },
+});
+```
+
+The callback fires for every tool call regardless of witness success or failure. The `error` field is set only when the witness POST failed -- the tool call itself was never affected.
 
 ## Why This Exists
 
