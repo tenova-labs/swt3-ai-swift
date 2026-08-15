@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SWT3 AI Governance Guides -- Compliance Crosswalks, Quickstarts, and Regulatory Mapping</title>
+<meta name="description" content="204 guides for AI compliance, governance, and cryptographic evidence. EU AI Act, GDPR, NIST AI RMF, CMMC, NYC LL 144, Idaho SB 1297, Maryland HB 895. Search by role: developer, auditor, compliance officer, executive.">
+<link rel="canonical" href="https://sovereign.tenova.io/guides/index.html">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SWT3 AI Governance Guides -- Compliance Crosswalks, Quickstarts, and Regulatory Mapping">
+<meta property="og:description" content="204 guides for AI compliance, governance, and cryptographic evidence. EU AI Act, GDPR, NIST AI RMF, CMMC, NYC LL 144, Idaho SB 1297, Maryland HB 895. Search by role: developer, auditor, compliance officer, executive.">
+<meta property="og:url" content="https://sovereign.tenova.io/guides/index.html">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "SWT3 AI Governance Guides -- Compliance Crosswalks, Quickstarts, and Regulatory Mapping",
+  "datePublished": "2026-07-29",
+  "dateModified": "2026-08-13",
+  "publisher": { "@type": "Organization", "name": "Tenable Nova LLC" },
+  "proficiencyLevel": "Intermediate",
+  "about": [
+    {"@type": "Thing", "name": "SWT3 protocol"},
+    {"@type": "Thing", "name": "algorithmic accountability"}
+  ]
+}
+</script>
+<meta name="keywords" content="AI governance guides, EU AI Act compliance, GDPR Article 22, NIST AI RMF, AI compliance SDK, cryptographic evidence, SWT3 protocol, AI audit trail, CMMC, bias audit, GRC integration">
+<style>
+:root{--bg:#FAFAFA;--bg-surface:#F5F5F4;--text:#1A1A1A;--text-muted:#555555;--accent:#c4875a;--emerald:#22C55E;--border:#D1D5DB;--code-bg:#F3F4F6}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI','Inter',-apple-system,sans-serif;line-height:1.7;font-size:15px}
+.site-header{background:var(--bg-surface);border-bottom:1px solid var(--border);padding:32px 0 24px;text-align:center}
+.site-header .brand{font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+.site-header h1{font-size:28px;font-weight:700;margin-bottom:4px}
+.site-header .subtitle{font-size:14px;color:var(--text-muted);max-width:600px;margin:0 auto}
+.breadcrumb{font-size:12px;color:var(--text-muted);margin:16px 0 0;text-align:center}
+.breadcrumb a{color:var(--text-muted);text-decoration:none}.breadcrumb a:hover{color:var(--accent)}
+.container{max-width:860px;margin:0 auto;padding:0 24px}
+.stats{background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin:32px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;text-align:center}
+.stats .num{font-size:28px;font-weight:800;color:var(--accent)}
+.stats .label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px}
+.toolbar{position:sticky;top:0;z-index:100;background:var(--bg);padding:12px 0 8px;margin-bottom:8px}
+.cat-nav{display:flex;gap:4px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.cat-nav::-webkit-scrollbar{height:4px}.cat-nav::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.cat-pill{white-space:nowrap;padding:4px 12px;font-size:11px;border-radius:20px;border:1px solid var(--border);color:var(--text-muted);text-decoration:none;transition:all 0.15s;flex-shrink:0}
+.cat-pill.active,.cat-pill:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.search-row{position:relative;margin:8px 0}
+.search-bar{width:100%;padding:10px 14px;padding-right:100px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--bg-surface);color:var(--text);outline:none}
+.search-bar:focus{border-color:var(--accent)}
+.search-bar::placeholder{color:rgba(85,85,85,0.4)}
+#search-count{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text-muted);pointer-events:none}
+.role-pills{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.role-pill{padding:5px 14px;font-size:12px;font-weight:600;border:1px solid var(--border);border-radius:20px;background:none;color:var(--text-muted);cursor:pointer;transition:all 0.15s;font-family:inherit}
+.role-pill:hover{border-color:var(--accent);color:var(--accent)}
+.role-pill.active{background:rgba(196,135,90,0.12);color:var(--accent);border-color:var(--accent)}
+h2{font-size:18px;font-weight:700;color:var(--accent);margin:40px 0 16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+p{font-size:14px;color:var(--text-muted);margin-bottom:12px}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.guide-list{list-style:none;margin:0 0 24px;padding:0}
+.guide-list li{padding:8px 0;border-bottom:1px solid rgba(0,0,0,0.03);font-size:14px}
+.guide-list li a{color:var(--text);font-weight:500}.guide-list li a:hover{color:var(--accent)}
+.guide-list .tag{font-size:11px;color:var(--text-muted);margin-left:8px}
+.guide-list .new{font-size:10px;font-weight:700;color:#22C55E;background:rgba(34,197,94,0.1);padding:2px 6px;border-radius:3px;margin-left:8px;text-transform:uppercase}
+.guide-section.hidden{display:none}
+.guide-list li.hidden{display:none}
+.no-results{text-align:center;padding:40px 0;color:var(--text-muted);font-size:14px;display:none}
+.footer{text-align:center;padding:48px 0 32px;font-size:11px;color:rgba(160,147,125,0.4);line-height:1.8;border-top:1px solid var(--border);margin-top:64px}
+.footer a{color:var(--text-muted);text-decoration:none}.footer a:hover{color:var(--accent)}
+@media(max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}.role-pills{gap:4px}.role-pill{padding:4px 10px;font-size:11px}}
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <div class="breadcrumb"><a href="/">Home</a> / Guides</div>
+  <div class="brand" style="margin-top:16px">SWT3 Protocol</div>
+  <h1>AI Governance Guides</h1>
+  <p class="subtitle">Compliance crosswalks, implementation quickstarts, and regulatory mapping for AI systems across regulated industries.</p>
+</div>
+
+<div class="container">
+
+  <div class="stats">
+    <div><div class="num">202</div><div class="label">Guides</div></div>
+    <div><div class="num">113</div><div class="label">Procedures</div></div>
+    <div><div class="num">18</div><div class="label">Profiles</div></div>
+    <div><div class="num">36</div><div class="label">Frameworks</div></div>
+  </div>
+
+  <div class="toolbar" id="toolbar">
+    <div class="cat-nav" id="cat-nav">
+      <a href="#quickstart" class="cat-pill">Quickstart</a>
+      <a href="#developer" class="cat-pill">Developer</a>
+      <a href="#us-federal" class="cat-pill">US Federal</a>
+      <a href="#us-state" class="cat-pill">US State</a>
+      <a href="#agentic-ai" class="cat-pill">Agentic AI</a>
+      <a href="#database-ai" class="cat-pill">Database AI</a>
+      <a href="#eu-ai-act" class="cat-pill">EU AI Act</a>
+      <a href="#gdpr" class="cat-pill">GDPR</a>
+      <a href="#nist" class="cat-pill">NIST</a>
+      <a href="#fintech" class="cat-pill">Financial</a>
+      <a href="#provider-frameworks" class="cat-pill">Providers</a>
+      <a href="#security" class="cat-pill">Security</a>
+      <a href="#international" class="cat-pill">International</a>
+      <a href="#regional" class="cat-pill">Regional</a>
+      <a href="#platform-integration" class="cat-pill">Platform</a>
+      <a href="#auditor" class="cat-pill">Auditor</a>
+      <a href="#leadership" class="cat-pill">Executive</a>
+      <a href="#protocol" class="cat-pill">Protocol</a>
+      <a href="#support" class="cat-pill">Support</a>
+    </div>
+    <div class="search-row">
+      <input type="text" id="search" placeholder="Search 204 guides..." class="search-bar" aria-label="Search guides">
+      <span id="search-count"></span>
+    </div>
+    <div class="role-pills" role="group" aria-label="Filter by role">
+      <button class="role-pill active" data-role="all">All</button>
+      <button class="role-pill" data-role="developer">Developer</button>
+      <button class="role-pill" data-role="auditor">Auditor</button>
+      <button class="role-pill" data-role="compliance">Compliance</button>
+      <button class="role-pill" data-role="executive">Executive</button>
+    </div>
+  </div>
+
+  <div id="no-results" class="no-results">No guides match your search. Try a different term or reset the filter.</div>
+
+  <section class="guide-section" id="quickstart">
+  <h2>Quickstart</h2>
+  <ul class="guide-list">
+    <li data-role="developer executive"><a href="cryptographic-ai-evidence-quickstart.html">Cryptographic AI Evidence Quickstart</a> <span class="tag">10 lines, Python + TypeScript</span> <span class="new">new</span></li>
+    <li data-role="developer executive"><a href="ai-witness-quickstart.html">AI Witness SDK Quickstart</a> <span class="tag">Getting started</span></li>
+    <li data-role="developer executive"><a href="swt3-protocol.html">SWT3 Protocol Overview</a> <span class="tag">Architecture</span></li>
+    <li data-role="developer executive"><a href="swt3-design-rationale.html">SWT3 Design Rationale</a> <span class="tag">Why decisions were made</span></li>
+    <li data-role="developer"><a href="local-ai-agent-governance-nvidia-n1x.html">Local AI Agent Governance on NVIDIA N1X Hardware</a> <span class="tag">Edge AI, Microsoft Scout, ARM</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="self-hosted-quickstart.html">Run SWT3 in Air-Gapped and Self-Hosted Environments</a> <span class="tag">Air-gap, private endpoint, offline WAL</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="mobile-edge-ai-attestation.html">How to Implement AI Attestation on Mobile Edge Devices</a> <span class="tag">Android, Kotlin, TFLite, device context, WAL on mobile, battery</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="autonomous-vehicle-ai-governance.html">Autonomous Vehicle AI Governance with SWT3</a> <span class="tag">VLA, trajectory attestation, ISO/PAS 8800, UNECE WP.29 R157, safety classification, Alpamayo</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="connectivity-constrained-compliance.html">How to Maintain AI Compliance in Connectivity-Constrained Environments</a> <span class="tag">Intermittent networks, WAL deep dive, batch upload, offline verify, rural</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="slm-compliance-evidence.html">How to Produce Compliance Evidence for Small Language Model Deployments</a> <span class="tag">SLM, quantization, distillation, GGUF, Phi-3, Gemma, Llama 3.2, RAG+SLM, edge AI</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="developer">
+  <h2>Developer Experience</h2>
+  <ul class="guide-list">
+    <li data-role="developer"><a href="api-reference.html">SWT3 API Reference -- Complete Endpoint Documentation</a> <span class="tag">REST API, endpoints, schemas, error codes, rate limits</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="developer-before-after.html">Replace Manual AI Audit Evidence with Cryptographic Witness Anchors</a> <span class="tag">Before/after comparison</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="developer-integration-patterns.html">Add Cryptographic Compliance Evidence to Any AI Application</a> <span class="tag">8 patterns, procedure mapping</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="developer-governance-instrumentation.html">Governance Instrumentation Guide</a> <span class="tag">Witness governance decisions, framework checklists, SDK examples</span> <span class="new">new</span></li>
+    <li data-role="developer auditor"><a href="developer-auditor-bridge.html">See What Your Auditor Receives from SWT3 Witness Anchors</a> <span class="tag">Developer-auditor bridge</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="developer-coverage-report.html">Measure AI Compliance Coverage with SWT3 Witness Anchors</a> <span class="tag">Coverage dashboard, gap analysis</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="developer-cicd-guide.html">Validate AI Compliance Configuration in Your CI/CD Pipeline</a> <span class="tag">CI/CD, GitHub Actions, doctor</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="developer-gate-config-guide.html">Configure .swt3-gate.yml for CI/CD Compliance Gates</a> <span class="tag">.swt3-gate.yml spec, generate, validate, evaluate</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="runtime-surface-governance.html">Govern AI Across Every Runtime Surface</a> <span class="tag">8 SDKs, 21 adapters, regulatory trigger matrix</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="webhook-integration-guide.html">Webhook Integration Guide -- Setup, Debugging, and HMAC Verification</a> <span class="tag">Webhooks, HMAC, SIEM, retry semantics, debugging</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="rate-limits-and-quotas.html">Rate Limits and Quotas -- Token Bucket, Tier Limits, and Optimization</a> <span class="tag">Rate limiting, token bucket, throughput, capacity planning</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="us-federal">
+  <h2>US Federal AI Policy</h2>
+  <ul class="guide-list">
+    <li data-role="compliance executive"><a href="june-2026-ai-executive-order-crosswalk.html">How the June 2026 AI Executive Order Changes Runtime Compliance</a> <span class="tag">Anti-licensing, CFAA, Clearinghouse, 30/60-day deadlines</span></li>
+    <li data-role="compliance executive developer"><a href="great-american-ai-act-ivo-crosswalk.html">How to Use SWT3 as Independent Verification Infrastructure Under the Great American AI Act</a> <span class="tag">GAAIA, IVO audits, CAISI, $1M/day penalties, state preemption</span> <span class="new">new</span></li>
+    <li data-role="compliance developer"><a href="ftc-ai-accuracy-crosswalk.html">FTC AI Accuracy Policy Statement Crosswalk</a> <span class="tag">Suppression of accuracy, Section 5 deception, output steering disclosure, comment period July 31</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="nspm-11-ai-crosswalk.html">NSPM-11: AI in the National Security Enterprise Crosswalk</a> <span class="tag">Signed June 5, 2026. 4 pillars: Adoption, Adaptation, Assurance, Accountability. Replaces NSM-25</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="cfpb-ai-underwriting-crosswalk.html">CFPB Circular 2026-03: AI Credit Underwriting Crosswalk</a> <span class="tag">Binding May 2026. ML adverse action reasons, no black box defense, ECOA/Reg B</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="us-state">
+  <h2>US State AI Laws</h2>
+  <ul class="guide-list">
+    <li data-role="compliance"><a href="texas-traiga-crosswalk.html">Texas TRAIGA (HB 149) Crosswalk</a> <span class="tag">Effective now</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="california-sb53-crosswalk.html">California SB 53 (Frontier AI Transparency) Crosswalk</a> <span class="tag">Effective now</span></li>
+    <li data-role="compliance"><a href="california-ab2013-crosswalk.html">California AB 2013 (Training Data Transparency) Crosswalk</a> <span class="tag">Effective now, 12 disclosure categories</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="california-sb942-crosswalk.html">California SB 942 (AI Transparency Act) Crosswalk</a> <span class="tag">Effective Aug 2, 2026, watermarking, C2PA</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="colorado-ai-act-crosswalk.html">Colorado AI Act (SB 26-189) Crosswalk</a> <span class="tag">Effective Jan 2027</span></li>
+    <li data-role="compliance"><a href="nyc-ll144-crosswalk.html">NYC Local Law 144 (Automated Employment Decision Tools) Crosswalk</a> <span class="tag">Effective now, AEDT bias audit</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="connecticut-sb2-crosswalk.html">Connecticut SB 2 (AI Accountability Act) Crosswalk</a> <span class="tag">Impact assessments, consumer notification</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="illinois-ai-safety-act-crosswalk.html">Illinois AI Safety Measures Act (SB 315) Crosswalk</a> <span class="tag">Signed July 6, 2026. First US law requiring annual AI audits</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="illinois-hb3773-crosswalk.html">Illinois HB 3773 (AI Employment Decisions) Crosswalk</a> <span class="tag">Effective now, disparate impact, AIVIA consent</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="new-york-raise-act-crosswalk.html">New York RAISE Act Crosswalk</a> <span class="tag">Effective now, frontier AI safety, $3M penalties</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="connecticut-sb5-omnibus-ai-crosswalk.html">Connecticut SB5 Omnibus AI and Online Safety Act (2026)</a> <span class="tag">39 sections, 3-phase enforcement Oct 2026-Oct 2027, 12 procedures</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="washington-hb2225-crosswalk.html">Washington HB 2225 (AI Companion Chatbot Safety Act) Crosswalk</a> <span class="tag">Effective Jan 2027, disclosure cadences, minor protections, private right of action</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="state-ai-companion-laws-crosswalk.html">State AI Companion Laws (WA, OR, NE, ME -- 4-State Composite)</a> <span class="tag">Chatbot disclosure, minor protections, crisis detection, private right of action</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="connecticut-cart-act-crosswalk.html">Connecticut CART Act (SB 5 Early Draft) Crosswalk</a> <span class="tag">Superseded by SB5 Omnibus -- see above</span></li>
+    <li data-role="compliance"><a href="idaho-sb1297-crosswalk.html">Idaho SB 1297 (AI Disclosure Act) Crosswalk</a> <span class="tag">Effective Jul 2027, AI identification, crisis response</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="maryland-hb895-crosswalk.html">Maryland HB 895 (AI Surveillance Pricing Ban) Crosswalk</a> <span class="tag">Effective Oct 2026, food retail, $10K penalties</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="tennessee-sb1580-crosswalk.html">Tennessee SB 1580 (AI Mental Health Therapy Ban) Crosswalk</a> <span class="tag">In effect Jul 2026, therapy chatbot prohibition, $5K/violation</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="rhode-island-ai-laws-crosswalk.html">Rhode Island AI Therapy, Safety, and Clinical Disclosure Laws (2026)</a> <span class="tag">3 laws, self-harm safety, $15K/day penalty</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="health-insurance-ai-crosswalk.html">Health Insurance AI Regulations (6-State Composite: IN, AL, UT, WA, IA, GA)</a> <span class="tag">Prior auth, claims, underwriting, 240+ bills nationwide</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="new-york-2026-ai-package-crosswalk.html">New York 2026 AI Legislative Package (6 Bills)</a> <span class="tag">Chatbot safety, training data, FAIR News Act, surveillance pricing, workforce reporting</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="oregon-sb1546-ai-companion-crosswalk.html">Oregon SB 1546 (AI Companion Safety Act) Crosswalk</a> <span class="tag">Effective Jan 2027, mental health safeguards, private right of action</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="georgia-ai-laws-2026-crosswalk.html">Georgia AI Laws 2026 (SB 540 + SB 444) Crosswalk</a> <span class="tag">Chatbot safety + healthcare AI insurance, effective 2027</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="washington-hb1170-ai-disclosure-crosswalk.html">Washington HB 1170 (AI Content Disclosure) Crosswalk</a> <span class="tag">Effective Feb 2027, content provenance, watermarking, 1M user threshold</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="virginia-ivo-framework-crosswalk.html">Virginia IVO Framework (SB 384/HB 797) Crosswalk</a> <span class="tag">Signed Apr 13, 2026. First US state to legislate Independent Verification Organizations for AI</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="agentic-ai">
+  <h2>Agentic AI Integration</h2>
+  <ul class="guide-list">
+    <li data-role="developer"><a href="google-adk-witness.html">Google ADK Witness Integration</a> <span class="tag">Agent Development Kit</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="microsoft-foundry-witness.html">Microsoft Foundry Witness Integration</a> <span class="tag">Azure AI Foundry + AGT</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="multi-agent-witness.html">Multi-Agent Witness (CrewAI + A2A)</a> <span class="tag">Orchestration + Messaging</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="cisco-cloud-control-witness.html">Cisco Cloud Control Agent Witnessing</a> <span class="tag">MCP-native, 50+ connectors</span> <span class="new">new</span></li>
+    <li data-role="compliance developer"><a href="openclaw-ai-agent-governance-crisis.html">Prevent AI Agent Crises After OpenClaw</a> <span class="tag">15 procedures, 5 control domains, CVE response</span> <span class="new">new</span></li>
+    <li data-role="compliance developer"><a href="cisa-agentic-ai-crosswalk.html">CISA/NSA Agentic AI Security Guidance Crosswalk</a> <span class="tag">Five Eyes joint guidance, cryptographic agent identity, 5 risk categories, Apr 2026</span> <span class="new">new</span></li>
+    <li data-role="developer auditor compliance"><a href="multi-agent-chain-audit-trail.html">Build an Auditable Multi-Agent Chain</a> <span class="tag">cycle_id, chain verification, trust degradation, density policy</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="a2a-agent-card-integration.html">Add Compliance Credentials to A2A Agent Cards</a> <span class="tag">Google A2A, agent discovery, delegation</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="database-ai">
+  <h2>Database AI Governance</h2>
+  <ul class="guide-list">
+    <li data-role="developer compliance"><a href="oracle-26ai-crosswalk.html">Oracle AI Database 26ai Crosswalk</a> <span class="tag">MCP + Select AI Agent</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="snowflake-cortex-crosswalk.html">Snowflake Cortex AI Crosswalk</a> <span class="tag">Horizon Catalog + SR 11-7</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="eu-ai-act">
+  <h2>EU AI Act</h2>
+  <ul class="guide-list">
+    <li data-role="compliance executive"><a href="africa-eu-ai-act-crosswalk.html">EU AI Act Compliance for AI Systems in African Markets</a> <span class="tag">Extraterritorial, mobile-first, NIS 2 supply chain, AU strategy</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="nis2-directive-crosswalk.html">NIS 2 Directive Crosswalk</a> <span class="tag">Art. 21, supply chain, personal liability, 18 sectors, EU AI Act convergence</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="eu-ai-act-cheatsheet.html">EU AI Act Cheatsheet</a> <span class="tag">Quick reference</span></li>
+    <li data-role="compliance"><a href="eu-ai-omnibus-agreement.html">EU AI Act Omnibus Agreement</a> <span class="tag">Formally adopted June 2026, high-risk deferrals, new prohibitions</span></li>
+    <li data-role="compliance auditor"><a href="eu-ai-act-bias-detection-witnessing.html">Bias Detection Witnessing</a> <span class="tag">Art. 10(5) + GDPR Art. 9</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="eu-high-risk-classification-response.html">High-Risk AI Classification Response</a> <span class="tag">Annex III</span></li>
+    <li data-role="compliance auditor"><a href="annex-iv-metrics.html">Annex IV Technical Documentation Metrics</a> <span class="tag">Art. 11</span></li>
+    <li data-role="compliance auditor"><a href="annex-vii-data-room.html">Annex VII Data Room Guide</a> <span class="tag">Conformity assessment</span></li>
+    <li data-role="compliance"><a href="fria-dpia-mapping.html">FRIA/DPIA Evidence Mapping</a> <span class="tag">Art. 27 + GDPR Art. 35</span></li>
+    <li data-role="compliance"><a href="deployer-responsibility-matrix.html">Deployer Responsibility Matrix</a> <span class="tag">Art. 26</span></li>
+    <li data-role="compliance"><a href="gpai-code-of-practice-mapping.html">GPAI Code of Practice Mapping</a> <span class="tag">General Purpose AI</span></li>
+    <li data-role="compliance"><a href="vi-cjt-alf-lavr-mapping.html">VI/CJT/ALF/LAVR Architecture Mapping</a> <span class="tag">EU Futurium</span></li>
+    <li data-role="compliance developer"><a href="eu-article-50-code-of-practice.html">EU Code of Practice on AI-Generated Content Marking</a> <span class="tag">Art. 50, C2PA, deepfakes, Aug 2 enforcement</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="eu-ai-act-august-2026-checklist.html">EU AI Act August 2, 2026 Countdown Checklist</a> <span class="tag">Art. 50, GPAI, Omnibus deferrals</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="eu-ai-act-day-one-enforcement.html">EU AI Act Enforcement Begins August 2: What Changed and Your First 72 Hours</a> <span class="tag">Day-one actions, AI Office powers, misconceptions</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="eu-ai-act-omnibus-update.html">EU AI Act Digital Omnibus Update (July 2026)</a> <span class="tag">8 amendments, Annex III deferred to Dec 2027, new prohibitions</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="eu-product-liability-directive-crosswalk.html">EU Product Liability Directive (2024/2853) Crosswalk</a> <span class="tag">AI as product, strict liability, transposition Dec 9 2026, private right of action</span> <span class="new">new</span></li>
+    <li data-role="compliance auditor"><a href="en-18286-ai-qms-crosswalk.html">EN 18286:2026 AI Quality Management System Crosswalk</a> <span class="tag">First AI Act harmonized standard, QMS Art. 17, national adoption Jan 2027</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="gdpr">
+  <h2>GDPR</h2>
+  <ul class="guide-list">
+    <li data-role="compliance"><a href="gdpr-article-17-mapping.html">GDPR Article 17 Right to Erasure Mapping</a> <span class="tag">Data deletion</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="nist">
+  <h2>NIST</h2>
+  <ul class="guide-list">
+    <li data-role="developer auditor compliance"><a href="nist-cyber-ai-profile-crosswalk.html">NIST Cyber AI Profile (IR 8596) Crosswalk</a> <span class="tag">CSF 2.0, Secure/Defend/Thwart, 6500+ contributors</span> <span class="new">new</span></li>
+    <li data-role="compliance auditor"><a href="nist-ci-ai-profile-crosswalk.html">NIST AI RMF Sector Profile Crosswalk</a> <span class="tag">Apr 2026</span> <span class="new">new</span></li>
+    <li data-role="compliance auditor"><a href="nist-continuous-monitoring-ai-crosswalk.html">How NIST's Continuous Monitoring Model Maps to SWT3</a> <span class="tag">June 2026, Godel proof, continuous attestation</span> <span class="new">new</span></li>
+    <li data-role="compliance auditor"><a href="cmmc-overlay.html">CMMC Overlay</a> <span class="tag">CMMC v2.0</span></li>
+    <li data-role="compliance auditor"><a href="conmon-strategy-template.html">Continuous Monitoring Strategy Template</a> <span class="tag">NIST 800-137</span></li>
+    <li data-role="developer compliance"><a href="fim-integration.html">File Integrity Monitoring Integration</a> <span class="tag">SI-7</span></li>
+    <li data-role="developer compliance"><a href="nist-agentic-ai-standards-crosswalk.html">NIST Agentic AI Standards Crosswalk</a> <span class="tag">CAISI, NCCoE, agent identity, delegation, tool witnessing</span> <span class="new">new</span></li>
+    <li data-role="compliance auditor"><a href="nist-cosais-crosswalk.html">NIST COSAiS (Control Overlays for Securing AI Systems) Crosswalk</a> <span class="tag">Draft 2026, 800-53 Rev 5 AI overlays, 15 procedure mappings</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="fintech">
+  <h2>Financial Services</h2>
+  <ul class="guide-list">
+    <li data-role="compliance auditor"><a href="treasury-ai-rmf-crosswalk.html">Treasury OCC and SR 11-7 AI Model Risk Crosswalk</a> <span class="tag">OCC / SR 11-7</span> <span class="new">new</span></li>
+    <li data-role="compliance auditor"><a href="treasury-fs-ai-rmf-crosswalk.html">Treasury FS AI Risk Management Framework (230 Control Objectives)</a> <span class="tag">Feb 2026, FSSCC, CRI, 7 risk domains, examiner baseline</span> <span class="new">new</span></li>
+    <li data-role="compliance auditor"><a href="sr-11-7-overlay.html">SR 11-7 Model Risk Overlay</a> <span class="tag">Fed Reserve</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="provider-frameworks">
+  <h2>AI Provider Frameworks</h2>
+  <ul class="guide-list">
+    <li data-role="developer compliance"><a href="anthropic-zero-trust-crosswalk.html">Implement Zero Trust for AI Agents (Anthropic Framework)</a> <span class="tag">3-tier architecture, 8-phase implementation</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="microsoft-agt-crosswalk.html">Add Independent Verification to Microsoft Agent Governance Toolkit</a> <span class="tag">AGT, Foundry, OWASP Agentic Top 10</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="openai-agentic-governance-crosswalk.html">Implement OpenAI Agent Governance and Compliance</a> <span class="tag">Scaffolding layers, guardrails, ZDR</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="claude-fable-5-regulated.html">Deploy Claude Fable 5 in Regulated Environments</a> <span class="tag">Safety classifiers, model fallback, Anthropic (model suspended)</span></li>
+    <li data-role="compliance developer"><a href="ai-model-export-control-compliance.html">Maintain Compliance When AI Models Are Recalled Under Export Control</a> <span class="tag">Model recall, revocation, incident response, provider-agnostic</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="inkling-compliance-witnessing.html">Witness Thinking Machines Inkling Deployments</a> <span class="tag">975B MoE, open-weight, vLLM Day-0, fine-tuning governance</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="llama-stack-compliance-witnessing.html">Witness Meta Llama Stack Deployments</a> <span class="tag">Open-weight compliance gap, GPAI, LiteLLM, vLLM</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="fugu-compliance-witnessing.html">Witness Sakana Fugu Multi-Model Orchestration</a> <span class="tag">Learned routing, GPAI, EU AI Act, NVIDIA Dynamo, multi-agent chain</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="kimi-k3-compliance-witnessing.html">Witness Moonshot AI Kimi K3 Deployments</a> <span class="tag">2.8T MoE, 896 experts, Chinese-origin, GPAI, open-weight</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="digitalocean-inference-witnessing.html">Witness Kimi K3 on DigitalOcean Inference Engine</a> <span class="tag">Serverless evidence gap, model routing, 70+ models, OpenAI-compatible</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="security">
+  <h2>Security and MCP</h2>
+  <ul class="guide-list">
+    <li data-role="developer compliance security"><a href="sovereign-ai-governance.html">Govern Sovereign and Self-Hosted AI Deployments</a> <span class="tag">Self-hosted, vLLM, Ollama, forensic reconstruction, 7 procedures</span> <span class="new">new</span></li>
+    <li data-role="developer compliance security"><a href="ai-agent-supply-chain-security.html">Secure AI Agent Supply Chains</a> <span class="tag">Agent attack vectors, IR tabletop, forensic reconstruction, 7 procedures</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="automated-red-teaming-governance.html">Govern Automated AI Red Teaming Campaigns</a> <span class="tag">AI-REDTEAM.1, vulnerability lifecycle, GPT-Red, NVIDIA Garak</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="mitre-atlas-crosswalk.html">MITRE ATLAS AI Threat Crosswalk</a> <span class="tag">Adversarial AI, DoD, ATT&CK</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="nsa-mcp-security-mapping.html">NSA MCP Security Mapping</a> <span class="tag">NSA guidance</span></li>
+    <li data-role="developer"><a href="owasp-mcp-top10-mapping.html">OWASP MCP Top 10 Mapping</a> <span class="tag">OWASP</span></li>
+    <li data-role="developer compliance security"><a href="cosai-risk-map-crosswalk.html">CoSAI AI Security Risk Map Crosswalk</a> <span class="tag">30 risks, 6 domains, OASIS Open, Google/NVIDIA/Microsoft/Anthropic coalition</span> <span class="new">new</span></li>
+    <li data-role="developer compliance security"><a href="nemo-guardrails-witnessing.html">Witness NVIDIA NeMo Guardrails with Independent Evidence</a> <span class="tag">Guardrail attestation, Votal AI, PAN, CrowdStrike, inline security</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="mcp-connect.html">Connect to the SWT3 MCP Server</a> <span class="tag">Install, Claude Desktop, Cursor, Windsurf config</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="mcp-witness-middleware.html">Witness Middleware: Zero-Code Compliance for Any MCP Server</a> <span class="tag">Transport tap, batching, sampling, multi-tenant, retry</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="mcp-governance-compliance.html">MCP Governance and Compliance</a> <span class="tag">Tool policy, witnessing, conformance</span></li>
+    <li data-role="developer compliance"><a href="ai-provider-outage-resilience.html">Prove What Happened When Your AI Provider Goes Dark</a> <span class="tag">Outage evidence, chain gaps, drift</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="threat-model.html">Threat Model</a> <span class="tag">Security architecture</span></li>
+    <li data-role="developer"><a href="signing-security-guide.html">Signing Security Guide</a> <span class="tag">HMAC + ML-DSA-65</span></li>
+    <li data-role="developer"><a href="secret-store-integration.html">Secret Store Integration</a> <span class="tag">Key management</span></li>
+    <li data-role="developer"><a href="supply-chain-integrity.html">Supply Chain Integrity</a> <span class="tag">SBOM + provenance</span></li>
+    <li data-role="developer"><a href="ai-threat-detection-witness.html">Witness AI-Driven Threat Detection</a> <span class="tag">SOC AI accountability, SIEM integration</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="cisco-ai-defense-attestation.html">Add Independent Attestation to Cisco AI Defense</a> <span class="tag">Defense-in-depth, runtime proof</span> <span class="new">new</span></li>
+    <li data-role="executive compliance security"><a href="ai-security-decision-witnessing.html">Who Watches the Security AI?</a> <span class="tag">CISO strategic guide, recursive trust, CrowdStrike, PAN</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="international">
+  <h2>International and Defense</h2>
+  <ul class="guide-list">
+    <li data-role="compliance"><a href="five-eyes-overlay.html">Five Eyes Overlay</a> <span class="tag">Intelligence community</span></li>
+    <li data-role="compliance"><a href="multi-cloud-data-boundary.html">Multi-Cloud Data Boundary Guide</a> <span class="tag">Sovereignty</span></li>
+    <li data-role="developer"><a href="dynamo-integration.html">Dynamo Integration Guide</a> <span class="tag">GPU fleet</span></li>
+    <li data-role="developer compliance"><a href="cross-silicon-compliance.html">Cross-Silicon Compliance</a> <span class="tag">NVIDIA + TPU + AMD + Trainium + Gaudi</span></li>
+    <li data-role="developer compliance"><a href="cross-silicon-k8s-attestation.html">Multi-Silicon Kubernetes Attestation</a> <span class="tag">Helm chart, DaemonSet, GKE, EKS, AKS</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="telecom-5g-ran-ai-compliance.html">Telecom AI Compliance: 5G, RAN, and Network Edge Attestation</a> <span class="tag">O-RAN, Cloud RAN, ETSI MEC, 3GPP, network slicing, 5G</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="ai-factory-compliance-blueprint.html">AI Factory Compliance Blueprint</a> <span class="tag">GPU infrastructure, Triton, Dynamo, NIM</span></li>
+    <li data-role="developer"><a href="marvell-custom-silicon-compliance.html">Prove AI Compliance on Marvell Custom Silicon Infrastructure</a> <span class="tag">Custom ASIC, optical interconnect, NVLink Fusion</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="openmdw-license-provenance.html">OpenMDW License Provenance</a> <span class="tag">Model licensing</span></li>
+    <li data-role="compliance"><a href="taiwan-ai-basic-act-crosswalk.html">Taiwan AI Basic Act Crosswalk</a> <span class="tag">20 articles, 7 principles, sector-level risk authority, semiconductor AI</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="south-korea-ai-framework-crosswalk.html">South Korea AI Framework Act Crosswalk</a> <span class="tag">AI Basic Act, PIPC, high-impact AI</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="japan-ai-promotion-act-crosswalk.html">Japan AI Promotion Act Crosswalk</a> <span class="tag">Innovation-first, AI Utilization Guidelines, APPI</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="china-ai-compliance-stack-crosswalk.html">China AI Compliance Stack Crosswalk</a> <span class="tag">CAC, 5 regulations, algorithm filing, content labeling</span></li>
+    <li data-role="compliance"><a href="china-anthropomorphic-ai-crosswalk.html">China Anthropomorphic AI Interaction Services</a> <span class="tag">Emotional AI, virtual companions, minor protections, CAC July 2026</span> <span class="new">new</span></li>
+    <li data-role="compliance developer"><a href="china-ai-agent-regulations-crosswalk.html">China AI Agent Regulations Crosswalk</a> <span class="tag">World's first agent regulation, three-tier authorization, CAC filing, effective Jul 2026</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="council-of-europe-ai-convention-crosswalk.html">Council of Europe Framework Convention on AI (CETS 225) Crosswalk</a> <span class="tag">First binding AI treaty, EU effective Sep 1 2026, US signed not ratified</span> <span class="new">new</span></li>
+    <li data-role="compliance developer"><a href="singapore-imda-agentic-ai-crosswalk.html">Singapore IMDA Agentic AI Framework Crosswalk</a> <span class="tag">MGF v1.5, tool-calling agents, multi-agent chains, PDPA</span> <span class="new">new</span></li>
+    <li data-role="compliance auditor"><a href="jtc-21-crosswalk.html">CEN-CENELEC JTC 21 Harmonized Standards Crosswalk</a> <span class="tag">prEN 18286, Article 50, GPAI, EU harmonized standards</span> <span class="new">new</span></li>
+    <li data-role="compliance auditor"><a href="iso-42001-crosswalk.html">ISO/IEC 42001 AI Management System Crosswalk</a> <span class="tag">AIMS certification, Annex A controls, EU AI Act alignment</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="vietnam-ai-law-crosswalk.html">Vietnam AI Law (Law 134/2025) Crosswalk</a> <span class="tag">First ASEAN AI law, risk-based classification, in force March 2026</span> <span class="new">new</span></li>
+    <li data-role="compliance developer"><a href="india-it-rules-2026-crosswalk.html">India IT Rules 2026: Deepfakes and AI Content Labeling</a> <span class="tag">MeitY, SGI, 3-hour takedown, AI labeling, intermediary liability</span> <span class="new">new</span></li>
+    <li data-role="compliance auditor"><a href="uk-ai-safety-bill-crosswalk.html">UK AI Regulation: Regulating for Growth Bill and Evidence Landscape</a> <span class="tag">Sandbox approach, no mandatory AI rules, dual UK/EU compliance, King's Speech May 2026</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="uae-ai-governance-crosswalk.html">UAE AI Governance Crosswalk</a> <span class="tag">PDPL Article 18, DIFC Regulation 10, Federal Authority for AI and Data</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="saudi-sdaia-responsible-ai-crosswalk.html">Saudi SDAIA Responsible AI Policy Crosswalk</a> <span class="tag">SDAIA, Vision 2030, Year of AI 2026, continuous assessment, PDPL</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="brazil-ai-bill-crosswalk.html">Brazil AI Bill Crosswalk</a> <span class="tag">LGPD, ANPD, risk tiers, EU digital partnership, LATAM</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="nigeria-ai-licensing-crosswalk.html">Nigeria AI Licensing Framework Crosswalk</a> <span class="tag">NITDA, high-risk licensing, annual impact assessments, West Africa</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="kenya-ai-bill-crosswalk.html">Kenya AI Bill 2026 Crosswalk</a> <span class="tag">Risk-based AI governance, record-keeping, DPA 2019, East Africa</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="rwanda-ai-policy-crosswalk.html">How to Meet Rwanda's National AI Policy Requirements</a> <span class="tag">MINICT, RISA, first African AI policy, EAC, Smart Africa</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="au-continental-ai-strategy-crosswalk.html">How to Align AI Governance with the AU Continental AI Strategy</a> <span class="tag">African Union, 55 member states, Phase 1, Malabo Convention, cross-border</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="peru-ai-law-crosswalk.html">How to Meet Peru's AI Law Requirements</a> <span class="tag">Law 31814, first LATAM binding AI law, prohibited uses, SGTD, OECD</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="colombia-conpes-4144-crosswalk.html">How to Meet Colombia's CONPES 4144 AI Policy Requirements</a> <span class="tag">CONPES 4144, four-tier risk, 106 actions, MinTIC, Andean Community</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="canada-ai-governance-2026-crosswalk.html">Canada AI Governance 2026 Crosswalk</a> <span class="tag">Post-AIDA, PIPEDA, OSFI, red-teaming, lifecycle traceability</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="australia-ai-standards-crosswalk.html">Australia AI Standards 2026 Crosswalk</a> <span class="tag">AISI, Voluntary AI Safety Standard, Privacy Act, ACL</span> <span class="new">new</span></li>
+    <li data-role="compliance"><a href="china-tc260-ethics-safety-crosswalk.html">China TC260 AI Ethics-Safety Guidelines Crosswalk</a> <span class="tag">TC260-005, 9 principles, 5 risk categories, CAC, PIPL, July 2026</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="regional">
+  <h2>Regional Compliance Overviews</h2>
+  <ul class="guide-list">
+    <li data-role="compliance executive"><a href="regional-europe-ai-compliance.html">AI Compliance Evidence for European Regulatory Frameworks</a> <span class="tag">EU AI Act, GPAI, GDPR, NIS-2, UK</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="regional-apac-ai-compliance.html">AI Governance Evidence for Asia-Pacific Regulatory Frameworks</a> <span class="tag">China, Japan, Korea, Singapore, Australia, India, Vietnam, Taiwan</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="regional-americas-ai-compliance.html">AI Compliance Evidence Across US Federal, State, and Latin American Frameworks</a> <span class="tag">NIST, 16 state laws, Brazil, Colombia, Peru, Canada</span> <span class="new">new</span></li>
+    <li data-role="compliance executive"><a href="regional-africa-mena-ai-compliance.html">AI Governance Evidence for African and Middle Eastern Regulatory Markets</a> <span class="tag">AU Continental, Kenya, Nigeria, Rwanda, Saudi, UAE</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="platform-integration">
+  <h2>Platform Integration</h2>
+  <ul class="guide-list">
+    <li data-role="developer"><a href="grc-platform-integration.html">Feed Cryptographic AI Evidence into GRC Platforms</a> <span class="tag">Vanta, Drata, ServiceNow, webhooks, OSCAL</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="ai-observability-attestation.html">Add Compliance Attestation to AI Observability Pipelines</a> <span class="tag">OTel, Datadog, Grafana, Jaeger</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="auditor">
+  <h2>Auditor and Assessor</h2>
+  <ul class="guide-list">
+    <li data-role="auditor compliance"><a href="governance-assessment-workflow.html">Governance Witnessing Assessment Workflow</a> <span class="tag">4-step methodology, evidence boundaries, pivot guidance, cross-jurisdiction</span> <span class="new">new</span></li>
+    <li data-role="auditor compliance"><a href="assessment-playbook.html">Assess AI Systems Using Cryptographic Compliance Evidence</a> <span class="tag">Operational playbook, 4 frameworks, 7 steps</span></li>
+    <li data-role="auditor"><a href="nb-eu-ai-act-walkthrough.html">EU AI Act Assessment Walkthrough for Notified Bodies</a> <span class="tag">16 articles, 80 procedures</span> <span class="new">new</span></li>
+    <li data-role="auditor"><a href="nb-nist-ai-rmf-walkthrough.html">NIST AI RMF Assessment Walkthrough</a> <span class="tag">GOVERN/MAP/MEASURE/MANAGE, 80 procedures</span> <span class="new">new</span></li>
+    <li data-role="auditor"><a href="nb-cmmc-walkthrough.html">CMMC AI Assessment Walkthrough for C3PAOs</a> <span class="tag">12 practice families, NIST 800-53</span> <span class="new">new</span></li>
+    <li data-role="auditor"><a href="nb-sr117-walkthrough.html">SR 11-7 Model Risk Assessment Walkthrough</a> <span class="tag">6 sections, bank examination</span> <span class="new">new</span></li>
+    <li data-role="auditor"><a href="ao-guide.html">Authorizing Official Guide</a> <span class="tag">RMF</span></li>
+    <li data-role="auditor"><a href="c3pao-guide.html">C3PAO Assessment Guide</a> <span class="tag">CMMC</span></li>
+    <li data-role="auditor"><a href="issm-guide.html">ISSM Guide</a> <span class="tag">Information security</span></li>
+    <li data-role="auditor"><a href="assessor-evidence-matrix.html">Assessor Evidence Matrix</a> <span class="tag">What to show auditors</span></li>
+    <li data-role="auditor developer"><a href="assessor-hot-sheet.html">Assessor Hot Sheet</a> <span class="tag">2-page leave-behind for assessment meetings</span></li>
+    <li data-role="auditor developer"><a href="swt3-auditor-display-standard.html">Auditor Display Standard</a> <span class="tag">SWT3-SPEC Section 23, reference CSS, conformity checklist</span> <span class="new">new</span></li>
+    <li data-role="auditor compliance"><a href="nb-pilot-package.html">Notified Body Pilot Package</a> <span class="tag">EU conformity, scope, evidence mapping</span></li>
+    <li data-role="auditor compliance"><a href="pilot-program.html">Pilot Program Guide</a> <span class="tag">Setup, onboarding, FAQ</span></li>
+    <li data-role="auditor compliance"><a href="forensic-chain-of-custody.html">Forensic Chain-of-Custody for AI Evidence</a> <span class="tag">Evidence lifecycle, SHA-256, 10-item checklist</span> <span class="new">new</span></li>
+    <li data-role="auditor compliance"><a href="assessor-gate-evaluation-guide.html">Evaluate .swt3-gate.yml Results in the Audit Portal</a> <span class="tag">Portal upload, reading results, follow-up questions</span> <span class="new">new</span></li>
+    <li data-role="auditor compliance"><a href="assessor-onboarding-kit.html">Assessor Onboarding Kit</a> <span class="tag">Guided introduction, verification walkthrough, report template</span> <span class="new">new</span></li>
+    <li data-role="auditor compliance executive"><a href="pilot-program-enterprise.html">Enterprise Evaluation Guide</a> <span class="tag">14-day evaluation, data handling, provider-deployer evidence</span> <span class="new">new</span></li>
+    <li data-role="auditor compliance"><a href="eu-ai-act-conformity-assessment.html">EU AI Act Conformity Assessment Evidence Guide</a> <span class="tag">Art. 9-15, GPAI Art. 51-56, Notified Body</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="leadership">
+  <h2>Regulatory and Executive Leadership</h2>
+  <ul class="guide-list">
+    <li data-role="executive compliance"><a href="plain-language-guide.html">What is Cryptographic AI Compliance Evidence?</a> <span class="tag">No technical background needed</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <section class="guide-section" id="protocol">
+  <h2 id="support">Support and Operations</h2>
+  <ul class="guide-list">
+    <li data-role="developer compliance"><a href="troubleshooting-faq.html">Troubleshooting and FAQ -- Self-Serve Support for SWT3 Integration</a> <span class="tag">SDK, API, webhooks, billing, onboarding, self-serve support</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="error-codes-reference.html">Error Codes Reference -- HTTP Status Codes, Diagnosis, and Resolution</a> <span class="tag">Error codes, 400/401/403/429/502, diagnosis trees, AXM codes</span> <span class="new">new</span></li>
+    <li data-role="developer compliance"><a href="api-key-lifecycle.html">API Key Lifecycle -- Create, Rotate, Revoke, and Secure</a> <span class="tag">API keys, rotation, CI/CD, secret managers, audit trail</span> <span class="new">new</span></li>
+  </ul>
+
+  <h2>Protocol and Registry</h2>
+  <ul class="guide-list">
+    <li data-role="developer auditor"><a href="swt3-spec-v1.html">SWT3 Protocol Specification v1.0</a> <span class="tag">Formal spec, test vectors, conformity requirements</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="uct-registry-reference.html">UCT Registry Reference</a> <span class="tag">204 procedures</span></li>
+    <li data-role="developer"><a href="trust-mesh-protocol.html">Trust Mesh Protocol</a> <span class="tag">Agent trust</span></li>
+    <li data-role="developer"><a href="trust-mesh-implementation.html">Trust Mesh Implementation Guide</a> <span class="tag">Developer</span> <span class="new">new</span></li>
+    <li data-role="developer auditor"><a href="trust-mesh-assessment.html">Trust Mesh Assessment Guide</a> <span class="tag">Auditor / NB</span> <span class="new">new</span></li>
+    <li data-role="developer"><a href="ai-agent-audit-trail.html">AI Agent Audit Trail</a> <span class="tag">Forensic chain</span></li>
+    <li data-role="developer"><a href="integrity-debt-score.html">Integrity Debt Score</a> <span class="tag">Metrics</span></li>
+    <li data-role="developer"><a href="oidc-ephemeral-signing.html">OIDC Ephemeral Signing</a> <span class="tag">Identity</span></li>
+    <li data-role="developer compliance"><a href="disaggregated-inference-witnessing.html">Witness Disaggregated Inference Across GPU Clusters</a> <span class="tag">KV cache custody, AMD, Cerebras</span> <span class="new">new</span></li>
+  </ul>
+  </section>
+
+  <div class="footer">
+    <p style="font-size:0.75em;color:#666;max-width:700px;margin:0 auto 1em;">This guide is provided for informational purposes only and does not constitute legal, regulatory, or compliance advice. Regulatory mappings and crosswalk interpretations reflect the publisher's analysis and may not address all obligations applicable to your organization. Consult qualified legal counsel before making compliance decisions based on this content.</p>
+    <p>Patent Pending. SWT3 and Sovereign Witness Traceability are trademarks of Tenable Nova LLC.</p>
+    <p style="font-size:0.75em;color:#666;max-width:700px;margin:0.5em auto;">This project is not affiliated with, endorsed by, or sponsored by any third-party AI provider. All third-party product names, logos, and trademarks mentioned in these guides are the property of their respective owners and are used for identification and interoperability purposes only.</p>
+    <p><a href="/terms/clearing-addendum">Clearing Addendum</a> &middot; <a href="/docs/factor-handoff-protocol.html">Factor Handoff</a> &middot; <a href="/docs/">SDK Docs</a> &middot; <a href="/registry/">Registry</a> &middot; <a href="/">Home</a></p>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var search=document.getElementById('search');
+  var countEl=document.getElementById('search-count');
+  var noResults=document.getElementById('no-results');
+  var items=document.querySelectorAll('.guide-list li');
+  var sections=document.querySelectorAll('.guide-section');
+  var pills=document.querySelectorAll('.role-pill');
+  var catPills=document.querySelectorAll('.cat-pill');
+  var total=items.length;
+
+  function filter(){
+    var q=search.value.toLowerCase();
+    var role=document.querySelector('.role-pill.active').dataset.role;
+    var visible=0;
+
+    items.forEach(function(li){
+      var text=li.textContent.toLowerCase();
+      var roles=(li.dataset.role||'').split(' ');
+      var matchSearch=!q||text.indexOf(q)!==-1;
+      var matchRole=role==='all'||roles.indexOf(role)!==-1;
+      var show=matchSearch&&matchRole;
+      li.classList.toggle('hidden',!show);
+      if(show)visible++;
+    });
+
+    sections.forEach(function(sec){
+      var has=sec.querySelector('.guide-list li:not(.hidden)');
+      sec.classList.toggle('hidden',!has);
+    });
+
+    countEl.textContent=(q||role!=='all')?visible+' of '+total:'';
+    noResults.style.display=visible===0?'block':'none';
+  }
+
+  search.addEventListener('input',filter);
+
+  pills.forEach(function(btn){
+    btn.addEventListener('click',function(){
+      document.querySelector('.role-pill.active').classList.remove('active');
+      btn.classList.add('active');
+      filter();
+    });
+  });
+
+  var observer=new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        catPills.forEach(function(p){p.classList.remove('active');});
+        var pill=document.querySelector('.cat-pill[href="#'+entry.target.id+'"]');
+        if(pill){
+          pill.classList.add('active');
+          pill.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+        }
+      }
+    });
+  },{rootMargin:'-80px 0px -60% 0px'});
+
+  sections.forEach(function(sec){observer.observe(sec);});
+})();
+</script>
+
+</body>
+</html>
