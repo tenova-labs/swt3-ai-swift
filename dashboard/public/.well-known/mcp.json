@@ -1,0 +1,30 @@
+{
+  "name": "SWT3 AI Witness",
+  "description": "Cryptographic AI governance and compliance attestation. 33 tools across 36 regulatory frameworks including EU AI Act, NIST AI RMF, OWASP Agentic Top 10, CMMC, and SR 11-7. Witness Middleware for zero-code transport-layer compliance.",
+  "version": "0.6.5",
+  "transport": "stdio",
+  "install": {
+    "npm": "npm install -g @tenova/swt3-mcp",
+    "npx": "npx @tenova/swt3-mcp"
+  },
+  "package": {
+    "registry": "npm",
+    "name": "@tenova/swt3-mcp",
+    "version": "0.6.5"
+  },
+  "links": {
+    "repository": "https://github.com/tenova-labs/swt3-ai",
+    "documentation": "https://sovereign.tenova.io/guides/mcp-connect.html",
+    "registry_listing": "https://registry.modelcontextprotocol.io/servers/io.tenova/swt3-witness",
+    "website": "https://tenova.io"
+  },
+  "provider": {
+    "name": "Tenable Nova LLC",
+    "url": "https://tenova.io",
+    "contact": "contact@tenovaai.com"
+  },
+  "tools_count": 33,
+  "frameworks_count": 36,
+  "procedures_count": 114,
+  "server_card": "/.well-known/mcp/server-card.json"
+}

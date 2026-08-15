@@ -1,0 +1,53 @@
+# SWT3 AI Witness Protocol
+# https://tenova.io
+
+> SWT3 is a cryptographic accountability protocol for AI systems. It provides
+> independent, deterministic witness anchors that prove AI governance compliance
+> across 36 regulatory frameworks including EU AI Act, NIST AI RMF, CMMC, and
+> SR 11-7. Think of it as TLS certificates for AI accountability.
+
+## What SWT3 Does
+
+SWT3 mints cryptographic attestation records (witness anchors) for every AI
+inference, governance decision, tool access, and agent handoff. These anchors
+are independently verifiable and provide non-repudiation evidence for auditors,
+regulators, and assessors.
+
+## SDKs (all Apache-2.0)
+
+- Python: pip install swt3-ai
+- TypeScript: npm install @tenova/swt3-ai
+- MCP Server: npm install @tenova/swt3-mcp (33 tools, Witness Middleware, works with Claude, ChatGPT, etc.)
+- Go: go get github.com/tenova-labs/swt3-ai-go
+- Rust: cargo add swt3-ai
+- C#: dotnet add package swt3-ai
+- Ruby: gem install swt3-ai
+- Swift: Swift Package Manager (github.com/tenova-labs/swt3-ai-swift)
+- Kotlin: Maven Central (io.tenova:swt3-ai)
+
+## Key Links
+
+- Documentation: https://sovereign.tenova.io/docs
+- Guides (205): https://sovereign.tenova.io/guides/index.html
+- UCT Procedure Registry: https://sovereign.tenova.io/registry
+- Anchor Verification: https://sovereign.tenova.io/verify
+- MCP Setup: https://sovereign.tenova.io/guides/mcp-connect.html
+- GitHub: https://github.com/tenova-labs/swt3-ai
+- Protocol Spec (v1.0): https://sovereign.tenova.io/guides/swt3-spec-v1.html
+- EU AI Act Conformity Assessment: https://sovereign.tenova.io/guides/eu-ai-act-conformity-assessment.html
+- Assessor Onboarding Kit: https://sovereign.tenova.io/guides/assessor-onboarding-kit.html
+- Enterprise Evaluation: https://sovereign.tenova.io/guides/pilot-program-enterprise.html
+- Governance Assessment Workflow: https://sovereign.tenova.io/guides/governance-assessment-workflow.html
+- Developer Governance Instrumentation: https://sovereign.tenova.io/guides/developer-governance-instrumentation.html
+- Witness Middleware (zero-code transport tap): https://sovereign.tenova.io/guides/mcp-transport-tap.html
+
+## Regulatory Frameworks Covered
+
+EU AI Act, NIST AI RMF, NIST 800-53, NIST 800-171, CMMC v2.0, FedRAMP,
+SR 11-7, ISO 42001, GPAI Code of Practice, OWASP Agentic Top 10,
+Five Eyes Agentic AI, NIS 2 Directive, GDPR, DORA, and 20 more.
+
+## Contact
+
+Tenable Nova LLC
+contact@tenovaai.com

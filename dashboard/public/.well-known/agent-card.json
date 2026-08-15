@@ -1,0 +1,103 @@
+{
+  "name": "SWT3 Witness Protocol",
+  "description": "Cryptographic witness anchors for AI accountability. Independent, deterministic attestation for AI inference, governance, and compliance across 36 regulatory frameworks.",
+  "url": "https://tenova.io",
+  "provider": {
+    "organization": "Tenable Nova LLC",
+    "url": "https://tenova.io"
+  },
+  "version": "0.6.5",
+  "capabilities": [
+    "ai-witness-attestation",
+    "compliance-evidence",
+    "model-trust-profiles",
+    "chain-witnessing",
+    "lifecycle-chains",
+    "delegation-trees",
+    "cost-witnessing",
+    "anchor-verification",
+    "clearing-engine",
+    "trust-mesh",
+    "revocation",
+    "forensic-reconstruction",
+    "verifiable-credentials",
+    "transport-middleware",
+    "probabilistic-sampling",
+    "batch-witnessing"
+  ],
+  "protocols": [
+    {
+      "name": "SWT3",
+      "version": "1.4.0",
+      "specification": "https://sovereign.tenova.io/guides/swt3-spec-v1.html"
+    },
+    {
+      "name": "MCP",
+      "version": "1.0",
+      "server": "https://www.npmjs.com/package/@tenova/swt3-mcp"
+    }
+  ],
+  "endpoints": {
+    "witness": "https://sovereign.tenova.io/api/v1/witness",
+    "witness_batch": "https://sovereign.tenova.io/api/v1/witness/batch",
+    "verify": "https://sovereign.tenova.io/verify",
+    "registry": "https://sovereign.tenova.io/registry",
+    "health": "https://sovereign.tenova.io/api/v1/health",
+    "crosswalks": "https://sovereign.tenova.io/registry/crosswalks.json",
+    "reconstruct": "https://sovereign.tenova.io/api/v1/reconstruct",
+    "passport": "https://sovereign.tenova.io/api/v1/passport/export"
+  },
+  "sdks": {
+    "python": "https://pypi.org/project/swt3-ai/",
+    "typescript": "https://www.npmjs.com/package/@tenova/swt3-ai",
+    "mcp": "https://www.npmjs.com/package/@tenova/swt3-mcp",
+    "rust": "https://crates.io/crates/swt3-ai",
+    "csharp": "https://www.nuget.org/packages/swt3-ai",
+    "ruby": "https://rubygems.org/gems/swt3-ai",
+    "swift": "https://github.com/tenova-labs/swt3-ai-swift",
+    "kotlin": "https://central.sonatype.com/artifact/io.tenova/swt3-ai",
+    "go": "https://pkg.go.dev/github.com/tenova-labs/swt3-ai-go"
+  },
+  "procedures": 114,
+  "namespaces": 62,
+  "documentation": "https://sovereign.tenova.io/guides/index.html",
+  "frameworks": [
+    "NIST-800-53",
+    "NIST-AI-RMF",
+    "EU-AI-ACT",
+    "CMMC",
+    "FedRAMP",
+    "SR-11-7",
+    "HIPAA-CFR",
+    "NIST-800-171",
+    "ISO-42001",
+    "OSHA-1926",
+    "RMF",
+    "GPAI-COP",
+    "FIVE-EYES",
+    "MITRE-ATLAS",
+    "EO-14110",
+    "SOC2",
+    "NIST-CSF-2",
+    "ISO-27001",
+    "PCI-DSS-4",
+    "DORA",
+    "NIS2",
+    "CRA",
+    "JTC-21",
+    "SINGAPORE-IMDA",
+    "SAUDI-SDAIA",
+    "UAE-ADIA",
+    "BRAZIL-AI",
+    "JAPAN-APA",
+    "KOREA-AIA",
+    "INDIA-DPDPA",
+    "AU-AI-ETHICS",
+    "ISO-PAS-8800",
+    "UNECE-WP29"
+  ],
+  "contact": {
+    "email": "contact@tenovaai.com",
+    "security": "https://tenova.io/.well-known/security.txt"
+  }
+}
