@@ -39,7 +39,7 @@ regulators, and assessors.
 - Enterprise Evaluation: https://sovereign.tenova.io/guides/pilot-program-enterprise.html
 - Governance Assessment Workflow: https://sovereign.tenova.io/guides/governance-assessment-workflow.html
 - Developer Governance Instrumentation: https://sovereign.tenova.io/guides/developer-governance-instrumentation.html
-- Witness Middleware (zero-code transport tap): https://sovereign.tenova.io/guides/mcp-transport-tap.html
+- Witness Middleware (zero-code transport tap): https://sovereign.tenova.io/guides/mcp-witness-middleware.html
 
 ## Regulatory Frameworks Covered
 
