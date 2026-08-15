@@ -293,7 +293,7 @@ withSWT3(transport, {
 });</code></pre>
 
   <div class="principle-box">
-    <strong>AI-SAMPLE.1 summaries:</strong> When tools are sampled out, the middleware tracks how many calls were skipped per tool. On each batch flush, it emits an AI-SAMPLE.1 summary anchor that records the skip count and sampling rate. The audit trail always shows what was witnessed and what was intentionally excluded.
+    <strong>AI-SAMPLE.1 summaries:</strong> When tools are sampled out, the middleware tracks how many calls were skipped per tool. On each batch flush that contains witnessed payloads, it prepends an AI-SAMPLE.1 summary anchor that records the skip count and sampling rate. The audit trail always shows what was witnessed and what was intentionally excluded.
   </div>
 
   <p>The sampling algorithm uses the first two bytes of the SHA-256 fingerprint hash as a uint16 threshold. This is the same algorithm used by the Python and TypeScript SDKs, producing identical sampling decisions across all SWT3 implementations for the same input.</p>
@@ -474,7 +474,7 @@ process.on("SIGTERM", async () => {
 
 <pre><code>npm install @tenova/swt3-mcp</code></pre>
 
-  <p>Import the middleware, wrap your transport, and connect. Every tool call your server processes now produces a cryptographic witness record. Start in demo mode, verify the output, then connect to the ledger when you are ready.</p>
+  <p>Import the middleware, wrap your transport, and connect. Every tool call your server processes now produces a cryptographic witness record (or a deterministic fraction, if you configure <a href="#sampling">sampling</a>). Start in demo mode, verify the output, then connect to the ledger when you are ready.</p>
 
   <ul>
     <li><a href="/guides/mcp-connect.html">MCP server setup guide</a></li>
