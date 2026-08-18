@@ -8,7 +8,63 @@ Witness your AI at the edge. Prove it followed the rules. Cryptographic accounta
 
 Your models run on-device. Your attestation stays on-device until you choose to transmit. Only irreversible hashes leave the device -- never prompts, responses, or model weights.
 
-GPAI transparency obligations are enforceable now. EU AI Act high-risk enforcement begins **December 2, 2027**. Edge inference is not exempt.
+EU AI Act GPAI transparency obligations enforce **August 2, 2026**. High-risk enforcement follows **December 2, 2027**. Edge inference is not exempt.
+
+## What's New in v0.6.5
+
+Scale governance. The protocol grew features that matter at GPAI scale, and every improvement flows through to Swift because fingerprints are identical across all 10 languages.
+
+### Probabilistic Witnessing (Python + TypeScript)
+
+**What it does:** A new sampling rate parameter lets the full-pipeline SDKs witness a statistical sample of inferences instead of every single one. Non-witnessed inferences are counted and summarized in periodic AI-SAMPLE.1 anchors on flush.
+
+**Why it matters for Swift:** On-device Core ML inference on iPhone and Vision Pro is inherently high-volume. When a server-side Python pipeline samples at 1% and your Swift app witnesses every on-device prediction at 100%, both produce anchors with the same fingerprint formula. The AI-SAMPLE.1 summary anchors are verifiable with `SWT3.mintFingerprint` -- your app can independently confirm that the server-side sampling was deterministic and nothing was selectively excluded.
+
+### Governance Effectiveness Metadata (Python + TypeScript)
+
+**What it does:** Governance witness methods now accept metadata recording review duration and participant count. Assessors use this to distinguish substantive governance from governance theater.
+
+**Why it matters for Swift:** If your iOS app displays compliance status from governance anchors, the metadata lives in the `ai_context` field at clearing levels 0-1. The data structure is forward-compatible. Your app can surface review quality indicators (duration, participant count) without any SDK changes.
+
+### Go SDK (v0.1.0)
+
+The 10th language in the SWT3 ecosystem. Zero dependencies. All 65 test vectors pass. Go covers the infrastructure layer -- Kubernetes operators, API gateways, inference orchestrators. Your Swift app talks to Go-based backend services; now both ends of the chain produce identical cryptographic evidence.
+
+### MCP Witness Middleware
+
+`withSWT3(transport)` wraps any MCP transport to auto-witness every tool call. If your Swift app interacts with MCP-enabled agents via server-side proxies, every tool call now has a cryptographic anchor verifiable with this package.
+
+### Updated Coverage
+
+- 114 procedures across 62 namespaces (AI-SAMPLE.1 added)
+- 10 SDK languages with byte-identical output
+- 36 framework crosswalks, 215 compliance guides
+- 2,515 tests passing across 5 languages
+
+### v0.6.4
+
+Pre-inference gate, chain reconstruction, 10 new MCP tools (33 total), Kotlin SDK (v0.1.1), 185 guides, 27 frameworks.
+
+### v0.6.3
+
+Four new attestation types for the procedures regulators ask about first. Each maps to regulations enforcing now or within months.
+
+- **Output Filter Result** (`OutputFilterResult` + `FilterAction`, AI-GRD.2) -- Guardrails run, but proving the output classification result is a separate evidence requirement. When Tencent's Doubao was shut down overnight for output violations, the gap was not whether guardrails existed but whether there was proof each output passed classification. This struct records whether model output passed content safety filters, what type of filter ran, and what action was taken. Distinct from input-side guardrail activation (AI-GRD.1) -- this is the output-side classification result. EU AI Act Art. 15(3), NIST AI RMF GOVERN 1.5.
+
+- **Data Provenance Attestation** (`DataProvenanceAttestation`, AI-DATA.1) -- Training data is the most guarded secret in AI. This type solves the tension: it attests that data governance review was performed WITHOUT disclosing what the training data was. No dataset names, no license strings, no content hashes of the data itself. Instead: governance reviewed (bool), documentation hash (SHA-256 of the data card, not the data), license compliance verified, demographic features confirmed absent. Satisfies EU AI Act Art. 10, SR 11-7 III.A, and CA-AB-2013 through diligence attestation, not disclosure.
+
+- **Consent Attestation** (`ConsentAttestation`, AI-CONSENT.1) -- GDPR lawful basis encoding for mobile apps that collect consent before on-device inference. Basis code, subject count, withdrawal availability, jurisdiction. When an iOS app runs Core ML locally, the consent evidence must exist before inference starts.
+
+- **Incident Report** (`IncidentReport`, AI-INCIDENT.1) -- NIS-2 gives you 24 hours to report. EU AI Act Art. 62 gives you 72. The question regulators ask is "when did you know?" This struct records severity, incident type, authority notification status, detection method, and reporting deadline -- structured evidence that the clock started when you say it did.
+- **Code Maps** -- `consentBasisCodes`, `incidentSeverityCodes`, `incidentTypeCodes`, `filterActionCodes` dictionaries for factor encoding.
+- **Governance Gate Types** -- `GateConfig`, `GateProcedure`, `GateGroup`, `FrameworkGate` structs for parsing .swt3-gate.yml configurations.
+- **Delegation Tree Types** -- `DelegationTree` struct for AI-DEL.1 hierarchical permission delegation.
+- **Resource Consumption Types** -- `ResourceConsumption` struct for AI-COST.1 token usage and cost witnessing.
+- **Deployment Context Types** -- `DeploymentContext` struct for device model, OS, chip type, and container image metadata.
+
+### v0.5.9
+
+- Compliance Intelligence available in Python, TypeScript, and MCP SDKs. Core primitives unchanged.
 
 ## What You Get
 
@@ -18,7 +74,7 @@ GPAI transparency obligations are enforceable now. EU AI Act high-risk enforceme
 - **`SWT3.signPayload`** -- HMAC-SHA256 signing with optional agent identity binding
 - **`SWT3.sha256Truncated`** -- truncated SHA-256 hashing for prompts, responses, and model weights
 - **`SWT3.timestampMs`** -- millisecond-precision timestamps matching the protocol clock
-- **Types** -- `WitnessPayload`, `WitnessReceipt`, `WitnessConfig`, `RevocationReason` structs (Sendable, Equatable, Codable)
+- **Types** -- `WitnessPayload`, `WitnessReceipt`, `WitnessConfig`, `GateConfig`, `DelegationTree`, `ResourceConsumption`, `DeploymentContext`, `RevocationReason` structs (Sendable, Equatable, Codable)
 - **Model Integrity** -- `SWT3.hashFile` and `SWT3.hashDirectory` for model weight verification
 
 ### Apple Platform Features
@@ -29,7 +85,7 @@ Available on iOS, macOS, and visionOS via `#if canImport`:
 - **`SWT3.witnessModelIntegrity`** -- witness Core ML model integrity (AI-MDL.1). Hashes the compiled `.mlmodelc` bundle for tamper detection and drift monitoring.
 - **`SWT3.witnessSpatialInference`** -- witness an AI decision with spatial context. Captures a 4x4 world transform matrix and hashes it into the anchor. For AI systems making decisions in physical space (navigation, object recognition, spatial reasoning on Vision Pro), this proves WHERE the decision was made, not just WHAT was decided.
 
-All output is byte-identical to the Python, TypeScript, Rust, C#, Ruby, and MCP SDKs. 7 languages, one audit trail. Verified by 74 tests covering 47 fingerprint vectors, 2 signing vectors, and 5 hash vectors.
+All output is byte-identical to the Python, TypeScript, Rust, C#, Ruby, Go, Kotlin, and MCP SDKs. 10 languages, one audit trail. Verified by 74 tests covering 47 fingerprint vectors, 2 signing vectors, and 5 hash vectors.
 
 ## Quick Start
 
@@ -37,7 +93,7 @@ Add to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/tenova-labs/swt3-ai-swift.git", from: "0.5.8"),
+    .package(url: "https://github.com/tenova-labs/swt3-ai-swift.git", from: "0.5.9"),
 ],
 targets: [
     .target(dependencies: [
@@ -146,6 +202,7 @@ All SWT3 SDKs produce identical fingerprints from the same inputs. A unified aud
 | Rust | [swt3-ai](https://crates.io/crates/swt3-ai) | crates.io |
 | C# / .NET | [swt3-ai](https://www.nuget.org/packages/swt3-ai) | NuGet |
 | Ruby | [swt3-ai](https://rubygems.org/gems/swt3-ai) | RubyGems |
+| Go | [swt3-ai](https://github.com/tenova-labs/swt3-ai-go) | Go modules |
 | MCP Server | [@tenova/swt3-mcp](https://www.npmjs.com/package/@tenova/swt3-mcp) | npm + MCP Registry |
 | K8s Witness Agent | [swt3-witness](https://github.com/tenova-labs/swt3-ai/tree/main/packages/swt3-witness) | GHCR + Helm |
 
