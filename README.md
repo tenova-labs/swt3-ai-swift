@@ -10,6 +10,26 @@ Your models run on-device. Your attestation stays on-device until you choose to 
 
 EU AI Act GPAI transparency obligations enforce **August 2, 2026**. High-risk enforcement follows **December 2, 2027**. Edge inference is not exempt.
 
+## What's New in v0.7.0
+
+AI does not run in a vacuum. It authenticates with service accounts, runs on hardware with supply chains, and consumes enough electricity to reshape power grids. v0.7.0 extends SWT3 down the full AI infrastructure stack with 22 new procedures across three families: credential governance (NHI), hardware supply chains (HBOM/DPP), and energy management (ADR). Every new anchor type verifies with the existing `SWT3.mintFingerprint` function -- no package update required.
+
+**Why this matters for Swift:** On-device Core ML inference is expanding into healthcare, automotive, and industrial settings where the hardware matters as much as the model. An iPhone running a clinical AI model now has credential governance (which health API keys does the agent hold?), hardware attestation (is the Secure Enclave intact?), and energy monitoring (is the device thermally safe for inference?) all verifiable with the same `SWT3.mintFingerprint` call. Edge devices in EV charging infrastructure can witness battery passport data using the same protocol their server-side Python pipeline uses for inference attestation.
+
+### 22 New Procedures
+
+**NHI (6):** Credential scope, lifecycle, privilege changes, rotation, delegation, revocation. **HBOM/DPP (10):** Hardware inventory, component lifecycle, thermal monitoring, water, PUE, supply chain provenance, battery health, charge cycles, degradation, end-of-life. **ADR (6):** Demand response events, baseline, curtailment, settlement, carbon credits, grid signals.
+
+- 266 procedures across 75 namespaces (was 118/64)
+- 59 MCP tools (was 37)
+- 10 SDK languages with byte-identical output
+- 36 framework crosswalks, 237 compliance guides
+- ~2,950 tests passing across 5 languages
+
+## What's New in v0.6.6
+
+Supply chain accountability. Four new procedures, a CI/CD gate action, and OTel GenAI conventions across the ecosystem. Every improvement flows through to Swift because fingerprints are identical across all 10 languages.
+
 ## What's New in v0.6.5
 
 Scale governance. The protocol grew features that matter at GPAI scale, and every improvement flows through to Swift because fingerprints are identical across all 10 languages.
