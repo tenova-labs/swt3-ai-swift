@@ -10,6 +10,26 @@ Your models run on-device. Your attestation stays on-device until you choose to 
 
 EU AI Act GPAI transparency obligations enforce **August 2, 2026**. High-risk enforcement follows **December 2, 2027**. Edge inference is not exempt.
 
+## What's New in v0.7.1
+
+MCP security is under fire. OWASP published the MCP Top 10 in 2026 -- 30-82% of MCP servers are vulnerable to tool poisoning, insufficient authentication, and shadow server proliferation. v0.7.1 adds three new procedures (AI-MCP.2, AI-MCP.3, AI-MCP.4) that close the remaining OWASP gaps. SWT3 is now the first protocol to cover all 10 OWASP MCP risks with cryptographic evidence. Every new anchor type verifies with the existing `SWT3.mintFingerprint` function -- no package update required.
+
+**Why this matters for Swift:** Apple Intelligence and on-device agents increasingly use tool-calling patterns that mirror MCP. When your iOS or visionOS app calls server-side MCP tools, the new MCP security anchors prove the tool schema was stable (AI-MCP.2), the server authenticated (AI-MCP.3), and the server was on your approved list (AI-MCP.4). Your Swift code can verify all three anchor types with the same `SWT3.mintFingerprint` call -- zero package changes. For edge deployments where the device itself hosts an MCP server, these procedures create evidence that the server configuration was not tampered with between releases.
+
+### 3 New Procedures
+
+- **AI-MCP.2** (Tool Integrity Attestation): Detects tool schema drift between connect and invoke. OWASP MCP-03.
+- **AI-MCP.3** (Server Auth Attestation): Records auth method and verification. No auth = FAIL = IA-9 finding. OWASP MCP-07.
+- **AI-MCP.4** (Server Discovery Attestation): Shadow server detection via allowlist check. OWASP MCP-09.
+
+### Updated Coverage
+
+- 275 procedures across 77 namespaces (was 266/75)
+- 63 MCP tools (was 59)
+- 10 SDK languages with byte-identical output
+- 77 framework crosswalks, 250 compliance guides
+- ~2,950 tests passing across 5 languages
+
 ## What's New in v0.7.0
 
 AI does not run in a vacuum. It authenticates with service accounts, runs on hardware with supply chains, and consumes enough electricity to reshape power grids. v0.7.0 extends SWT3 down the full AI infrastructure stack with 22 new procedures across three families: credential governance (NHI), hardware supply chains (HBOM/DPP), and energy management (ADR). Every new anchor type verifies with the existing `SWT3.mintFingerprint` function -- no package update required.
