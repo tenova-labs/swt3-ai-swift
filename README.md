@@ -4,31 +4,167 @@ Witness your AI at the edge. Prove it followed the rules. Cryptographic accounta
 
 # swt3-ai
 
-**SWT3 AI Witness SDK for Swift**: mint, verify, and sign SWT3 witness anchors on Apple platforms and Linux. Zero external dependencies on Apple platforms. CryptoKit for hashing and HMAC, Foundation for timestamps.
+**SWT3™ AI Witness SDK for Swift**: mint, verify, and sign SWT3 witness anchors on Apple platforms and Linux. Zero external dependencies on Apple platforms. CryptoKit for hashing and HMAC, Foundation for timestamps.
 
 Your models run on-device. Your attestation stays on-device until you choose to transmit. Only irreversible hashes leave the device -- never prompts, responses, or model weights.
 
 EU AI Act GPAI transparency obligations enforce **August 2, 2026**. High-risk enforcement follows **December 2, 2027**. Edge inference is not exempt.
 
+> **Protocol Spec:** [swt3.ai/spec](https://swt3.ai/spec) | **Registry:** [swt3.ai/registry](https://swt3.ai/registry) | **Verify:** [swt3.ai/verify](https://swt3.ai/verify)
+
+---
+
+## v8.1.0 -- Hierarchical Milestone Merkle Trees
+
+v8.0.0 put AI, infrastructure, and construction evidence into the same Merkle tree. v8.1.0 gives that tree hierarchical structure. The new three-tier architecture -- **Structure > Phase > Milestone** -- lets each tier carry its own domain-separated Merkle root. A single inclusion proof can verify that a specific witness anchor exists within a specific milestone, within a specific phase, within the overall structure.
+
+**Why this matters for Swift:** Apple devices are where phased AI workflows meet the real world. An iOS health app that orchestrates a clinical decision pipeline has stages: symptom intake, risk scoring, triage recommendation, physician review. A visionOS spatial computing app that manages a factory floor has phases: safety zone verification, robotic arm clearance, quality inspection. Core ML inferences at each stage produce witness anchors signed by Secure Enclave. With hierarchical milestone trees, those anchors now land inside ordered phases with cryptographic gate enforcement. When an FDA auditor asks "prove that the risk model was evaluated before the triage recommendation was generated," the answer is a Merkle path from the risk-scoring milestone leaf through the assessment phase root to the clinical-decision structure root -- signed by the device's Secure Enclave, verified by any platform.
+
+**New in this release:**
+- Three-tier Merkle hashing with domain-separated prefixes
+- Phase-gate enforcement with emergency override and scope amendment support
+- Multi-tier inclusion proofs (milestone > phase > structure)
+- 294 procedures, 93 frameworks, 47 adapters, 11 SDK languages
+
+---
+
+## v8.0.0 -- Full Stack Governance
+
+v8.0.0 grows SWT3 beyond AI inference into full stack governance. Three evidence domains in one Merkle tree. 294 procedures, 93 frameworks. Full details in the [Go SDK README](https://github.com/tenova-labs/swt3-ai-go#v080----full-stack-governance).
+
+---
+
+## What's New in v0.7.9
+
+v0.7.9 is the ecosystem adapter release. Four new provider adapters (Groq, Together AI, DeepSeek, Azure OpenAI) and six witnessing guides bring the total adapter count to 47. Every major commercial inference provider now produces witness anchors in the same format -- one evidence stream regardless of which cloud your team chose.
+
+| Adapter | Provider Tag | Notes |
+|---------|-------------|-------|
+| `wrap_groq` / `wrapGroq` | `groq` | LPU inference with latency capture |
+| `wrap_together` / `wrapTogether` | `together` | Open-weight model serving |
+| `wrap_deepseek` / `wrapDeepSeek` | `deepseek` | R1 reasoning chain witnessing |
+| `wrap_azure_openai` / `wrapAzureOpenAI` | `azure-openai` | Deployment name preservation, content filter detection |
+
+New guides: [OpenAI GPT](https://sovereign.tenova.io/guides/openai-gpt-compliance-witnessing.html) | [Anthropic Claude](https://sovereign.tenova.io/guides/anthropic-claude-compliance-witnessing.html) | [Google Vertex/Gemini](https://sovereign.tenova.io/guides/google-vertex-gemini-compliance-witnessing.html) | [LangChain/LangGraph](https://sovereign.tenova.io/guides/langchain-langgraph-compliance-witnessing.html) | [DeepSeek](https://sovereign.tenova.io/guides/deepseek-gpai-compliance-witnessing.html) | [Groq](https://sovereign.tenova.io/guides/groq-compliance-witnessing.html)
+
+**Why this matters for Swift:** iOS and macOS applications combining on-device Core ML inference with cloud AI calls now have a complete picture. An app that runs a local model via Core ML (witnessed by this Swift package) and falls back to Azure OpenAI or Groq for complex queries (witnessed by the Python/TypeScript adapters) produces anchors that verify with the same `SWT3.mintFingerprint()` function on both sides. The `@tenova/swt3-mcp` MCP server (75 tools, 93 frameworks) aggregates anchors from all 47 cloud adapters alongside Swift's on-device attestations, giving auditors a single evidence stream across device and cloud. Secure Enclave signing on Apple Silicon produces anchors with hardware-bound keys that no cloud provider can replicate.
+
+v0.7.9 also aligns all MCP discovery metadata (`mcp.json`, `agent-card.json`, `llms.txt`, `server.json`) to report identical version numbers and counts. Agent discovery bots and MCP crawlers see consistent metadata everywhere.
+
+### Updated Coverage
+
+- 294 procedures across 10 namespaces
+- 93 regulatory frameworks, 348 compliance guides, 47 adapters, 11 SDK languages
+
+## What's New in v0.7.8
+
+Six new adapters unify evidence collection across IBM watsonx, AWS Bedrock, AWS Strands, and Mistral AI. Organizations running models across multiple cloud providers no longer need to reconcile separate audit trails -- every inference and policy decision produces a witness anchor in the same format regardless of provider.
+
+| Provider | Adapter | What it witnesses | Why it matters |
+|----------|---------|-------------------|----------------|
+| IBM watsonx.ai | `wrap_granite` | `generate()`, `generate_text()`, streaming | Enterprise AI on IBM's regulated cloud -- banks and insurers run Granite for document processing |
+| AWS Bedrock Guardrails | `wrap_bedrock_guardrails` | `apply_guardrail()` policy decisions (AI-GRD.1) | Content filtering audit trail -- proves guardrails were active, not just configured |
+| AWS Strands | `wrap_strands` | Agent callable invocations (AI-INF.1) | AWS agent orchestration framework -- 120+ enterprise customers with zero built-in audit |
+| Mistral AI | `wrap_mistral` | `chat.complete()`, `chat.stream()`, async | European sovereign AI -- Mistral runs on EU infrastructure, GPAI compliance required since Aug 2 |
+| NVIDIA NemoClaw | `NemoClawWitness` | Policy engine decisions (AI-GRD.1) | Hardware-level AI governance -- NeMo Guardrails policy decisions witnessed independently |
+| NVIDIA ROSClaw | `ROSClawWitness` | ROS 2 robotics audit log events | Robotics compliance -- EU Machinery Regulation (Jan 2027) requires AI decision evidence in safety-critical robots |
+
+Guides: [IBM Granite Adapter](https://sovereign.tenova.io/guides/ibm-granite-watsonx-crosswalk.html) | [AWS Bedrock Guardrails](https://sovereign.tenova.io/guides/aws-bedrock-guardrails-crosswalk.html) | [Mistral AI Adapter](https://sovereign.tenova.io/guides/mistral-ai-governance-crosswalk.html) | [NVIDIA NemoClaw](https://sovereign.tenova.io/guides/nvidia-nemoclaw-governance-crosswalk.html)
+
+**Why this matters for Swift:** iOS and macOS applications that combine on-device Core ML inference with cloud AI calls (Bedrock, watsonx, Mistral) now have adapter coverage on the cloud side to match Swift's local witnessing. A single evidence export covers both on-device and cloud inferences. v0.7.8 brings all SDKs back to version lockstep.
+
+## What's New in v0.7.6
+
+Five standards bodies converged on agent governance requirements in Q3-Q4 2026. v0.7.6 adds three procedures -- delegation chain integrity, scope boundary attestation, and agent interrupt witnessing -- and aligns crosswalks to G7 AI-SBOM, DORA, Singapore Agentic MGF, and the upcoming NIST Agent Profile.
+
+**Why this matters for Swift:** All three new procedures verify with the existing `SWT3.mintFingerprint()` function -- zero package changes. Apple platform agents (Core ML, Secure Enclave) delegating tasks to server-side agents gain delegation chain and interrupt evidence with the same cryptographic parity as server-side SDKs. The agent interrupt procedure (AI-SAFE.2) is particularly relevant for on-device inference where kill switches must produce auditable evidence. Singapore IMDA Agentic Framework crosswalk coverage (24 mappings) expands APAC governance evidence for Swift-based edge deployments.
+
+### 3 New Procedures
+
+- **AI-DEL.3** (Delegation Chain Integrity): Records delegation chain completeness -- hops, orphaned references, chain status.
+- **AI-SAND.2** (Scope Boundary Attestation): Records the operator's boundary enforcement report -- actions attempted, out-of-scope flagged, response taken.
+- **AI-SAFE.2** (Agent Interrupt Witnessing): Records interrupt events -- trigger source, actions suspended, state preservation.
+
+### Updated Coverage
+
+- 294 procedures across 10 namespaces
+- 93 regulatory frameworks, 348 compliance guides
+- [G7 AI-SBOM Crosswalk](https://sovereign.tenova.io/guides/g7-ai-sbom-minimum-elements-crosswalk.html) | [DORA + ECB Crosswalk](https://sovereign.tenova.io/guides/dora-ecb-ai-cyber-crosswalk.html)
+
+## What's New in v0.7.4
+
+NVIDIA shipped OpenShell to 120+ partners. Agent containment is now infrastructure. But containment without evidence is a black box -- an auditor cannot verify that a sandbox policy was enforced last Tuesday at 14:00 UTC by looking at enforcement logs alone. v0.7.4 adds runtime containment attestation (AI-SHELL.1), model distillation provenance (AI-DIST.1), MCP elicitation detection (AI-MCP.6), and incident lifecycle chains. Four governance gaps closed in one release.
+
+**Why this matters for Swift:** All three new procedure IDs (AI-SHELL.1, AI-DIST.1, AI-MCP.6) verify with the existing `SWT3.mintFingerprint()` function. AI-SHELL.1 runtime containment attestation works with zero dependency changes -- on-device Core ML distillation (teacher to student model compression) and sandboxed inference on Apple platforms can attest containment and lineage with the same cryptographic parity as server-side SDKs.
+
+### 3 New Procedures
+
+- **AI-SHELL.1** (Runtime Containment Attestation): Records that a sandboxed runtime enforced its containment policy during a specific observation window. Duck-typed: works with OpenShell, gVisor, Kata, Firecracker, WASM. [NVIDIA OpenShell Crosswalk](https://sovereign.tenova.io/guides/nvidia-openshell-crosswalk.html)
+- **AI-DIST.1** (Distillation Provenance): Records teacher-to-student model lineage, compression ratio, and knowledge transfer method.
+- **AI-MCP.6** (Elicitation Detection): Records prompt injection attempts via MCP tool responses. OWASP MCP-06.
+
+### Updated Coverage
+
+- 278 procedures across 10 namespaces (was 284)
+- 75 MCP tools (was 72)
+- 277 compliance guides
+- [NVIDIA OpenShell Crosswalk](https://sovereign.tenova.io/guides/nvidia-openshell-crosswalk.html) -- runtime containment evidence for OpenShell, gVisor, Kata, Firecracker
+- All new anchor types verify with `SWT3.mintFingerprint()` -- no library update required for verification
+
+## What's New in v0.7.3
+
+A2A (Google's Agent-to-Agent protocol) has 150+ supporting organizations, all three hyperscalers, and a v1.0 stable specification under Linux Foundation governance. It has zero built-in audit trail. MCP OAuth adoption sits at 8.5% with 30+ CVEs filed in 60 days. v0.7.3 makes SWT3 the evidence layer for both agent communication protocols with dedicated procedures, lifecycle-aware adapters, and a new crosswalk CLI command.
+
+**Why this matters for Swift:** Apple platforms hosting on-device agents (Core ML, Secure Enclave signing) gain A2A task lifecycle witnessing. Agents running on Apple Silicon can now attest delegation chains with the same cryptographic parity as server-side SDKs.
+
+### 4 New Procedures
+
+- **AI-A2A.1** (Task Delegation Lifecycle): Records task state transitions (submitted/working/input_required/completed/failed/canceled/rejected) with delegation depth and latency.
+- **AI-A2A.2** (Agent Card Discovery): Records agent discovery via well-known URLs, registries, or referrals, with verified credential count.
+- **AI-A2A.3** (Context Chain Linking): Records contextId linkage across multi-agent delegation chains for forensic reconstruction.
+- **AI-MCP.5** (OAuth Token Binding): Records 8 OAuth lifecycle events (discovery through revocation) with binding strength and scope governance.
+
+### Updated Coverage
+
+- 284 procedures across 10 namespaces (was 280/9)
+- 72 MCP tools (was 68)
+- A2A namespace added (10th namespace)
+- `swt3 crosswalk <procedure>` CLI command for offline framework mapping lookup
+- 269 compliance guides
+
+## What's New in v0.7.2
+
+Two gaps closed in one release: harness-layer governance and zero-code MCP compliance. v0.7.2 adds five new procedures for orchestration, context management, sandboxing, and eval gating -- the decisions AI harnesses make before inference that have no audit trail today. It also ships a Witness Middleware (`withSWT3(transport)`) in the companion MCP package that auto-mints AI-TOOL.1 anchors for every tool call flowing through any MCP server, with zero code changes to tool handlers.
+
+**Why this matters for Swift:** Apple Intelligence and on-device agents increasingly use tool-calling patterns that mirror MCP. When your iOS or visionOS app delegates inference to a server-side agent pipeline, the harness governance anchors (AI-ORCH.1/2, AI-CTX.1, AI-SAND.1, AI-GATE.1) prove which agent handled the request, whether context was truncated, and whether the eval gate passed before the response reached the device. Your Swift code can verify all five anchor types with the same `SWT3.mintFingerprint` call -- zero package changes. For edge deployments where the device itself hosts an MCP server, the Witness Middleware wraps the transport to attest every tool call without modifying tool handlers.
+
+### 5 New Procedures
+
+- **AI-ORCH.1** (Orchestration Topology): Records routing pattern (parallel/sequential/hierarchical), agent count, dependency depth.
+- **AI-ORCH.2** (Agent Handoff): Records delegator-to-delegate identity link with permission delta direction.
+- **AI-CTX.1** (Context Window Management): Records token count before/after eviction and the method used.
+- **AI-SAND.1** (Sandbox Enforcement): Records tools declared vs. invoked and violation count.
+- **AI-GATE.1** (Eval Gate Decision): Records eval pass/fail counts with auto-computed gate score.
+
+### Updated Coverage
+
+- 280 procedures across 77 namespaces (was 275/77)
+- 68 MCP tools (was 63)
+- 11 SDK languages with byte-identical output
+- 77 framework crosswalks, 265 compliance guides
+- ~3,000 tests passing across 10 languages
+
 ## What's New in v0.7.1
 
 MCP security is under fire. OWASP published the MCP Top 10 in 2026 -- 30-82% of MCP servers are vulnerable to tool poisoning, insufficient authentication, and shadow server proliferation. v0.7.1 adds three new procedures (AI-MCP.2, AI-MCP.3, AI-MCP.4) that close the remaining OWASP gaps. SWT3 is now the first protocol to cover all 10 OWASP MCP risks with cryptographic evidence. Every new anchor type verifies with the existing `SWT3.mintFingerprint` function -- no package update required.
 
-**Why this matters for Swift:** Apple Intelligence and on-device agents increasingly use tool-calling patterns that mirror MCP. When your iOS or visionOS app calls server-side MCP tools, the new MCP security anchors prove the tool schema was stable (AI-MCP.2), the server authenticated (AI-MCP.3), and the server was on your approved list (AI-MCP.4). Your Swift code can verify all three anchor types with the same `SWT3.mintFingerprint` call -- zero package changes. For edge deployments where the device itself hosts an MCP server, these procedures create evidence that the server configuration was not tampered with between releases.
+**Why this matters for Swift:** When your iOS or visionOS app calls server-side MCP tools, the new MCP security anchors prove the tool schema was stable (AI-MCP.2), the server authenticated (AI-MCP.3), and the server was on your approved list (AI-MCP.4). Zero package changes.
 
 ### 3 New Procedures
 
 - **AI-MCP.2** (Tool Integrity Attestation): Detects tool schema drift between connect and invoke. OWASP MCP-03.
 - **AI-MCP.3** (Server Auth Attestation): Records auth method and verification. No auth = FAIL = IA-9 finding. OWASP MCP-07.
 - **AI-MCP.4** (Server Discovery Attestation): Shadow server detection via allowlist check. OWASP MCP-09.
-
-### Updated Coverage
-
-- 275 procedures across 77 namespaces (was 266/75)
-- 63 MCP tools (was 59)
-- 10 SDK languages with byte-identical output
-- 77 framework crosswalks, 250 compliance guides
-- ~2,950 tests passing across 5 languages
 
 ## What's New in v0.7.0
 
@@ -42,7 +178,7 @@ AI does not run in a vacuum. It authenticates with service accounts, runs on har
 
 - 266 procedures across 75 namespaces (was 118/64)
 - 59 MCP tools (was 37)
-- 10 SDK languages with byte-identical output
+- 11 SDK languages with byte-identical output
 - 36 framework crosswalks, 237 compliance guides
 - ~2,950 tests passing across 5 languages
 
@@ -77,7 +213,7 @@ The 10th language in the SWT3 ecosystem. Zero dependencies. All 65 test vectors 
 ### Updated Coverage
 
 - 114 procedures across 62 namespaces (AI-SAMPLE.1 added)
-- 10 SDK languages with byte-identical output
+- 11 SDK languages with byte-identical output
 - 36 framework crosswalks, 215 compliance guides
 - 2,515 tests passing across 5 languages
 
@@ -267,13 +403,13 @@ For Core ML predictions, the SDK hashes feature provider descriptions (names and
 ## Links
 
 - **Website**: [tenova.io](https://tenova.io)
-- **Protocol Spec**: [SWT3-SPEC-v1.0](https://github.com/tenova-labs/swt3-ai)
+- **Protocol Spec**: [SWT3 Protocol Specification](https://swt3.ai/spec)
 - **Live Demo**: [sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public](https://sovereign.tenova.io/audit/axm_audit_demo_eu_ai_act_public)
 
 ---
 
 *SWT3: Sovereign Witness Traceability. We don't run your models. We witness them.*
 
-SWT3 and Sovereign Witness Traceability are trademarks of Tenable Nova LLC. Patent pending. Apache 2.0 licensed.
+SWT3, swt3-ai, TeNova, Axiom Sovereign Engine, UCT, and Sovereign Score are trademarks of Tenable Nova LLC. Patent pending. Apache 2.0 licensed.
 
 This project uses Apple's CryptoKit framework and Secure Enclave APIs. Apple, CryptoKit, Core ML, ARKit, RealityKit, Vision Pro, iOS, macOS, watchOS, tvOS, and visionOS are trademarks of Apple Inc. This project is not affiliated with, endorsed by, or sponsored by Apple Inc. or any other third-party AI provider. All third-party trademarks are the property of their respective owners. Use of these names is for identification and interoperability purposes only.
